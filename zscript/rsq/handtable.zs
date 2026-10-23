@@ -126,9 +126,13 @@ class RSQ_HandTable abstract
 
 	clearscope static Vector3 SupportHook(int i)
 	{
-		static const double x[] = { 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, -9.690, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, -9.690 };
-		static const double y[] = { 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, -1.500, 0.000, -16.750, 0.000, 0.000, 0.000, 0.000, -1.500, 0.000, 0.000, -16.750 };
-		static const double z[] = { 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 2.520, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 2.520 };
+		// FITTED 2026-10-23 with the kit's wrap branch (fitall.py), indices 5/15 shotguns and
+		// 6/13 pulse rifles. ICP of the patch of Ermac's shotgun his support hand holds onto
+		// ours; residual 0.65 cm on the shotgun, 0.90 cm on the rifle. Patched, not
+		// regenerated -- 000_READ_THIS_FIRST section 6.
+		static const double x[] = { 0.000, 0.000, 0.000, 0.000, 0.000, -0.090, -0.090, 0.000, -9.690, 0.000, 0.000, 0.000, 0.000, -0.090, 0.000, -0.090, -9.690 };
+		static const double y[] = { 0.000, 0.000, 0.000, 0.000, 0.000, -2.980, -10.800, 0.000, -16.750, 0.000, 0.000, 0.000, 0.000, -10.800, 0.000, -2.980, -16.750 };
+		static const double z[] = { 0.000, 0.000, 0.000, 0.000, 0.000, -2.800, 10.670, 0.000, 2.520, 0.000, 0.000, 0.000, 0.000, 10.670, 0.000, -2.800, 2.520 };
 		if (i <= 0 || i >= x.Size())
 			return (0, 0, 0);
 		return (x[i], y[i], z[i]);
