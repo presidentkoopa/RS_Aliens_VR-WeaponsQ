@@ -218,6 +218,27 @@ class RSR_Guns abstract
 		return (0, 0, 0);
 	}
 
+	// HOW LONG THE THING YOU GRAB IS, half-length in cm along Pull(i). 0 = a point, which is
+	// what every grab was before 2026-10-23.
+	//
+	// Owner: "the rack point on the pistol has to extend to cover the whole slide. right now
+	// it is like i have to grab the front of the barrel to rack the gun." Measured: the slide
+	// is surface [3] of m4a3.md3 and runs F -7.50 .. +15.00 -- 22.5 cm. Grab(1) is a single
+	// point at F 2.82 and RSR_Assist's catch radius is 8 cm, so the catch covered F -5.18 ..
+	// +10.82 and only near the axis: it missed the front 4.2 cm and the rear 2.3 cm of a slide
+	// you are meant to be able to take anywhere along.
+	//
+	// The pulse rifle is NOT given one. Its charging handle really is a knob -- surface [3] of
+	// m41a.md3, 1.96 cm long -- and Grab(2) is exactly its centroid, so a point is right there.
+	clearscope static double GrabLen(int i)
+	{
+		switch (i)
+		{
+		case 1:	case 5:	case 6:	case 7:	return 11.25;	// the pistols' slide, 22.5 cm
+		}
+		return 0.0;
+	}
+
 	clearscope static Vector3 Pull(int i)
 	{
 		switch (i)

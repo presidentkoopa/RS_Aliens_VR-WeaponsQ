@@ -514,7 +514,17 @@ class RSR_State play
 			if (press || g)
 			{
 				Vector3 rel = OffPoint(RSR.PalmGrab()) - RSR_Guns.Grab(i);
-				if (rel.Length() < RSR_Assist.MagGrab(mo.player, i))
+				// 2026-10-23: a slide is a BAR, not a dot. Where the gun says so
+				// (RSR_Guns.GrabLen), the catch is measured to the SEGMENT along the pull
+				// axis rather than to Grab's single point, so the whole slide can be taken
+				// anywhere along its length instead of only within one radius of its middle.
+				// grabS still comes from the unclamped rel: the stroke has to start from
+				// where the hand actually is, or the first centimetre of travel is lost.
+				Vector3 reach = rel;
+				double half = RSR_Guns.GrabLen(i);
+				if (half > 0)
+					reach -= RSR_Guns.Pull(i) * clamp(rel dot RSR_Guns.Pull(i), -half, half);
+				if (reach.Length() < RSR_Assist.MagGrab(mo.player, i))
 				{
 					grabS = rel dot RSR_Guns.Pull(i);
 					racked = false;
