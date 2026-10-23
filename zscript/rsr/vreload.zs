@@ -1,0 +1,1030 @@
+// RS real VR reload (RSR) on QuestZDoom 17.3, no engine changes (team/reload/DESIGN.md).
+//
+// The gun's own magazine (drum, cell) drops out of the well and falls to the floor as the
+// gun's own mesh. The off hand takes a new one, brings it to the well and pushes it home.
+// Then, when the set's own rule says so, the hand takes the charging handle / slide / bolt
+// and pulls it back. Every sound is the set's own, played when the hand does the thing;
+// firing is the set's own. Out of VR, or with rsq_reload 0, the gun's own reload runs
+// unchanged. The hand takes hold by the input rule (RSR.GripCanGrab): the off trigger
+// anywhere, the off grip only where its press cannot start the engine's steadying.
+//
+// This file is the shared plumbing and names no gun. Per gun: rsr_guns.zs and MODELDEF.rsr
+// (team/reload/tools/gen_rsr.py), and a few states in its weapon file (tools/rsr_patch.py):
+//   its Reload goes to RSR_Start after all of its own checks (RSR_Start: decide);
+//   RSR_Out gives RSR_MagOut when there is a magazine in the gun, then the set's own
+//   counts take its rounds back to the reserve (a chambered round stays);
+//   RSR_Wait holds the gun ("####" "#") and gives RSR_Tick every tic;
+//   RSR_Seated (given here) makes it run the set's own fill loop, then give RSR_Filled;
+//   RSR_Done (given here) ends at the set's own end of a reload.
+// Positions: cm in the weapon controller's frame, F forward, L left, U up (rsr_guns.zs).
+
+class RSR abstract
+{
+	// layers (rsq/hands.zs owns 2100, 2101, 2200)
+	const WELLMAG = 2102;	// RSR_GunParts, main controller: the magazine at / in the well
+	const HANDLE = 2103;	// RSR_GunParts: the charging handle (when it is its own surface)
+	const BOLT = 2104;		// RSR_GunParts: the bolt carrier that moves with it
+	const FREEHAND = 2200;	// RSQ_Hands: the free hand
+	const HANDMAG = 2201;	// RSQ_Hands (the off-hand weapon), off controller: the magazine in the hand
+	const LAYER_FIRST = 2102;
+	const LAYER_LAST = 2104;
+
+	// phases
+	const IDLE = 0;
+	const DROP = 1;			// the magazine slides out of the well
+	const EMPTY = 2;		// no magazine; the hand goes for one
+	const CARRY = 3;		// a magazine in the hand
+	const INSERT = 4;		// the magazine in the well, as far as the hand puts it
+	const SEATED = 5;		// home; the weapon fills it
+	const CHARGE = 6;		// the hand goes for the handle
+	const PULL = 7;			// the handle in the hand
+	const RELEASED = 8;		// the handle springs forward
+	const DONE = 9;
+
+	const WEAPONTOP = 32;	// a layer drawn at y = 0 is tilted (hw_weapon.cpp: (my - WEAPONTOP) / -4)
+
+	// cm, degrees
+	const POUCH_MIN = 20.0;		// a magazine is taken at least this far from the well
+	const POUCH_LOW = 40.0;		// rsr_pouch 1: this far below the eyes
+	// 2026-10-22: ENTER_* / LEAVE_* / GRAB_HANDLE / RACKED are superseded by the capture zones in
+	// rsr_assist.zs (BD22 1.92), scaled by the rsr_assist cvar. Kept for reference.
+	const ENTER_SIDE = 3.5;		// the magazine's top within this of the well's axis goes in
+	const ENTER_ABOVE = 1.5;	// ...through the mouth: from no higher than this above it
+	const ENTER_BELOW = 6.0;	// ...and no further than this below it
+	const ENTER_ANGLE = 35.0;	// ...pointing within this of the axis
+	const LEAVE_SIDE = 5.5;		// further off the axis than this: back in the hand
+	const LEAVE_BELOW = 9.0;	// pulled further out than this below the mouth: back in the hand
+	const SEAT = 0.6;			// home within this
+	const GRAB_HANDLE = 7.0;	// the hand within this of the handle takes it
+	const LEAVE_HANDLE = 12.0;	// the hand further than this from the handle's track lets go
+	const RACKED = 0.85;		// of the handle's travel: far enough back to chamber a round
+	const SPRING = 4.0;			// cm a released handle goes forward per tic
+	const DROP_TICS = 4;
+	const DROP_CM = 24.0;		// how far the old magazine slides in DROP_TICS before it falls free
+	const STEADY_RANGE = 50.0;	// the engine steadies on an off-grip press with the controllers closer than this
+
+	// the off hand's frame (the free hand's MODELDEF placement): the middle of the closed hand
+	clearscope static Vector3 PalmGrab() { return (-1.5, 2.0, -4.5); }
+
+	// PORTED 2026-10-22 (rsr_pump.zs 1.92): the buttons that grab anywhere. BD22 1.92 has
+	// rsr_grab_with (trigger / grip / Use); this pack grabs with rsr_grab_buttons only.
+	clearscope static int GrabMask(PlayerInfo p)
+	{
+		return PlayerInt(p, 'rsr_grab_buttons', BT_OFFHANDATTACK);
+	}
+
+	clearscope static int PlayerInt(PlayerInfo p, Name n, int def)
+	{
+		let cv = CVar.GetCVar(n, p);
+		return cv ? cv.GetInt() : def;
+	}
+
+	clearscope static double Float(Name n, double def)
+	{
+		let cv = CVar.FindCVar(n);
+		return cv ? cv.GetFloat() : def;
+	}
+
+	clearscope static bool Debug(PlayerInfo p)
+	{
+		return PlayerInt(p, 'rsr_debug', 0) != 0;
+	}
+
+	// INPUT RULE (DESIGN.md "Inputs"). Stock two-hand steadying stays as it is: the engine
+	// steadies when the off grip is PRESSED with the controllers within STEADY_RANGE
+	// (vr_two_handed_weapons on), and lets go when the grip is released. So:
+	//   the off trigger (rsr_grab_buttons, BT_OFFHANDATTACK) grabs anywhere;
+	//   the off grip grabs only when its press cannot start steadying: the controllers at
+	//   least STEADY_RANGE apart (the engine's own distance), or vr_two_handed_weapons 0
+	//   (read, never written). That grip then holds until it is released;
+	//   a steadied grip (WF_TWOHANDSTABILIZED) is never a grab.
+	play static bool GripCanGrab(PlayerPawn mo)
+	{
+		let cv = CVar.FindCVar('vr_two_handed_weapons');
+		if (!cv || !cv.GetBool())
+			return true;
+		return RSVR_VRHand.SteadyGap(mo) >= STEADY_RANGE;
+	}
+
+	static String PhaseName(int ph)
+	{
+		static const String n[] = { "IDLE", "DROP", "EMPTY", "CARRY", "INSERT", "SEATED", "CHARGE", "PULL", "RELEASED", "DONE" };
+		return ph >= 0 && ph < n.Size() ? n[ph] : "?";
+	}
+
+	// a layer the reload owns: shown with a sprite and frame of the gun's own model
+	// (MODELDEF.rsr), or gone (st null)
+	play static void SetPart(PlayerInfo p, int id, Actor caller, bool show, Name spr, int frame)
+	{
+		let psp = p.FindPSprite(id);
+		if (!show || !caller)
+		{
+			if (psp)
+				p.SetPsprite(id, null);
+			return;
+		}
+		let st = GetDefaultByType('RSR_PartStates').FindState("Part");
+		if (!psp || psp.Caller != caller || psp.CurState != st)
+		{
+			p.SetPsprite(id, st, false, caller);
+			psp = p.FindPSprite(id);
+			if (!psp)
+				return;
+			psp.bAddWeapon = false;
+			psp.bAddBob = true;
+			psp.x = 0;
+			psp.oldx = 0;
+			psp.y = WEAPONTOP;
+			psp.oldy = WEAPONTOP;
+		}
+		psp.Sprite = Actor.GetSpriteIndex(spr);
+		psp.Frame = frame;
+	}
+
+	// "RIFG A" -> sprite, frame
+	play static bool SpriteOf(String s, out SpriteID spr, out int fr)
+	{
+		Array<String> w;
+		s.Split(w, " ", TOK_SKIPEMPTY);
+		if (w.Size() < 2)
+			return false;
+		spr = Actor.GetSpriteIndex(w[0]);
+		fr = w[1].ByteAt(0) - 65;
+		return true;
+	}
+
+	play static bool IsReadyFrame(PSprite psp, int gun)
+	{
+		Array<String> list;
+		RSR_Guns.ReadySprites(gun).Split(list, " ", TOK_SKIPEMPTY);
+		for (int k = 0; k + 1 < list.Size(); k += 2)
+		{
+			if (psp.Sprite == Actor.GetSpriteIndex(list[k]) && psp.Frame == list[k + 1].ByteAt(0) - 65)
+				return true;
+		}
+		return false;
+	}
+}
+
+// one player's reload
+class RSR_State play
+{
+	int phase;
+	int gun;				// RSR_Guns index
+	Weapon weap;			// the gun being reloaded
+	int phaseTic;
+	int lastTick;			// maptime of the weapon's last RSR_Tick
+	bool racked;
+	bool backSounded;
+	double grabS;			// where along the handle's track the hand took it
+
+	// the grab (RSR.GripCanGrab; synchronised: rsr_grip network events from
+	// RSR_Handler.InputProcess, and usercmd buttons)
+	bool netGrip;			// the off grip's key is down
+	bool gripFree;			// ...and its press could not start steadying (latched at the press)
+	int netPresses;			// grip presses that grab
+	int usedPresses;
+	bool gripPrev;
+	bool relPrev;			// mag-release buttons last tic
+
+	// what is drawn (ui interpolates prev -> cur with ticfrac)
+	double d, dPrev;		// the magazine at the well: cm out of home along the axis
+	double pull, pullPrev;	// the handle: cm back
+	bool wellShown, handShown;
+	Vector3 offLocal;		// the off hand, gun frame cm (the desktop test draws with it)
+
+	// this tic's controller frames (world unit vectors; the engine mirrors the left hand,
+	// AttackDir / OffhandDir include it, so these are the frames the layers are drawn in)
+	Vector3 F, L, U, oF, oL, oU;
+	double ps, vu;
+
+	void SetPhase(PlayerPawn mo, int ph)
+	{
+		if (RSR.Debug(mo.player))
+			Console.Printf("rsr t%d gun %d: %s -> %s", mo.Level.maptime, gun, RSR.PhaseName(phase), RSR.PhaseName(ph));
+		phase = ph;
+		phaseTic = mo.Level.maptime;
+	}
+
+	void Frames(PlayerPawn mo)
+	{
+		ps = mo.Level.pixelstretch;
+		if (ps <= 0)
+			ps = 1.2;
+		vu = RSR.Float('vr_vunits_per_meter', 34);
+		if (vu <= 0)
+			vu = 34;
+		F = RSVR_VRHand.HandDir(mo, 0, 0, ps);
+		L = RSVR_VRHand.HandDir(mo, 90, 0, ps);
+		U = RSVR_VRHand.HandDir(mo, 0, 90, ps);
+		oF = RSVR_VRHand.OffDir(mo, 0, 0, ps);
+		oL = RSVR_VRHand.OffDir(mo, 90, 0, ps);
+		oU = RSVR_VRHand.OffDir(mo, 0, 90, ps);
+		offLocal = ToGun(RSVR_VRHand.OffPos(mo) - RSVR_VRHand.HandPos(mo));
+	}
+
+	// a world offset -> gun frame cm
+	Vector3 ToGun(Vector3 w)
+	{
+		w.z *= ps;
+		w *= 100.0 / vu;
+		return (w dot F, w dot L, w dot U);
+	}
+
+	// gun frame cm -> world offset from the gun hand
+	Vector3 FromGun(Vector3 c)
+	{
+		Vector3 w = F * c.x + L * c.y + U * c.z;
+		w *= vu / 100.0;
+		w.z /= ps;
+		return w;
+	}
+
+	// rsr_assist_debug ONLY: a ring round a capture zone, drawn in the gun hand's frame.
+	// Nothing is spawned with the cvar off, and particles are not actors: no markers.
+	void ZoneRing(PlayerPawn mo, Vector3 centre, Vector3 axis, double r, Color col)
+	{
+		Vector3 u = abs(axis.z) < 0.9 ? (axis cross (0, 0, 1)).Unit() : (axis cross (1, 0, 0)).Unit();
+		Vector3 v = (axis cross u).Unit();
+		Vector3 off = RSVR_VRHand.HandPos(mo) + FromGun(centre) - mo.Pos;
+		RSR_Assist.Ring(mo, off, FromGun(u * r), FromGun(v * r), col);
+	}
+
+	// a direction of the off hand's frame -> gun frame
+	Vector3 OffDirInGun(Vector3 v)
+	{
+		Vector3 w = oF * v.x + oL * v.y + oU * v.z;
+		return (w dot F, w dot L, w dot U);
+	}
+
+	// a point of the off hand's frame (cm) -> gun frame (cm)
+	Vector3 OffPoint(Vector3 p)
+	{
+		return offLocal + OffDirInGun(p);
+	}
+
+	// the off hand is holding on: its trigger anywhere, or a grip that grabbed (RSR.GripCanGrab)
+	bool Grip(PlayerPawn mo)
+	{
+		int mask = RSR.PlayerInt(mo.player, 'rsr_grab_buttons', BT_OFFHANDATTACK);
+		bool trig = (RSVR_VRHand.Buttons(mo) & mask) != 0;
+		bool grip = netGrip && gripFree && !RSVR_VRHand.Steadied(mo);
+		return trig || grip;
+	}
+
+	// where the magazine in the hand is against the well: depth (cm out of home along the
+	// axis), distance off the axis, angle to it
+	double, double, double MagAtWell()
+	{
+		int i = gun;
+		Vector3 top = OffPoint(RSR_Guns.TopInHand(i));
+		Vector3 axis = RSR_Guns.Axis(i);
+		Vector3 rel = top - RSR_Guns.Well(i);
+		double along = rel dot axis;
+		double side = (rel - axis * along).Length();
+		double c = clamp(OffDirInGun(axis) dot axis, -1, 1);
+		return -along, side, acos(c);
+	}
+
+	bool CanTakeMag(PlayerPawn mo)
+	{
+		int i = gun;
+		String res = RSR_Guns.Reserve(i);
+		class<Inventory> rc = res;
+		if (rc && mo.CountInv(rc) <= 0)
+			return false;
+		Vector3 hand = OffPoint(RSR.PalmGrab());
+		if ((hand - RSR_Guns.MagCentre(i)).Length() < RSR.POUCH_MIN)
+			return false;
+		if (RSR.PlayerInt(mo.player, 'rsr_pouch', 0) == 1)
+		{
+			Vector3 op = RSVR_VRHand.OffPos(mo);
+			double below = (mo.player.viewz - op.z) * ps * 100.0 / vu;
+			if (below < RSR.POUCH_LOW)
+				return false;
+		}
+		return true;
+	}
+
+	void PlaySnd(PlayerPawn mo, String snd)
+	{
+		if (snd == "")
+			return;
+		mo.A_StartSound(snd, RSR_Guns.Channel(gun));
+		if (RSR.Debug(mo.player))
+			Console.Printf("rsr t%d sound %s (slot %d)", mo.Level.maptime, snd, RSR_Guns.Channel(gun));
+	}
+
+	// a magazine falls: the gun's own magazine as a world actor, where it is now
+	void Fall(PlayerPawn mo, Vector3 at)
+	{
+		Vector3 pos = RSVR_VRHand.HandPos(mo) + FromGun(at);
+		let m = RSR_DroppedMag(Actor.Spawn('RSR_DroppedMag', pos));
+		if (!m)
+			return;
+		m.sprite = Actor.GetSpriteIndex(RSR_Guns.SprWorld(gun));
+		m.frame = 0;
+		m.angle = atan2(F.y, F.x);
+		m.pitch = -asin(clamp(F.z, -1, 1));
+		m.vel = mo.vel + (0, 0, -1.5);
+		m.BounceSound = RSR_Guns.SndLand(gun);
+		m.target = mo;
+	}
+
+	void Buzz(PlayerPawn mo)
+	{
+		mo.SpawnPlayerMissile('RSVR_Buzz', mo.angle, noautoaim: true, aimflags: ALF_ISOFFHAND);
+	}
+
+	// the weapon's Reload reached RSR_Start and the real reload takes it
+	void Begin(PlayerPawn mo, Weapon w, int i)
+	{
+		gun = i;
+		weap = w;
+		racked = false;
+		backSounded = false;
+		d = dPrev = 0;
+		pull = pullPrev = 0;
+		wellShown = handShown = false;
+		usedPresses = netPresses;
+		gripPrev = Grip(mo);		// a grip already held is not a new grab
+		lastTick = mo.Level.maptime;
+		SetPhase(mo, RSR.EMPTY);
+	}
+
+	// RSR_MagOut: the gun lets its magazine go
+	void MagOut(PlayerPawn mo)
+	{
+		PlaySnd(mo, RSR_Guns.SndOut(gun));
+		d = dPrev = 0;
+		wellShown = true;
+		SetPhase(mo, RSR.DROP);
+	}
+
+	// RSR_Filled: the set's own loop has filled the gun. The handle next when the set's own
+	// rule says so (RSR_Guns.ChargeRule: the token its weapon file gave, or always)
+	void Filled(PlayerPawn mo)
+	{
+		class<Inventory> tc = RSR_Guns.ChargeToken(gun);
+		int rule = RSR_Guns.ChargeRule(gun);
+		bool charge = rule == 2 || rule == 1 && tc && mo.CountInv(tc) > 0;
+		if (charge)
+		{
+			SetPhase(mo, RSR.CHARGE);
+			return;
+		}
+		mo.GiveInventory('RSR_Done', 1);
+		SetPhase(mo, RSR.DONE);
+	}
+
+	// RSR_Tick, every tic the weapon waits
+	void Tick(PlayerPawn mo)
+	{
+		int now = mo.Level.maptime;
+		lastTick = now;
+		Frames(mo);
+		dPrev = d;
+		pullPrev = pull;
+		bool g = Grip(mo);
+		// a new hold: the grab went on, or a grip press that grabs came and went between tics
+		bool press = (g && !gripPrev) || netPresses != usedPresses && !RSVR_VRHand.Steadied(mo);
+		usedPresses = netPresses;
+		int i = gun;
+		switch (phase)
+		{
+		case RSR.DROP:
+		{
+			int t = now - phaseTic;
+			double f = t / double(RSR.DROP_TICS);
+			d = RSR.DROP_CM * f * f;
+			if (t >= RSR.DROP_TICS)
+			{
+				Fall(mo, RSR_Guns.MagCentre(i) - RSR_Guns.Axis(i) * d);
+				wellShown = false;
+				d = dPrev = 0;
+				SetPhase(mo, RSR.EMPTY);
+			}
+			break;
+		}
+
+		case RSR.EMPTY:
+			if (press && CanTakeMag(mo))
+			{
+				handShown = true;
+				Buzz(mo);
+				SetPhase(mo, RSR.CARRY);
+			}
+			break;
+
+		case RSR.CARRY:
+		{
+			if (!g)
+			{
+				// let go of it: it falls
+				Fall(mo, OffPoint(RSR_Guns.TopInHand(i)) - RSR_Guns.Well(i) + RSR_Guns.MagCentre(i));
+				handShown = false;
+				SetPhase(mo, RSR.EMPTY);
+				break;
+			}
+			double dd, side, ang;
+			[dd, side, ang] = MagAtWell();
+			// THE CAPTURE ZONE (rsr_assist.zs, from BD22 1.92). A cylinder of cap cm about the
+			// well's axis, from home out to cap beyond the mouth. The magazine's top inside it,
+			// pointing within tilt of the axis, is CAUGHT: from here the magazine is drawn on the
+			// axis at the depth the hand has reached, so the hand only pushes ALONG it.
+			double cap = RSR_Assist.MagCapture(mo.player, i);
+			double tilt = RSR_Assist.MagTilt(mo.player, i);
+			if (RSR_Assist.Dbg(mo.player))
+				ZoneRing(mo, RSR_Guns.Well(i) + RSR_Guns.Axis(i) * RSR_Guns.Mouth(i), RSR_Guns.Axis(i), cap, Color(255, 255, 255, 64));
+			if (side < cap && dd < RSR_Guns.Mouth(i) + cap && dd > -0.5 * cap && ang < tilt)
+			{
+				handShown = false;
+				wellShown = true;
+				d = dPrev = dd;
+				Buzz(mo);
+				SetPhase(mo, RSR.INSERT);
+			}
+			break;
+		}
+
+		case RSR.INSERT:
+		{
+			double dd, side, ang;
+			[dd, side, ang] = MagAtWell();
+			if (!g)
+			{
+				// let go before it is home: it falls out
+				Fall(mo, RSR_Guns.MagCentre(i) - RSR_Guns.Axis(i) * d);
+				wellShown = false;
+				d = dPrev = 0;
+				SetPhase(mo, RSR.EMPTY);
+				break;
+			}
+			double cap = RSR_Assist.MagCapture(mo.player, i);
+			double leave = RSR_Assist.Leave(mo.player, cap);
+			if (RSR_Assist.Dbg(mo.player))
+				ZoneRing(mo, RSR_Guns.Well(i) + RSR_Guns.Axis(i) * RSR_Guns.Mouth(i), RSR_Guns.Axis(i), cap, Color(255, 64, 255, 64));
+			if (side > leave || dd > RSR_Guns.Mouth(i) + leave)
+			{
+				wellShown = false;
+				handShown = true;
+				d = dPrev = 0;
+				SetPhase(mo, RSR.CARRY);
+				break;
+			}
+			d = max(dd, 0);
+			// home: SeatFrac of the way in from the mouth, but never looser than RSR.SEAT cm
+			double seat = RSR_Assist.SeatAt(RSR_Guns.Mouth(i), RSR_Assist.MagSeatFrac(mo.player, i), RSR.SEAT);
+			if (d <= seat)
+			{
+				d = dPrev = 0;
+				wellShown = false;
+				PlaySnd(mo, RSR_Guns.SndIn(i));
+				Buzz(mo);
+				mo.GiveInventory('RSR_Seated', 1);
+				SetPhase(mo, RSR.SEATED);
+			}
+			break;
+		}
+
+		case RSR.CHARGE:
+			// PATCHED BY HAND 2026-10-22 (owner: "the pulse rifle does not let me rack after
+			// loading"): a grab HELD since the magazine went in takes the handle too, not only a
+			// fresh press -- the hand usually arrives at the handle still holding the trigger.
+			if (press || g)
+			{
+				Vector3 rel = OffPoint(RSR.PalmGrab()) - RSR_Guns.Grab(i);
+				if (rel.Length() < RSR_Assist.MagGrab(mo.player, i))
+				{
+					grabS = rel dot RSR_Guns.Pull(i);
+					racked = false;
+					backSounded = false;
+					pull = pullPrev = 0;
+					Buzz(mo);
+					SetPhase(mo, RSR.PULL);
+				}
+			}
+			break;
+
+		case RSR.PULL:
+		{
+			Vector3 pd = RSR_Guns.Pull(i);
+			Vector3 rel = OffPoint(RSR.PalmGrab()) - RSR_Guns.Grab(i);
+			double s = rel dot pd;
+			double side = (rel - pd * s).Length();
+			double travel = RSR_Guns.Travel(i);
+			pull = clamp(s - grabS, 0, travel);
+			if (!backSounded && pull >= RSR_Guns.BackAt(i) * travel)
+			{
+				backSounded = true;
+				PlaySnd(mo, RSR_Guns.SndBack(i));
+			}
+			if (pull >= RSR_Assist.MagPullFrac(mo.player, i) * travel && !racked)
+			{
+				racked = true;
+				Buzz(mo);
+			}
+			if (!g || side > RSR_Assist.Leave(mo.player, RSR_Assist.MagGrab(mo.player, i)) * 1.2)
+				SetPhase(mo, RSR.RELEASED);
+			break;
+		}
+
+		case RSR.RELEASED:
+			pull = max(0, pull - RSR.SPRING);
+			if (pull <= 0)
+			{
+				if (racked)
+				{
+					PlaySnd(mo, RSR_Guns.SndFwd(i));
+					mo.GiveInventory('RSR_Done', 1);
+					SetPhase(mo, RSR.DONE);
+				}
+				else
+					SetPhase(mo, RSR.CHARGE);
+			}
+			break;
+		}
+		gripPrev = g;
+	}
+
+	// the weapon left the reload (switched away, died, ...): put everything away
+	void Abort(PlayerPawn mo)
+	{
+		if (phase == RSR.DROP || phase == RSR.INSERT)
+			Fall(mo, RSR_Guns.MagCentre(gun) - RSR_Guns.Axis(gun) * d);
+		else if (phase == RSR.CARRY)
+			Fall(mo, OffPoint(RSR_Guns.TopInHand(gun)) - RSR_Guns.Well(gun) + RSR_Guns.MagCentre(gun));
+		End(mo);
+	}
+
+	void End(PlayerPawn mo)
+	{
+		if (phase != RSR.IDLE)
+			SetPhase(mo, RSR.IDLE);
+		weap = null;
+		wellShown = handShown = false;
+		d = dPrev = pull = pullPrev = 0;
+		netGrip = false;
+	}
+
+	// after the psprites have ticked (RSR_Handler.WorldTick): what the gun and the layers show
+	void Draw(PlayerPawn mo)
+	{
+		let p = mo.player;
+		let w = p.ReadyWeapon;
+		int i = RSR_Guns.Index(w);
+		let psp = p.FindPSprite(PSP_WEAPON);
+		bool active = phase != RSR.IDLE && w && w == weap;
+		if (psp && i > 0)
+		{
+			Name gs = RSR_Guns.SprGun(i);
+			if (active && psp.CurState == w.FindState("RSR_Wait"))
+			{
+				if (phase >= RSR.DROP && phase <= RSR.INSERT)
+				{
+					psp.Sprite = Actor.GetSpriteIndex(gs);		// the gun without its magazine
+					psp.Frame = 0;
+				}
+				else if (phase == RSR.PULL || phase == RSR.RELEASED)
+				{
+					if (RSR_Guns.HandleLayers(i))
+					{
+						psp.Sprite = Actor.GetSpriteIndex(gs);	// without the handle: it is on its own layers
+						psp.Frame = 1;
+					}
+					else
+					{
+						int f = RSR_Guns.HandleFrame(i, pull);	// the gun's own frames with the bolt back
+						if (f > 0)
+						{
+							psp.Sprite = Actor.GetSpriteIndex(gs);
+							psp.Frame = f;
+						}
+						else
+							ShowReady(psp, i);
+					}
+				}
+				else
+					ShowReady(psp, i);
+			}
+			else if (!active && RSR_Guns.NoMag(i) != "")
+			{
+				// no magazine in the gun (left mid-reload, or the set's own unload): its
+				// ready frame shows the well empty
+				class<Inventory> nm = RSR_Guns.NoMag(i);
+				if (nm && mo.CountInv(nm) > 0 && RSR.IsReadyFrame(psp, i))
+				{
+					psp.Sprite = Actor.GetSpriteIndex(gs);
+					psp.Frame = 0;
+				}
+			}
+		}
+
+		let parts = RSR_GunParts(mo.FindInventory('RSR_GunParts'));
+		if (!parts && active)
+		{
+			mo.GiveInventory('RSR_GunParts', 1);
+			parts = RSR_GunParts(mo.FindInventory('RSR_GunParts'));
+		}
+		int gi = active ? gun : 0;
+		Name sp = gi > 0 ? RSR_Guns.SprPart(gi) : 'TNT1';
+		bool handle = active && (phase == RSR.PULL || phase == RSR.RELEASED) && RSR_Guns.HandleLayers(gi);
+		RSR.SetPart(p, RSR.WELLMAG, parts, active && wellShown, sp, 0);
+		RSR.SetPart(p, RSR.HANDLE, parts, handle, sp, 1);
+		RSR.SetPart(p, RSR.BOLT, parts, handle && RSR_Guns.BoltRatio(gi) > 0, sp, 2);
+		Actor hands = p.OffhandWeapon;
+		RSR.SetPart(p, RSR.HANDMAG, hands is 'RSQ_Hands' ? hands : null, active && handShown, sp, 0);
+	}
+
+	void ShowReady(PSprite psp, int i)
+	{
+		SpriteID spr;
+		int fr;
+		Array<String> list;
+		RSR_Guns.ReadySprites(i).Split(list, " ", TOK_SKIPEMPTY);
+		if (list.Size() < 2)
+			return;
+		psp.Sprite = Actor.GetSpriteIndex(list[0]);
+		psp.Frame = list[1].ByteAt(0) - 65;
+	}
+}
+
+// what the weapon gives itself to talk to the reload; never kept
+class RSR_Call : Inventory
+{
+	override bool TryPickup(in out Actor toucher)
+	{
+		let mo = PlayerPawn(toucher);
+		if (mo && mo.player)
+			Called(mo, RSR_Handler.StateOf(mo));
+		return false;
+	}
+
+	virtual void Called(PlayerPawn mo, RSR_State s) {}
+}
+
+class RSR_Start : RSR_Call
+{
+	override void Called(PlayerPawn mo, RSR_State s)
+	{
+		let w = mo.player.ReadyWeapon;
+		int i = RSR_Guns.Index(w);
+		if (!s || i <= 0 || !RSR_Handler.Wanted(mo))
+			return;			// the set's own reload
+		s.Begin(mo, w, i);
+		mo.GiveInventory('RSR_Go', 1);
+	}
+}
+
+class RSR_MagOut : RSR_Call
+{
+	override void Called(PlayerPawn mo, RSR_State s)
+	{
+		if (s && s.phase != RSR.IDLE)
+			s.MagOut(mo);
+	}
+}
+
+class RSR_Tick : RSR_Call
+{
+	override void Called(PlayerPawn mo, RSR_State s)
+	{
+		if (!s)
+			return;
+		if (s.phase == RSR.IDLE)
+		{
+			// the gun is in its wait states without a reload (a saved game, ...): end it
+			mo.GiveInventory('RSR_Done', 1);
+			return;
+		}
+		s.Tick(mo);
+	}
+}
+
+class RSR_Filled : RSR_Call
+{
+	override void Called(PlayerPawn mo, RSR_State s)
+	{
+		if (s && s.phase != RSR.IDLE)
+			s.Filled(mo);
+	}
+}
+
+// what the reload tells the weapon (the weapon takes them)
+class RSR_Go : RSVR_Token {}
+class RSR_Seated : RSVR_Token {}
+class RSR_Done : RSVR_Token {}
+// the weapon file's "the handle is still to be pulled" for a set that has no item of its
+// own for it (BD22 pistol, SMG); kept when the gun is put away, so the next reload goes
+// straight to the handle
+class RSR_Charge : RSVR_Token {}
+
+// owns the reload's layers on the main controller (the way RSQ_GunSide owns the hands)
+class RSR_GunParts : Inventory
+{
+	Default
+	{
+		Inventory.MaxAmount 1;
+		+INVENTORY.UNDROPPABLE
+		+INVENTORY.UNTOSSABLE
+		+INVENTORY.QUIET
+	}
+
+}
+
+// the state every reload layer shows (its sprite and frame set per gun). A weapon's state,
+// so a layer whose caller is the off-hand weapon may show it (p_pspr.cpp SetState refuses
+// non-weapon states there); never given.
+class RSR_PartStates : Weapon
+{
+	Default
+	{
+		+WEAPON.CHEATNOTWEAPON
+		+WEAPON.NO_AUTO_SWITCH
+		+WEAPON.NOAUTOSWITCHTO
+		+INVENTORY.UNDROPPABLE
+		Weapon.SelectionOrder 32001;
+	}
+
+	States
+	{
+	Part:
+		TNT1 A -1;		// sprite and frame set per gun (rsr_guns.zs RSR_GunSprites has every name)
+		Stop;
+	}
+}
+
+// the gun's own magazine, dropped: the same mesh and surface, at world scale (MODELDEF.rsr)
+class RSR_DroppedMag : Actor
+{
+	Default
+	{
+		Radius 2;
+		Height 2;
+		Speed 0;
+		Mass 1;
+		Projectile;
+		-NOGRAVITY
+		Gravity 0.8;
+		BounceType "Doom";
+		BounceFactor 0.3;
+		WallBounceFactor 0.3;
+		-CANBOUNCEWATER
+		+MOVEWITHSECTOR
+		+THRUACTORS
+		+NOTELEPORT
+		+NOBLOCKMONST
+		+DONTSPLASH
+		DeathSound "";
+	}
+
+	States
+	{
+	Spawn:
+		"####" "#" 1;
+		Loop;
+	Death:
+		"####" "#" 0 { pitch = 0; roll = 90; }
+		"####" "#" 350;
+		"####" "#" 1 A_FadeOut(0.05);
+		Wait;
+	}
+}
+
+class RSR_Handler : EventHandler
+{
+	RSR_State st[MAXPLAYERS];
+	ui Array<int> gripKeys;
+	ui String gripKeysFrom;
+	ui bool eaten[512];
+
+	clearscope static RSR_Handler Get()
+	{
+		return RSR_Handler(EventHandler.Find('RSR_Handler'));
+	}
+
+	static RSR_State StateOf(PlayerPawn mo)
+	{
+		let h = Get();
+		if (!h || !mo || !mo.player)
+			return null;
+		int n = mo.PlayerNumber();
+		if (n < 0 || n >= MAXPLAYERS)
+			return null;
+		if (!h.st[n])
+			h.st[n] = new('RSR_State');
+		return h.st[n];
+	}
+
+	// Real reload is on, in VR, with the hands' off-hand weapon there to hold a magazine
+	static bool Wanted(PlayerPawn mo)
+	{
+		if (!mo || !mo.player || RSR.PlayerInt(mo.player, 'rsq_reload', 0) != 1 || !RSVR_VRHand.InVR(mo))
+			return false;
+		return mo.player.OffhandWeapon is 'RSQ_Hands';
+	}
+
+	// rsq/hands.zs Upkeep: the off-hand weapon is wanted for Real reload even with the hands off
+	static bool WantsHands(PlayerPawn mo)
+	{
+		return mo && mo.player && RSR.PlayerInt(mo.player, 'rsq_reload', 0) == 1 && RSVR_VRHand.InVR(mo);
+	}
+
+	// rsq/hands.zs: the free hand's state while a reload has it ("" = not busy)
+	clearscope static String FreeHand(Actor mo)
+	{
+		let h = Get();
+		if (!h || !mo || !mo.player)
+			return "";
+		int n = mo.PlayerNumber();
+		let s = n >= 0 && n < MAXPLAYERS ? h.st[n] : null;
+		if (!s || s.phase == RSR.IDLE)
+			return "";
+		switch (s.phase)
+		{
+		case RSR.CARRY:
+		case RSR.INSERT:
+			return "RsrHold";		// Ermac's hold, round the magazine (layer 2201 is the magazine)
+		case RSR.PULL:
+		case RSR.RELEASED:
+			return "AmmoH";			// a closed hand round the handle
+		}
+		return "FreeHand";
+	}
+
+	// rsq/hands.zs RSQ_Hands.ModifyBobLayer3D: where the reload's layers go (ui, per frame)
+	clearscope static Vector3, Vector3 Place(Actor owner, Vector3 t, Vector3 r, int layer, double ticfrac)
+	{
+		let h = Get();
+		if (!h || !owner || !owner.player)
+			return t, r;
+		int n = owner.PlayerNumber();
+		let s = n >= 0 && n < MAXPLAYERS ? h.st[n] : null;
+		if (!s)
+			return t, r;
+		int i = s.gun;
+		switch (layer)
+		{
+		case RSR.WELLMAG:
+			return t + RSR_Guns.WellHook(i) * (s.dPrev + (s.d - s.dPrev) * ticfrac), r;
+		case RSR.HANDLE:
+			return t + RSR_Guns.HandleHook(i) * (s.pullPrev + (s.pull - s.pullPrev) * ticfrac), r;
+		case RSR.BOLT:
+			return t + RSR_Guns.HandleHook(i) * (RSR_Guns.BoltRatio(i) * (s.pullPrev + (s.pull - s.pullPrev) * ticfrac)), r;
+		case RSR.HANDMAG:
+			return t + RSR_Guns.HandHook(i) + DeskShift(owner, s, RSR_Guns.Scale(i)), r;
+		case RSR.FREEHAND:
+			return t + DeskShift(owner, s, (-1, 1, 1)), r;
+		}
+		return t, r;
+	}
+
+	// TEST ONLY (rsr_test_offdraw): on a desktop both hands are drawn at the view, so move
+	// the off hand's layers by where the (scripted) off hand is relative to the gun hand
+	clearscope static Vector3 DeskShift(Actor owner, RSR_State s, Vector3 scale)
+	{
+		let cv = CVar.FindCVar('rsr_test_offdraw');
+		if (!cv || !cv.GetBool())
+			return (0, 0, 0);
+		Vector3 c = s.offLocal;		// F L U cm
+		return (-c.y / scale.x, c.z / scale.z, -c.x / scale.y);
+	}
+
+	override void WorldTick()
+	{
+		int now = Level.maptime;
+		for (int n = 0; n < MAXPLAYERS; n++)
+		{
+			if (!playeringame[n] || !players[n].mo)
+				continue;
+			let mo = players[n].mo;
+			if (!st[n])
+				st[n] = new('RSR_State');
+			let s = st[n];
+			if (s.phase != RSR.IDLE)
+			{
+				bool gone = mo.health <= 0 || mo.player.ReadyWeapon != s.weap || now - s.lastTick > 2;
+				if (s.phase == RSR.DONE && now - s.lastTick > 0)
+					s.End(mo);
+				else if (gone)
+				{
+					if (RSR.Debug(mo.player))
+						Console.Printf("rsr t%d: the gun left the reload (%s)", now, RSR.PhaseName(s.phase));
+					s.Abort(mo);
+				}
+			}
+			MagRelease(mo, s);
+			s.Draw(mo);
+		}
+	}
+
+	// the mag-release buttons (rsr_magrelease) start the set's own reload, which the real
+	// reload then takes
+	void MagRelease(PlayerPawn mo, RSR_State s)
+	{
+		let p = mo.player;
+		int mask = RSR.PlayerInt(p, 'rsr_magrelease', BT_OFFHANDRELOAD);
+		bool down = (RSVR_VRHand.Buttons(mo) & mask) != 0;
+		bool edge = down && !s.relPrev;
+		s.relPrev = down;
+		if (!edge || s.phase != RSR.IDLE || !Wanted(mo))
+			return;
+		let w = p.ReadyWeapon;
+		int i = RSR_Guns.Index(w);
+		if (i <= 0)
+			return;
+		String tok = RSR_Guns.ReloadToken(i);
+		class<Inventory> tc = tok;
+		if (tc)
+			mo.GiveInventory(tc, 1);		// BD22: its ACS turns reload into this token
+		else if (p.WeaponState & WF_WEAPONRELOADOK)
+		{
+			let rs = w.FindState("Reload");
+			if (rs)
+				p.SetPsprite(PSP_WEAPON, rs);
+		}
+	}
+
+	override void NetworkProcess(ConsoleEvent e)
+	{
+		if (e.Name != "rsr_grip")
+			return;
+		int n = e.Player;
+		if (n < 0 || n >= MAXPLAYERS || !playeringame[n])
+			return;
+		if (!st[n])
+			st[n] = new('RSR_State');
+		bool down = e.Args[0] != 0;
+		let s = st[n];
+		let mo = players[n].mo;
+		if (down && !s.netGrip)
+		{
+			// the press grabs only where it cannot start the engine's steadying
+			s.gripFree = mo && RSR.GripCanGrab(mo) && !RSVR_VRHand.Steadied(mo);
+			if (s.gripFree)
+				s.netPresses++;
+		}
+		if (!down)
+			s.gripFree = false;
+		s.netGrip = down;
+		if (mo && RSR.Debug(players[n]))
+			Console.Printf("rsr t%d grip %s (key %d)%s", Level.maptime, down ? "down" : "up", e.Args[1],
+				!down ? "" : s.gripFree ? String.Format(", grabs (%.0f cm apart)", RSVR_VRHand.SteadyGap(mo))
+				: RSVR_VRHand.Steadied(mo) ? ", the gun is steadied: not a grab"
+				: String.Format(", within %.0f cm: the engine's steadying, not a grab", RSR.STEADY_RANGE));
+	}
+
+	// raw key events: the off-hand grip's key codes (rsr_grip_keys) become a synchronised
+	// rsr_grip event. rsr_debug prints every key code, so the headset's codes can be read.
+	override bool InputProcess(InputEvent e)
+	{
+		if (e.Type != InputEvent.Type_KeyDown && e.Type != InputEvent.Type_KeyUp)
+			return false;
+		bool down = e.Type == InputEvent.Type_KeyDown;
+		int k = e.KeyScan;
+		let me = players[consoleplayer];
+		if (RSR.Debug(me))
+			Console.Printf("rsr key %s %d (%s)", down ? "down" : "up", k, e.KeyString);
+		if (!IsGripKey(me, k))
+			return false;
+		EventHandler.SendNetworkEvent("rsr_grip", down ? 1 : 0, k);
+		if (k < 0 || k >= 512)
+			return false;
+		if (down)
+		{
+			let s = consoleplayer < MAXPLAYERS ? st[consoleplayer] : null;
+			// RSB_Handler (RSR-BREAK, the double barrels) is not in this pack:
+			// the Aliens set has no break-action gun, so rsr_break.zs and
+			// rsb_guns.zs are not shipped and the term is dropped. Leaving the
+			// call in is a hard "Unknown identifier" error, not a no-op.
+			bool busy = s && s.phase != RSR.IDLE || RSP_Handler.Busy(consoleplayer);	// RSR-PUMP's reload has the hand too
+			eaten[k] = busy && RSR.PlayerInt(me, 'rsr_eat_grip', 1) != 0;
+			return eaten[k];
+		}
+		bool was = eaten[k];
+		eaten[k] = false;
+		return was;		// only an up whose down was eaten
+	}
+
+	ui bool IsGripKey(PlayerInfo me, int k)
+	{
+		let cv = CVar.GetCVar('rsr_grip_keys', me);
+		String keys = cv ? cv.GetString() : "443 436";
+		if (keys != gripKeysFrom)
+		{
+			gripKeysFrom = keys;
+			gripKeys.Clear();
+			Array<String> w;
+			keys.Split(w, " ", TOK_SKIPEMPTY);
+			for (int j = 0; j < w.Size(); j++)
+				gripKeys.Push(w[j].ToInt());
+		}
+		return gripKeys.Find(k) != gripKeys.Size();
+	}
+}
+
+// RS options menu: the Reloading item (MENUDEF "RSRReload"). A plain option: it never
+// touches vr_two_handed_weapons (stock steadying stays as the player set it).
+class OptionMenuItemRSRReload : OptionMenuItemOption
+{
+}

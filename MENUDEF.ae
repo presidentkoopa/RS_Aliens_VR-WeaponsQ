@@ -1,0 +1,110 @@
+AddOptionMenu "OptionsMenu"
+{
+	StaticText " "
+	Submenu "Aliens VR Weapons", "AE_Options"
+}
+
+OptionValue "AE_ReloadMode"
+{
+	0, "Stock"
+	1, "VR"
+}
+
+OptionValue "AE_StartDual"
+{
+	0, "Normal"
+	1, "Start with dual pistols"
+}
+
+OptionValue "AE_Ballistics"
+{
+	0, "Stock"
+	1, "Enhanced"
+}
+
+OptionValue "AE_GrabWith"
+{
+	67108864, "Off hand trigger"
+	4,        "Use key"
+	67108868, "Either"
+}
+
+OptionMenu "AE_Options"
+{
+	Title "ALIENS VR WEAPONS"
+	StaticText " "
+	Option "VR Hands",                    "ae_hands",          "OnOff"
+	StaticText ""
+	StaticText "Gun hand rest offset (cm, bake when happy)", 1
+	Slider "Pistol hand forward",          "ae_pistolhand_fwd",  -10.0, 10.0, 0.25, 2
+	Slider "Pistol hand up",               "ae_pistolhand_up",   -10.0, 10.0, 0.25, 2
+	Slider "Pistol hand side (left +)",    "ae_pistolhand_side", -10.0, 10.0, 0.25, 2
+	Slider "Long gun hand forward",        "ae_gunhand_fwd",     -10.0, 10.0, 0.25, 2
+	Slider "Long gun hand up",             "ae_gunhand_up",      -10.0, 10.0, 0.25, 2
+	Slider "Long gun hand side (left +)",  "ae_gunhand_side",    -10.0, 10.0, 0.25, 2
+	Slider "Support hand forward",         "ae_support_fwd",     -10.0, 10.0, 0.25, 2
+	Slider "Support hand up",              "ae_support_up",      -10.0, 10.0, 0.25, 2
+	Slider "Support hand side (left +)",   "ae_support_side",    -10.0, 10.0, 0.25, 2
+	Slider "Satchel hand yaw",             "ae_satchel_yaw",     -180.0, 180.0, 5.0, 0
+	Slider "Satchel hand pitch",           "ae_satchel_pitch",   -180.0, 180.0, 5.0, 0
+	Slider "Satchel hand roll",            "ae_satchel_roll",    -180.0, 180.0, 5.0, 0
+	Slider "Shell in hand yaw",            "ae_shell_yaw",       -90.0, 90.0, 5.0, 0
+	Slider "Shell in hand pitch",          "ae_shell_pitch",     -90.0, 90.0, 5.0, 0
+	Slider "Shell in hand roll",           "ae_shell_roll",      -90.0, 90.0, 5.0, 0
+	StaticText ""
+	Option "Left handed",                 "ae_lefthanded",     "OnOff"
+	Option "Reloading",                   "rsq_reload",        "AE_ReloadMode"
+	Option "Grab ammo with",              "rsr_grab_buttons",  "AE_GrabWith"
+	Slider "Reload assist",               "rsr_assist",        0.5, 3.0, 0.25, 2
+	Option "Show reload capture zones",   "rsr_assist_debug",  "OnOff"
+	Option "Flick down to reload",        "ae_flick_reload",   "OnOff"
+	Option "Shotgun slug alt fire",       "ae_shotgun_slug",   "OnOff"
+	Option "Hand fire selector",          "ae_handswitch",     "OnOff"
+	Option "Melee by motion (knife, fist)", "ae_stab",          "OnOff"
+	Slider "Melee swing speed (m/s)",      "ae_stab_speed",     1.0, 5.0, 0.25, 2
+	Slider "Melee reach (cm)",             "ae_stab_reach",     30.0, 120.0, 5.0, 0
+	Slider "Launcher pump: rounds per grenade", "ae_glpump_cost", 1, 40, 1, 0
+	Slider "Launcher pump: grab radius (cm)",   "ae_glpump_grab", 6.0, 30.0, 1.0, 0
+	Option "Body holsters",               "ae_holsters",       "OnOff"
+	Option "Ballistics",                  "rsq_ballistics",    "AE_Ballistics"
+	StaticText " "
+	Submenu "Dual Options",               "AE_DualOptions"
+	Submenu "Smartgun Options",           "AE_SmartOptions"
+	StaticText " "
+	StaticText "No voxel options: this set ships no voxels.", "DarkGrey"
+}
+
+OptionMenu "AE_SmartOptions"
+{
+	Title "M56 SMARTGUN"
+	StaticText " "
+	Option "Target lock on",              "ae_smartlock",      "OnOff"
+	StaticText "The set shipped this bypassed by an unconditional", "DarkGrey"
+	StaticText "jump, so the gun never looked for a target.", "DarkGrey"
+	StaticText " "
+	Option "Harness gimbal",              "ae_gimbal",         "OnOff"
+	StaticText "The gun swings to follow a target; your hands stay put.", "DarkGrey"
+	Option "Gimbal leans the wrong way",  "ae_gimbal_flip",    "OnOff"
+	StaticText " "
+	StaticText "Rounds already track: the set's own SmartgunTracer is", "DarkGrey"
+	StaticText "a seeker missile. The gimbal just makes it seek what", "DarkGrey"
+	StaticText "the gun is aimed at rather than a target of its own.", "DarkGrey"
+}
+
+OptionMenu "AE_DualOptions"
+{
+	Title "DUAL WIELD"
+	StaticText " "
+	Option "Dual pistols",                "ae_dual_pistol",    "OnOff"
+	Option "Dual shotguns",               "ae_dual_shotgun",   "OnOff"
+	Option "Dual pulse rifles",           "ae_dual_rifle",     "OnOff"
+	Option "Dual flamethrowers",          "ae_dual_flamer",    "OnOff"
+	StaticText " "
+	Option "Pistol start",                "ae_start_dual",     "AE_StartDual"
+	StaticText " "
+	StaticText "Each hand keeps its own magazine; the reserve is shared.", "DarkGrey"
+	StaticText "You get the second gun by picking one up, or from the", "DarkGrey"
+	StaticText "start above. The Dual key swaps the off hand back to a", "DarkGrey"
+	StaticText "free hand, which is how you do a hands-on VR reload.", "DarkGrey"
+	StaticText "With two guns out, flick down to reload that hand.", "DarkGrey"
+}

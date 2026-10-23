@@ -1,0 +1,24 @@
+version "4.10"
+#include "zscript/rsvr/common.zs"
+#include "zscript/rsvr/vrhand.zs"
+#include "zscript/rsq/handtable.zs"
+#include "zscript/rsq/gunmoves.zs"
+#include "zscript/rsq/hands.zs"
+#include "zscript/rsq/counter.zs"	// 2026-10-22 pulse rifle ammo counter
+#include "zscript/rsq/melee.zs"	// 2026-10-22 VR melee by motion (knife stab, free fist)
+#include "zscript/rsq/pumpgl.zs"	// 2026-10-22 pulse rifle: pump to load the launcher
+#include "zscript/rsq/switch.zs"
+#include "zscript/rsq/smartgun.zs"
+#include "zscript/rsq/holstertable.zs"
+#include "zscript/rsq/holster.zs"
+#include "zscript/rsq/flick.zs"
+#include "zscript/rsq/dualtable.zs"
+#include "zscript/rsq/dual.zs"
+#include "zscript/rsq/ballistics.zs"
+// RS real VR reload (zscript/rsr, kit/team/reload_merged)
+#include "zscript/rsr/rsr_assist.zs"
+#include "zscript/rsr/vreload.zs"
+#include "zscript/rsr/rsr_guns.zs"
+// hand-loaded shells for the M37A2
+#include "zscript/rsr/rsr_pump.zs"
+#include "zscript/rsr/rsr_pump_guns.zs"

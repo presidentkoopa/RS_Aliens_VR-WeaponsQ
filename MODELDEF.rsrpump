@@ -1,0 +1,172 @@
+// RSR-PUMP (zscript/rsr/rsr_pump.zs, tools/gen_pump.py): AE/NewShotgun_3D. The gun's own model and
+// frames; pieces shown or hidden by a clear skin (every surface has its own SurfaceSkin:
+// models_md3.cpp reads SurfaceSkin only when a block has no Skin).
+
+// the gun without its pump (they are on their own layers while the hand works it)
+Model NewShotgun_3D
+{
+	Path "models/weapons/shotgun"
+	Model 0 "m37a2.md3"
+	SurfaceSkin 0 0 "m37a2.png"
+	SurfaceSkin 0 1 "rsr_clear.png"
+	SurfaceSkin 0 2 "m37a2.png"
+	SurfaceSkin 0 3 "shotgun_shell.png"	// PATCHED BY HAND 2026-10-22: the shell surface has its own texture (its shader is shotgun_shell.png); m37a2.png here was the "fucked" texture
+	Scale -1.1000 1.1000 1.1000
+	Offset 0.0000 -30.0000 0.0
+	ZOffset -7.0000
+	FrameIndex RSHG A 0 0
+}
+
+// the pump alone (main controller)
+Model RSR_GunParts
+{
+	Path "models/weapons/shotgun"
+	Model 0 "m37a2.md3"
+	SurfaceSkin 0 0 "rsr_clear.png"
+	SurfaceSkin 0 1 "m37a2.png"
+	SurfaceSkin 0 2 "rsr_clear.png"
+	SurfaceSkin 0 3 "rsr_clear.png"
+	Scale -1.1000 1.1000 1.1000
+	Offset 0.0000 -30.0000 0.0
+	ZOffset -7.0000
+	FrameIndex RSHP A 0 0
+}
+
+// the shell alone, at the loading port
+Model RSR_GunParts
+{
+	Path "models/weapons/shotgun"
+	Model 0 "m37a2.md3"
+	SurfaceSkin 0 0 "rsr_clear.png"
+	SurfaceSkin 0 1 "rsr_clear.png"
+	SurfaceSkin 0 2 "rsr_clear.png"
+	SurfaceSkin 0 3 "shotgun_shell.png"	// PATCHED BY HAND 2026-10-22: the shell surface has its own texture (its shader is shotgun_shell.png); m37a2.png here was the "fucked" texture
+	Scale -1.1000 1.1000 1.1000
+	Offset 0.0000 -30.0000 0.0
+	ZOffset -7.0000
+	FrameIndex RSHP C 0 23
+}
+
+// the shell alone, in the off hand (off controller)
+Model RSQ_Hands
+{
+	Path "models/weapons/shotgun"
+	Model 0 "m37a2.md3"
+	SurfaceSkin 0 0 "rsr_clear.png"
+	SurfaceSkin 0 1 "rsr_clear.png"
+	SurfaceSkin 0 2 "rsr_clear.png"
+	SurfaceSkin 0 3 "shotgun_shell.png"	// PATCHED BY HAND 2026-10-22: the shell surface has its own texture (its shader is shotgun_shell.png); m37a2.png here was the "fucked" texture
+	Scale -1.1000 1.1000 1.1000
+	Offset 0.0000 -30.0000 0.0
+	ZOffset -7.0000
+	FrameIndex RSHP C 0 23
+}
+
+// a dropped shell (world)
+Model RSP_DroppedShell
+{
+	Path "models/weapons/shotgun"
+	Model 0 "m37a2.md3"
+	SurfaceSkin 0 0 "rsr_clear.png"
+	SurfaceSkin 0 1 "rsr_clear.png"
+	SurfaceSkin 0 2 "rsr_clear.png"
+	SurfaceSkin 0 3 "shotgun_shell.png"	// PATCHED BY HAND 2026-10-22: the shell surface has its own texture (its shader is shotgun_shell.png); m37a2.png here was the "fucked" texture
+	Scale 0.3815 0.3815 0.3815
+	Offset -5.0441 -2.6374 0.0
+	ZOffset -2.2121
+	USEACTORPITCH
+	USEACTORROLL
+	FrameIndex RSHW A 0 23
+}
+// RSR-PUMP (zscript/rsr/rsr_pump.zs, tools/gen_pump.py): AE/YutaniShotgun_3D. The gun's own model and
+// frames; pieces shown or hidden by a clear skin (every surface has its own SurfaceSkin:
+// models_md3.cpp reads SurfaceSkin only when a block has no Skin).
+
+// the gun without its pump (they are on their own layers while the hand works it)
+Model YutaniShotgun_3D
+{
+	Path "models/weapons/shotgun"
+	Model 0 "m37a2.md3"
+	SurfaceSkin 0 0 "m37a2.png"
+	SurfaceSkin 0 1 "rsr_clear.png"
+	SurfaceSkin 0 2 "m37a2.png"
+	SurfaceSkin 0 3 "shotgun_shell.png"	// PATCHED BY HAND 2026-10-22: the shell surface has its own texture (its shader is shotgun_shell.png); m37a2.png here was the "fucked" texture
+	Scale -1.1000 1.1000 1.1000
+	Offset 0.0000 -30.0000 0.0
+	ZOffset -7.0000
+	FrameIndex RSJG A 0 0
+}
+
+// the pump alone (main controller)
+Model RSR_GunParts
+{
+	Path "models/weapons/shotgun"
+	Model 0 "m37a2.md3"
+	SurfaceSkin 0 0 "rsr_clear.png"
+	SurfaceSkin 0 1 "m37a2.png"
+	SurfaceSkin 0 2 "rsr_clear.png"
+	SurfaceSkin 0 3 "rsr_clear.png"
+	Scale -1.1000 1.1000 1.1000
+	Offset 0.0000 -30.0000 0.0
+	ZOffset -7.0000
+	FrameIndex RSJP A 0 0
+}
+
+// the shell alone, at the loading port
+Model RSR_GunParts
+{
+	Path "models/weapons/shotgun"
+	Model 0 "m37a2.md3"
+	SurfaceSkin 0 0 "rsr_clear.png"
+	SurfaceSkin 0 1 "rsr_clear.png"
+	SurfaceSkin 0 2 "rsr_clear.png"
+	SurfaceSkin 0 3 "shotgun_shell.png"	// PATCHED BY HAND 2026-10-22: the shell surface has its own texture (its shader is shotgun_shell.png); m37a2.png here was the "fucked" texture
+	Scale -1.1000 1.1000 1.1000
+	Offset 0.0000 -30.0000 0.0
+	ZOffset -7.0000
+	FrameIndex RSJP C 0 23
+}
+
+// the shell alone, in the off hand (off controller)
+Model RSQ_Hands
+{
+	Path "models/weapons/shotgun"
+	Model 0 "m37a2.md3"
+	SurfaceSkin 0 0 "rsr_clear.png"
+	SurfaceSkin 0 1 "rsr_clear.png"
+	SurfaceSkin 0 2 "rsr_clear.png"
+	SurfaceSkin 0 3 "shotgun_shell.png"	// PATCHED BY HAND 2026-10-22: the shell surface has its own texture (its shader is shotgun_shell.png); m37a2.png here was the "fucked" texture
+	Scale -1.1000 1.1000 1.1000
+	Offset 0.0000 -30.0000 0.0
+	ZOffset -7.0000
+	FrameIndex RSJP C 0 23
+}
+
+// a dropped shell (world)
+Model RSP_DroppedShell
+{
+	Path "models/weapons/shotgun"
+	Model 0 "m37a2.md3"
+	SurfaceSkin 0 0 "rsr_clear.png"
+	SurfaceSkin 0 1 "rsr_clear.png"
+	SurfaceSkin 0 2 "rsr_clear.png"
+	SurfaceSkin 0 3 "shotgun_shell.png"	// PATCHED BY HAND 2026-10-22: the shell surface has its own texture (its shader is shotgun_shell.png); m37a2.png here was the "fucked" texture
+	Scale 0.3815 0.3815 0.3815
+	Offset -5.0441 -2.6374 0.0
+	ZOffset -2.2121
+	USEACTORPITCH
+	USEACTORROLL
+	FrameIndex RSJW A 0 23
+}
+
+// RSR-PUMP: Ermac's one-shell hold (ammo_hand frame 1) without his shell: the gun's own shell is
+// drawn in it on layer 2210 (rsr/rsr_pump.zs). ammo_hand.md3 is already in the packs (models/rsq).
+Model RSQ_Hands
+{
+	Path "models/rsq"
+	Model 0 "ammo_hand.md3"
+	Skin 0 "hand.png"
+	Scale -1.0 1.0 1.0
+	Offset 0.0 -24.0 -10.0
+	FrameIndex RQUN A 0 1
+}

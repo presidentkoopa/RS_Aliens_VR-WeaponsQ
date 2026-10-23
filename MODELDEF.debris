@@ -1,0 +1,124 @@
+// Enhanced-ballistics debris (zscript/rsq/ballistics.zs). Twelve pieces --
+// chips, chunks and clods -- in three skins, picked by what the surface is
+// made of (SURFACES.ae). Taken with the module from rs_brutal22weaponsq;
+// they are generic geometry, nothing about them is BD22's.
+
+Model RSQ_Debris
+{
+	Path "models/rsq/debris"
+	Model 0 "chip1.md3"
+	Skin 0 "debris_grey.png"
+	Scale 1.6 1.6 1.6
+	USEACTORPITCH
+	FrameIndex QDBR A 0 0
+}
+
+Model RSQ_Debris
+{
+	Path "models/rsq/debris"
+	Model 0 "chip2.md3"
+	Skin 0 "debris_grey.png"
+	Scale 1.6 1.6 1.6
+	USEACTORPITCH
+	FrameIndex QDBR B 0 0
+}
+
+Model RSQ_Debris
+{
+	Path "models/rsq/debris"
+	Model 0 "chip3.md3"
+	Skin 0 "debris_grey.png"
+	Scale 1.6 1.6 1.6
+	USEACTORPITCH
+	FrameIndex QDBR C 0 0
+}
+
+Model RSQ_Debris
+{
+	Path "models/rsq/debris"
+	Model 0 "chip4.md3"
+	Skin 0 "debris_grey.png"
+	Scale 1.6 1.6 1.6
+	USEACTORPITCH
+	FrameIndex QDBR D 0 0
+}
+
+Model RSQ_Debris
+{
+	Path "models/rsq/debris"
+	Model 0 "chunk1.md3"
+	Skin 0 "debris_brick.png"
+	Scale 1.6 1.6 1.6
+	USEACTORPITCH
+	FrameIndex QDBR E 0 0
+}
+
+Model RSQ_Debris
+{
+	Path "models/rsq/debris"
+	Model 0 "chunk2.md3"
+	Skin 0 "debris_brick.png"
+	Scale 1.6 1.6 1.6
+	USEACTORPITCH
+	FrameIndex QDBR F 0 0
+}
+
+Model RSQ_Debris
+{
+	Path "models/rsq/debris"
+	Model 0 "chunk3.md3"
+	Skin 0 "debris_brick.png"
+	Scale 1.6 1.6 1.6
+	USEACTORPITCH
+	FrameIndex QDBR G 0 0
+}
+
+Model RSQ_Debris
+{
+	Path "models/rsq/debris"
+	Model 0 "chunk4.md3"
+	Skin 0 "debris_brick.png"
+	Scale 1.6 1.6 1.6
+	USEACTORPITCH
+	FrameIndex QDBR H 0 0
+}
+
+Model RSQ_Debris
+{
+	Path "models/rsq/debris"
+	Model 0 "clod1.md3"
+	Skin 0 "debris_dirt.png"
+	Scale 1.6 1.6 1.6
+	USEACTORPITCH
+	FrameIndex QDBR I 0 0
+}
+
+Model RSQ_Debris
+{
+	Path "models/rsq/debris"
+	Model 0 "clod2.md3"
+	Skin 0 "debris_dirt.png"
+	Scale 1.6 1.6 1.6
+	USEACTORPITCH
+	FrameIndex QDBR J 0 0
+}
+
+Model RSQ_Debris
+{
+	Path "models/rsq/debris"
+	Model 0 "clod3.md3"
+	Skin 0 "debris_dirt.png"
+	Scale 1.6 1.6 1.6
+	USEACTORPITCH
+	FrameIndex QDBR K 0 0
+}
+
+Model RSQ_Debris
+{
+	Path "models/rsq/debris"
+	Model 0 "clod4.md3"
+	Skin 0 "debris_dirt.png"
+	Scale 1.6 1.6 1.6
+	USEACTORPITCH
+	FrameIndex QDBR L 0 0
+}

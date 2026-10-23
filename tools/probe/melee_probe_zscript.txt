@@ -1,0 +1,12 @@
+version "4.10"
+class AEMeleeProbe : EventHandler
+{
+	override void WorldTick()
+	{
+		if (level.maptime % 5 != 0) return;
+		let it = ThinkerIterator.Create('Actor');
+		Actor z;
+		while (z = Actor(it.Next())) if (z.bISMONSTER && z.health > 0)
+			Console.Printf("PROBE zombie t%d health=%d rel=(%.0f %.0f %.0f)", level.maptime, z.health, z.pos.x - players[0].mo.pos.x, z.pos.y - players[0].mo.pos.y, z.pos.z - players[0].mo.pos.z);
+	}
+}

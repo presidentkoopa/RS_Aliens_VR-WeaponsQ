@@ -1,0 +1,90 @@
+user bool ae_hands = true;      // VR hands on the Aliens weapons
+
+// The M56's own lock-on. The set shipped it bypassed by an unconditional
+// A_Jump(256, "LockedOn"), which made its A_JumpIfTargetInLOS check dead code:
+// the gun always fired as though locked. 1 runs the check the labels were
+// written for; 0 is the shipped behaviour.
+server bool ae_smartlock = true;
+// The physical fire-mode selector: flick the switch on the receiver with the
+// off hand instead of pressing alt-fire. Only guns whose mesh HAS a selector
+// surface get one -- on this set, the two smartguns.
+server bool ae_handswitch = true;
+
+// The M56's harness gimbal: the gun swings to follow a locked target while
+// your hands stay where they are. The engine turns a psprite's x/y into a HUD
+// model's yaw/pitch, so tilting the weapon layer swings the gun and the hand
+// layers (which carry their own zero tilt) do not follow.
+server bool  ae_gimbal = true;
+// The engine mirrors the left controller, and the sign of the yaw term cannot
+// be confirmed without a headset. If the gun leans AWAY from targets, set this.
+server bool  ae_gimbal_flip = false;
+// REMOVED. This used to cap a hand-rolled steer applied to each round, written
+// on the assumption that SmartgunTracer was an ordinary projectile. It is not:
+// the base TC declares it +SEEKERMISSILE +SCREENSEEKER and runs
+// A_SeekerMissile(179, 180, SMF_LOOK|SMF_PRECISE, 256, 10) itself. Two things
+// steering one round fight each other, so the steer is gone and the gun's own
+// tracking does the work. Tune that in the TC, not here.
+
+// Body holsters: seven weapon slots, seven places on the body you reach for.
+server bool ae_holsters = false;	// PATCHED BY HAND 2026-10-22: off by default (owner)
+
+// Flick the gun hand sharply downward to reload. A velocity test, not a
+// position test: a flick is fast movement that then stops, so walking with
+// your arms down never triggers it.
+server bool ae_flick_reload = true;
+// Left-handed: the gun rides the OFF controller and the free hand the main
+// one. Which actor owns a layer decides which controller draws it, so this
+// swaps the owners and changes nothing about the fits.
+server bool ae_lefthanded = false;
+// What the shotgun's alt-fire toggle gives you: a burst (off) or a slug (on).
+// A slug is the gun's own seven rounds fired on one line instead of scattered
+// -- same projectile, same total damage, concentrated.
+server bool ae_shotgun_slug = false;
+
+// Dual wield: a real gun in the off hand (p.OffhandWeapon), per family.
+// While dual there is no free hand, so the hands-on magazine reload switches
+// itself off and each gun uses the set's own -- flick down to reload.
+// Both hands share one ammo pool.
+server bool ae_dual_pistol = false;
+server bool ae_dual_shotgun = false;
+server bool ae_dual_rifle = false;
+server bool ae_dual_flamer = false;
+
+// Start already holding two: 0 none, 1 dual pistols.
+server int ae_start_dual = 0;
+
+// Enhanced ballistics: surface-matched impact debris and projectile trails.
+// Server, not user: the effects draw playsim random numbers, so every machine
+// has to make the same choice. Off by default -- on is a change to how the
+// set looks, and that should be asked for.
+server bool rsq_ballistics = false;
+
+// 2026-10-22 rest-pose tuning for the gun hand, centimetres (Options > Aliens VR). Bake into
+// RSQ_HandTable.GunHook when settled: fwd subtracts from z, up adds to y, side adds to x.
+user float ae_pistolhand_fwd = 0.0;
+user float ae_pistolhand_up = 0.0;
+user float ae_pistolhand_side = 0.0;
+user float ae_gunhand_fwd = 0.0;
+user float ae_gunhand_up = 0.0;
+user float ae_gunhand_side = 0.0;
+
+// 2026-10-22 VR melee by motion (zscript/rsq/melee.zs)
+server bool ae_stab = true;			// a fast thrust with the knife, or a fast punch with the free fist, lands a blow
+server float ae_stab_speed = 2.0;	// m/s the hand has to move
+server float ae_stab_reach = 70.0;	// cm the blow reaches past the hand
+
+// 2026-10-22 more rest-pose tuning (owner): the support hand, the satchel hand's turn, the held shell
+user float ae_support_fwd = 0.0;
+user float ae_support_up = 0.0;
+user float ae_support_side = 0.0;
+user float ae_satchel_yaw = 0.0;
+user float ae_satchel_pitch = 0.0;
+user float ae_satchel_roll = 0.0;
+user float ae_shell_yaw = 0.0;
+user float ae_shell_pitch = 0.0;
+user float ae_shell_roll = 0.0;
+
+// 2026-10-22 pulse rifle: pump to load the launcher (zscript/rsq/pumpgl.zs)
+server int ae_glpump_cost = 20;		// rounds one grenade costs
+server float ae_glpump_grab = 14.0;	// cm: the off hand this close to the pump takes it (trigger)
+server float ae_glpump_travel = 6.0;	// cm the pump must come back

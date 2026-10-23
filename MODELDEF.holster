@@ -1,0 +1,78 @@
+// Body holsters for the Aliens set (zscript/rsq/holster.zs,
+// tool/hands/ae_holster_gen.py). Do not edit by hand.
+//
+// Each block shows the gun's OWN pickup model, which lives in the base
+// addon: MODELDEF resolves Path across every loaded archive, so these
+// reference the existing meshes instead of duplicating them.
+//
+// One block per holster because Scale and Path are per block and every
+// pickup has its own.
+//
+// 2026-10-22: these Scales are the pickup blocks' numbers, which the TC writes
+// against weapon actors scaled 0.15 (satchel 0.1). The ghost ACTORS now carry
+// that scale (zscript/rsq/holstertable.zs), which is what makes these blocks
+// come out pickup-sized instead of ten times too big. The knife block is the
+// HUD mesh at its HUD scale; its ghost carries the HUD->world factor 0.3468.
+
+Model AE_Holster_Pistol
+{
+	Path "models/weapons/pistol"
+	Model 0 "m4a3_pickup.md3"
+	Skin 0 "m4a3.png"
+	Scale 3.50 3.50 3.50
+	FrameIndex HLPI A 0 0
+}
+
+Model AE_Holster_Knife
+{
+	Path "models/weapons/knife"
+	Model 0 "knife.md3"
+	Skin 0 "knife.png"
+	Scale 0.65 0.65 0.65
+	FrameIndex HLKN A 0 0
+}
+
+Model AE_Holster_Rifle
+{
+	Path "models/weapons/rifle"
+	Model 0 "m41a_pickup.md3"
+	Skin 0 "m41a.png"
+	Scale 2.80 2.80 2.80
+	FrameIndex HLRI A 0 0
+}
+
+Model AE_Holster_Shotgun
+{
+	Path "models/weapons/shotgun"
+	Model 0 "m37a2_pickup.md3"
+	Skin 0 "m37a2.png"
+	Scale 2.80 2.80 2.80
+	FrameIndex HLSH A 0 0
+}
+
+Model AE_Holster_Flamer
+{
+	Path "models/weapons/flamer"
+	Model 0 "m260b_pickup.md3"
+	Skin 0 "m260b.png"
+	Scale 2.50 2.50 2.50
+	FrameIndex HLFL A 0 0
+}
+
+Model AE_Holster_Smart
+{
+	Path "models/weapons/smartgun"
+	Model 0 "m56_pickup.md3"
+	Skin 0 "m56.png"
+	Scale 1.80 1.80 1.80
+	FrameIndex HLSM A 0 0
+}
+
+Model AE_Holster_Satchel
+{
+	Path "models/weapons/grenade"
+	Model 0 "satchel_charge.md3"
+	Scale 6.00 6.00 6.00
+	FrameIndex HLSA A 0 0
+}
+

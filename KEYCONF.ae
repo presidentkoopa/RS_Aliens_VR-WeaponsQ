@@ -1,0 +1,11 @@
+// The Dual key: toggles the off hand between the dual copy and the free hand.
+// Toggling back to the free hand is how you do a hands-on VR reload of the
+// main gun while dual wielding, so it is bound rather than buried in a menu.
+AddKeySection "Aliens VR Weapons" AEVRWeapons
+AddMenuKey "Dual wield on/off" ae_dualkey
+alias ae_dualkey "netevent ae_dual"
+
+// 2026-10-22 (owner: "need a keybind for dual like BD22"): bound out of the box to the off
+// controller's X button (free in QuestZDoom's default layout: A use, Y jump, B free, X free).
+// Rebind under Customize Controls -> Aliens VR Weapons.
+defaultbind Pad_X ae_dualkey

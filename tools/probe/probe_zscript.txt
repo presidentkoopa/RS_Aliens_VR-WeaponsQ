@@ -1,0 +1,66 @@
+version "4.10"
+// TEST ONLY: AE probe. Logs weapons in each hand and every psprite layer (sprite/frame@caller) so what is
+// drawn can be read from the log the way the kit's rtest does.
+class AEProbe : EventHandler
+{
+	int lastSig;
+	static String SprName(int idx)
+	{
+		static const Name names[] = { 'TNT1', 'RQGS', 'RQGT', 'RQGU', 'RQSP', 'RQHN', 'RQUN', 'RSPM', 'RSPP', 'RSPW', 'RSLM', 'RSLP', 'RSSM', 'RSSG', 'RSFM', 'RSFP',
+			'RSMM', 'RSMP', 'RSYM', 'RSYP', 'RSNM', 'RSNP', 'RSRM', 'RSRP', 'RSVM', 'RSVP', 'RSEM', 'RSEP', 'RSHG', 'RSHP', 'RSJG', 'RSJP',
+			'MM91', 'PULS', 'PLSR', 'ATSG', 'ATSR', 'SMRT', 'SMRR', 'FLMT', 'YM91', 'YTSG', 'YLAM', 'ATKN', 'KNFE', 'YTKN', 'PSMF', 'PLMF', 'SGMF', 'SMHD' };
+		for (int i = 0; i < names.Size(); i++)
+			if (Actor.GetSpriteIndex(names[i]) == idx) return names[i];
+		return String.Format("spr%d", idx);
+	}
+	override void WorldTick()
+	{
+		if (!playeringame[0]) return;
+		let p = players[0]; let mo = p.mo; if (!mo) return;
+		let rs = RSR_Handler.StateOf(mo);
+		if (rs && rs.phase != RSR.IDLE && level.maptime % 5 == 0)
+		{
+			double dd, side, ang; [dd, side, ang] = rs.MagAtWell();
+			Vector3 pg = rs.OffPoint(RSR.PalmGrab()); Vector3 gb = RSR_Guns.Grab(rs.gun); Vector3 ol = rs.offLocal;
+			Console.Printf("PROBE rsr t%d phase=%d off=(%.1f %.1f %.1f) magtop depth=%.1f side=%.1f ang=%.0f  palm=(%.1f %.1f %.1f) grab=(%.1f %.1f %.1f) d=%.1f pull=%.1f",
+				level.maptime, rs.phase, ol.x, ol.y, ol.z, dd, side, ang, pg.x, pg.y, pg.z, gb.x, gb.y, gb.z, rs.d, rs.pull);
+		}
+		let hh = RSQ_Hands(mo.FindInventory('RSQ_Hands'));
+		let wp = p.FindPSprite(PSP_WEAPON);
+		if (hh && wp && level.maptime > 100 && level.maptime % 2 == 0)
+		{
+			int gi = RSQ_HandTable.Index(p.ReadyWeapon);
+			Vector3 ft, fm; [ft, fm] = RSQ_GunMoves.Frame(gi, wp.Sprite, wp.Frame);
+			Console.Printf("PROBE gm t%d gun=%d %s/%c tics=%d frame=(%.1f %.1f %.1f)(%.1f %.1f %.1f) cached=(%.1f %.1f %.1f)(%.1f %.1f %.1f) next=(%.1f %.1f %.1f)",
+				level.maptime, gi, SprName(wp.Sprite), 65 + wp.Frame, wp.Tics, ft.x, ft.y, ft.z, fm.x, fm.y, fm.z,
+				hh.gunTurn.x, hh.gunTurn.y, hh.gunTurn.z, hh.gunMove.x, hh.gunMove.y, hh.gunMove.z, hh.nextTurn.x, hh.nextTurn.y, hh.nextTurn.z);
+		}
+		if (level.maptime < 40 || level.maptime % 35 != 0) return;
+		String rw = "none", ow = "none", pw = "-";
+		if (p.ReadyWeapon) rw = p.ReadyWeapon.GetClassName();
+		if (p.OffhandWeapon) ow = p.OffhandWeapon.GetClassName();
+		if (p.PendingWeapon != WP_NOCHANGE) { pw = "null"; if (p.PendingWeapon) pw = p.PendingWeapon.GetClassName(); }
+		String s = String.Format("PROBE t%d ready=%s off=%s pend=%s hands=%d side=%d parts=%d cls=%s vr=%d ws=%x |",
+			level.maptime, rw, ow, pw,
+			mo.CountInv('RSQ_Hands'), mo.CountInv('RSQ_GunSide'), mo.CountInv('RSR_GunParts'), mo.GetClassName(),
+			RSVR_VRHand.InVR(mo), p.WeaponState);
+		for (let psp = p.psprites; psp; psp = psp.Next)
+		{
+			String cn = "none"; if (psp.Caller) cn = psp.Caller.GetClassName();
+			String aw = ""; if (psp.bAddWeapon) aw = " +W"; if (psp.bAddBob) aw = aw .. " +B";
+			s = s .. String.Format(" [%d %s/%c@%s x%.1f y%.1f%s]", psp.ID,
+				SprName(psp.Sprite), 65 + psp.Frame, cn, psp.x, psp.y, aw);
+		}
+		Console.Printf("%s", s);
+		let it = ThinkerIterator.Create('AE_HolsterGhost');
+		Actor g;
+		while (g = Actor(it.Next()))
+			Console.Printf("PROBE ghost %s rel=(%.1f %.1f %.1f) scale=%.2f/%.2f spr=%s/%c alpha=%.1f rs=%d", g.GetClassName(),
+				g.pos.x - mo.pos.x, g.pos.y - mo.pos.y, g.pos.z - (mo.pos.z + p.viewheight), g.Scale.X, g.Scale.Y, SprName(g.sprite), 65 + g.frame, g.alpha, g.GetRenderStyle());
+		if (level.maptime == 70)
+		{
+			for (let it = mo.Inv; it; it = it.Inv)
+				if (it is 'Weapon') Console.Printf("PROBE weapon in inv: %s slot=%d off=%d", it.GetClassName(), Weapon(it).SlotNumber, Weapon(it).bOFFHANDWEAPON);
+		}
+	}
+}

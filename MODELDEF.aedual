@@ -1,0 +1,1466 @@
+// 2026-10-22 DUAL WIELD: the off-hand copies (DECORATE.aedual AE_Off_* : <gun>_3D) drew as the
+// TC's 2D sprites because MODELDEF binds models to the EXACT class name and this engine does not
+// inherit a parent's blocks. Every block of each base gun, copied for its off-hand class
+// (generated from the pack's own modeldef files; regenerate if those change).
+
+// from MODELDEF.rsr
+Model AE_Off_M4A3Pistol
+{
+	Path "models/weapons/pistol"
+	Model 0 "m4a3.md3"
+	SurfaceSkin 0 0 "m4a3.png"
+	SurfaceSkin 0 1 "m4a3.png"
+	SurfaceSkin 0 2 "m4a3.png"
+	SurfaceSkin 0 3 "m4a3.png"
+	SurfaceSkin 0 4 "rsr_clear.png"
+	Scale -0.8200 0.8200 0.8200
+	Offset 0.0000 -29.0000 0.0
+	ZOffset -8.0000
+	FrameIndex RSPM A 0 0
+}
+
+// from MODELDEF.rsr
+Model AE_Off_M4A3Pistol
+{
+	Path "models/weapons/pistol"
+	Model 0 "m4a3.md3"
+	SurfaceSkin 0 0 "m4a3.png"
+	SurfaceSkin 0 1 "m4a3.png"
+	SurfaceSkin 0 2 "m4a3.png"
+	SurfaceSkin 0 3 "rsr_clear.png"
+	SurfaceSkin 0 4 "m4a3.png"
+	Scale -0.8200 0.8200 0.8200
+	Offset 0.0000 -29.0000 0.0
+	ZOffset -8.0000
+	FrameIndex RSPM B 0 0
+}
+
+// from modeldef.pistol.txt
+Model AE_Off_M4A3Pistol
+{
+	Path "Models\Weapons\pistol"
+	Model 0 "m4a3.md3"
+	Skin 0 "m4a3.png"
+
+	Scale -0.82 0.82 0.82
+	Offset 0.0 -29.0 -8.0
+
+	//Ready
+	FrameIndex MM91 A 0 0
+	
+	//Fire
+	FrameIndex MM91 B 0 1
+	FrameIndex MM91 C 0 2
+	FrameIndex MM91 D 0 3
+	FrameIndex MM91 E 0 4
+	FrameIndex MM91 F 0 5
+	
+	//Reload
+	FrameIndex MM91 G 0 6
+	FrameIndex MM91 H 0 7
+	
+	
+	//Insert new clip
+	FrameIndex MM91 M 0 11
+	FrameIndex MM91 N 0 12
+	FrameIndex MM91 O 0 13
+	FrameIndex MM91 P 0 14
+	FrameIndex MM91 Q 0 15
+	FrameIndex MM91 R 0 16
+	FrameIndex MM91 S 0 17
+	FrameIndex MM91 T 0 18
+	FrameIndex MM91 U 0 19
+}
+
+// from modeldef.pistol.txt
+Model AE_Off_M4A3Pistol
+{
+	Path "Models\Weapons\pistol"
+	Model 0 "m4a3.md3"
+	SurfaceSkin 0 0 "m4a3.png"
+	SurfaceSkin 0 1 "m4a3.png"
+	SurfaceSkin 0 2 "m4a3.png"
+	SurfaceSkin 0 3 "m4a3.png"
+	SurfaceSkin 0 4 "empty.png"
+
+	Scale -0.82 0.82 0.82
+	Offset 0.0 -29.0 -8.0
+	
+	NOINTERPOLATION
+
+	//Drop clip
+	FrameIndex MM91 I 0 8
+	FrameIndex MM91 J 0 9
+	FrameIndex MM91 K 0 10
+	FrameIndex MM91 L 0 10
+}
+
+// from modeldef.pistol.txt
+Model AE_Off_M4A3Pistol
+{
+	Path "Models\Weapons\pistol"
+	Model 0 "pistol_mf.md3"
+	Skin 0 "pistol_mf.png"
+
+	Scale -0.82 0.82 0.82
+	Offset 0.0 -29.0 -8.0
+
+	FrameIndex PSMF A 0 1
+	FrameIndex PSMF B 0 2
+}
+
+// from modeldef.pistol.txt
+Model AE_Off_M4A3Pistol
+{
+	Path "Models\Weapons\pistol"
+	Model 0 "m4a3_pickup.md3"
+	Skin 0 "m4a3.png"
+
+	Scale 3.5 3.5 3.5
+	Offset 0.0 0.0 5.0
+	
+	ROTATING
+	rotation-speed 0.2
+	
+	FrameIndex M4A3 P 0 0
+}
+
+// from MODELDEF.rsr
+Model AE_Off_MercPistol
+{
+	Path "models/weapons/pistol"
+	Model 0 "m4a3.md3"
+	SurfaceSkin 0 0 "m4a3.png"
+	SurfaceSkin 0 1 "m4a3.png"
+	SurfaceSkin 0 2 "m4a3.png"
+	SurfaceSkin 0 3 "m4a3.png"
+	SurfaceSkin 0 4 "rsr_clear.png"
+	Scale -0.8200 0.8200 0.8200
+	Offset 0.0000 -29.0000 0.0
+	ZOffset -8.0000
+	FrameIndex RSMM A 0 0
+}
+
+// from MODELDEF.rsr
+Model AE_Off_MercPistol
+{
+	Path "models/weapons/pistol"
+	Model 0 "m4a3.md3"
+	SurfaceSkin 0 0 "m4a3.png"
+	SurfaceSkin 0 1 "m4a3.png"
+	SurfaceSkin 0 2 "m4a3.png"
+	SurfaceSkin 0 3 "rsr_clear.png"
+	SurfaceSkin 0 4 "m4a3.png"
+	Scale -0.8200 0.8200 0.8200
+	Offset 0.0000 -29.0000 0.0
+	ZOffset -8.0000
+	FrameIndex RSMM B 0 0
+}
+
+// from modeldef.pistol.txt
+Model AE_Off_MercPistol
+{
+	Path "Models\Weapons\pistol"
+	Model 0 "m4a3.md3"
+	Skin 0 "m4a3.png"
+
+	Scale -0.82 0.82 0.82
+	Offset 0.0 -29.0 -8.0
+
+	//Ready
+	FrameIndex MM91 A 0 0
+	
+	//Fire
+	FrameIndex MM91 B 0 1
+	FrameIndex MM91 C 0 2
+	FrameIndex MM91 D 0 3
+	FrameIndex MM91 E 0 4
+	FrameIndex MM91 F 0 5
+	
+	//Reload
+	FrameIndex MM91 G 0 6
+	FrameIndex MM91 H 0 7
+	
+	//Insert new clip
+	FrameIndex MM91 M 0 11
+	FrameIndex MM91 N 0 12
+	FrameIndex MM91 O 0 13
+	FrameIndex MM91 P 0 14
+	FrameIndex MM91 Q 0 15
+	FrameIndex MM91 R 0 16
+	FrameIndex MM91 S 0 17
+	FrameIndex MM91 T 0 18
+	FrameIndex MM91 U 0 19
+}
+
+// from modeldef.pistol.txt
+Model AE_Off_MercPistol
+{
+	Path "Models\Weapons\pistol"
+	Model 0 "m4a3.md3"
+	SurfaceSkin 0 0 "m4a3.png"
+	SurfaceSkin 0 1 "m4a3.png"
+	SurfaceSkin 0 2 "m4a3.png"
+	SurfaceSkin 0 3 "m4a3.png"
+	SurfaceSkin 0 4 "empty.png"
+
+	Scale -0.82 0.82 0.82
+	Offset 0.0 -29.0 -8.0
+	
+	NOINTERPOLATION
+	
+	//Drop clip
+	FrameIndex MM91 I 0 8
+	FrameIndex MM91 J 0 9
+	FrameIndex MM91 K 0 10
+	FrameIndex MM91 L 0 10
+}
+
+// from modeldef.pistol.txt
+Model AE_Off_MercPistol
+{
+	Path "Models\Weapons\pistol"
+	Model 0 "pistol_mf.md3"
+	Skin 0 "pistol_mf.png"
+
+	Scale -0.82 0.82 0.82
+	Offset 0.0 -29.0 -8.0
+
+	FrameIndex PSMF A 0 1
+	FrameIndex PSMF B 0 2
+}
+
+// from modeldef.pistol.txt
+Model AE_Off_MercPistol
+{
+	Path "Models\Weapons\pistol"
+	Model 0 "m4a3_pickup.md3"
+	Skin 0 "m4a3.png"
+
+	Scale 3.5 3.5 3.5
+	Offset 0.0 0.0 5.0
+	
+	ROTATING
+	rotation-speed 0.2
+	
+	FrameIndex M4A3 P 0 0
+}
+
+// from MODELDEF.rsr
+Model AE_Off_SynthPistol
+{
+	Path "models/weapons/pistol"
+	Model 0 "m4a3.md3"
+	SurfaceSkin 0 0 "m4a3.png"
+	SurfaceSkin 0 1 "m4a3.png"
+	SurfaceSkin 0 2 "m4a3.png"
+	SurfaceSkin 0 3 "m4a3.png"
+	SurfaceSkin 0 4 "rsr_clear.png"
+	Scale -0.8200 0.8200 0.8200
+	Offset 0.0000 -29.0000 0.0
+	ZOffset -8.0000
+	FrameIndex RSYM A 0 0
+}
+
+// from MODELDEF.rsr
+Model AE_Off_SynthPistol
+{
+	Path "models/weapons/pistol"
+	Model 0 "m4a3.md3"
+	SurfaceSkin 0 0 "m4a3.png"
+	SurfaceSkin 0 1 "m4a3.png"
+	SurfaceSkin 0 2 "m4a3.png"
+	SurfaceSkin 0 3 "rsr_clear.png"
+	SurfaceSkin 0 4 "m4a3.png"
+	Scale -0.8200 0.8200 0.8200
+	Offset 0.0000 -29.0000 0.0
+	ZOffset -8.0000
+	FrameIndex RSYM B 0 0
+}
+
+// from modeldef.pistol.txt
+Model AE_Off_SynthPistol
+{
+	Path "Models\Weapons\pistol"
+	Model 0 "m4a3.md3"
+	Skin 0 "m4a3.png"
+
+	Scale -0.82 0.82 0.82
+	Offset 0.0 -29.0 -8.0
+
+	//Ready
+	FrameIndex MM91 A 0 0
+	
+	//Fire
+	FrameIndex MM91 B 0 1
+	FrameIndex MM91 C 0 2
+	FrameIndex MM91 D 0 3
+	FrameIndex MM91 E 0 4
+	FrameIndex MM91 F 0 5
+	
+	//Reload
+	FrameIndex MM91 G 0 6
+	FrameIndex MM91 H 0 7
+	
+	//Insert new clip
+	FrameIndex MM91 M 0 11
+	FrameIndex MM91 N 0 12
+	FrameIndex MM91 O 0 13
+	FrameIndex MM91 P 0 14
+	FrameIndex MM91 Q 0 15
+	FrameIndex MM91 R 0 16
+	FrameIndex MM91 S 0 17
+	FrameIndex MM91 T 0 18
+	FrameIndex MM91 U 0 19
+}
+
+// from modeldef.pistol.txt
+Model AE_Off_SynthPistol
+{
+	Path "Models\Weapons\pistol"
+	Model 0 "m4a3.md3"
+	SurfaceSkin 0 0 "m4a3.png"
+	SurfaceSkin 0 1 "m4a3.png"
+	SurfaceSkin 0 2 "m4a3.png"
+	SurfaceSkin 0 3 "m4a3.png"
+	SurfaceSkin 0 4 "empty.png"
+
+	Scale -0.82 0.82 0.82
+	Offset 0.0 -29.0 -8.0
+	
+	NOINTERPOLATION
+	
+	//Drop clip
+	FrameIndex MM91 I 0 8
+	FrameIndex MM91 J 0 9
+	FrameIndex MM91 K 0 10
+	FrameIndex MM91 L 0 10
+}
+
+// from modeldef.pistol.txt
+Model AE_Off_SynthPistol
+{
+	Path "Models\Weapons\pistol"
+	Model 0 "pistol_mf.md3"
+	Skin 0 "pistol_mf.png"
+
+	Scale -0.82 0.82 0.82
+	Offset 0.0 -29.0 -8.0
+
+	FrameIndex PSMF A 0 1
+	FrameIndex PSMF B 0 2
+}
+
+// from modeldef.pistol.txt
+Model AE_Off_SynthPistol
+{
+	Path "Models\Weapons\pistol"
+	Model 0 "m4a3_pickup.md3"
+	Skin 0 "m4a3.png"
+
+	Scale 3.5 3.5 3.5
+	Offset 0.0 0.0 5.0
+	
+	ROTATING
+	rotation-speed 0.2
+	
+	FrameIndex M4A3 P 0 0
+}
+
+// from MODELDEF.rsr
+Model AE_Off_YutaniPistol
+{
+	Path "models/weapons/pistol"
+	Model 0 "m4a3.md3"
+	SurfaceSkin 0 0 "m4a3.png"
+	SurfaceSkin 0 1 "m4a3.png"
+	SurfaceSkin 0 2 "m4a3.png"
+	SurfaceSkin 0 3 "m4a3.png"
+	SurfaceSkin 0 4 "rsr_clear.png"
+	Scale -0.8200 0.8200 0.8200
+	Offset 0.0000 -29.0000 0.0
+	ZOffset -8.0000
+	FrameIndex RSNM A 0 0
+}
+
+// from MODELDEF.rsr
+Model AE_Off_YutaniPistol
+{
+	Path "models/weapons/pistol"
+	Model 0 "m4a3.md3"
+	SurfaceSkin 0 0 "m4a3.png"
+	SurfaceSkin 0 1 "m4a3.png"
+	SurfaceSkin 0 2 "m4a3.png"
+	SurfaceSkin 0 3 "rsr_clear.png"
+	SurfaceSkin 0 4 "m4a3.png"
+	Scale -0.8200 0.8200 0.8200
+	Offset 0.0000 -29.0000 0.0
+	ZOffset -8.0000
+	FrameIndex RSNM B 0 0
+}
+
+// from modeldef.pistol.txt
+Model AE_Off_YutaniPistol
+{
+	Path "Models\Weapons\pistol"
+	Model 0 "m4a3.md3"
+	Skin 0 "m4a3.png"
+
+	Scale -0.82 0.82 0.82
+	Offset 0.0 -29.0 -8.0
+
+	//Ready
+	FrameIndex YM91 A 0 0
+	
+	//Fire
+	FrameIndex YM91 B 0 1
+	FrameIndex YM91 C 0 2
+	FrameIndex YM91 D 0 3
+	FrameIndex YM91 E 0 4
+	FrameIndex YM91 F 0 5
+	
+	//Reload
+	FrameIndex YM91 G 0 6
+	FrameIndex YM91 H 0 7
+	
+	//Drop clip
+	FrameIndex YM91 J 0 9
+	FrameIndex YM91 K 0 10
+	
+	//Insert new clip
+	FrameIndex YM91 M 0 11
+	FrameIndex YM91 N 0 12
+	FrameIndex YM91 O 0 13
+	FrameIndex YM91 P 0 14
+	FrameIndex YM91 Q 0 15
+	FrameIndex YM91 R 0 16
+	FrameIndex YM91 S 0 17
+	FrameIndex YM91 T 0 18
+	FrameIndex YM91 U 0 19
+}
+
+// from modeldef.pistol.txt
+Model AE_Off_YutaniPistol
+{
+	Path "Models\Weapons\pistol"
+	Model 0 "m4a3.md3"
+	SurfaceSkin 0 0 "m4a3.png"
+	SurfaceSkin 0 1 "m4a3.png"
+	SurfaceSkin 0 2 "m4a3.png"
+	SurfaceSkin 0 3 "m4a3.png"
+	SurfaceSkin 0 4 "empty.png"
+
+	Scale -0.82 0.82 0.82
+	Offset 0.0 -29.0 -8.0
+	
+	NOINTERPOLATION
+	
+	//Drop clip
+	FrameIndex YM91 I 0 8
+	FrameIndex YM91 J 0 9
+	FrameIndex YM91 K 0 10
+	FrameIndex YM91 L 0 10
+}
+
+// from modeldef.pistol.txt
+Model AE_Off_YutaniPistol
+{
+	Path "Models\Weapons\pistol"
+	Model 0 "pistol_mf.md3"
+	Skin 0 "pistol_mf.png"
+
+	Scale -0.82 0.82 0.82
+	Offset 0.0 -29.0 -8.0
+
+	FrameIndex PSMF A 0 1
+	FrameIndex PSMF B 0 2
+}
+
+// from modeldef.pistol.txt
+Model AE_Off_YutaniPistol
+{
+	Path "Models\Weapons\pistol"
+	Model 0 "m4a3_pickup.md3"
+	Skin 0 "m4a3.png"
+
+	Scale 3.5 3.5 3.5
+	Offset 0.0 0.0 5.0
+	
+	ROTATING
+	rotation-speed 0.2
+	
+	FrameIndex M4A3 P 0 0
+}
+
+// from MODELDEF.rsrpump
+Model AE_Off_NewShotgun
+{
+	Path "models/weapons/shotgun"
+	Model 0 "m37a2.md3"
+	SurfaceSkin 0 0 "m37a2.png"
+	SurfaceSkin 0 1 "rsr_clear.png"
+	SurfaceSkin 0 2 "m37a2.png"
+	SurfaceSkin 0 3 "shotgun_shell.png"	// PATCHED BY HAND 2026-10-22: the shell surface has its own texture (its shader is shotgun_shell.png); m37a2.png here was the "fucked" texture
+	Scale -1.1000 1.1000 1.1000
+	Offset 0.0000 -30.0000 0.0
+	ZOffset -7.0000
+	FrameIndex RSHG A 0 0
+}
+
+// from modeldef.shotgun.txt
+Model AE_Off_NewShotgun
+{
+	Path "Models\Weapons\shotgun"
+	Model 0 "m37a2.md3"
+	Skin 0 "m37a2.png"
+
+	Scale -1.1 1.1 1.1
+	Offset 0.0 -30.0 -7.0
+
+	//Ready
+	FrameIndex ATSG A 0 0
+
+	//Fire
+	FrameIndex ATSG B 0 1
+	FrameIndex ATSG C 0 2
+	FrameIndex ATSG D 0 3
+
+	//Pump
+	FrameIndex ATSG E 0 4
+	FrameIndex ATSG F 0 5
+	FrameIndex ATSG G 0 6
+	FrameIndex ATSG H 0 7
+	FrameIndex ATSG I 0 8
+	FrameIndex ATSG J 0 9
+	FrameIndex ATSG K 0 10
+	FrameIndex ATSG L 0 11
+	FrameIndex ATSG M 0 12
+	FrameIndex ATSG N 0 13
+}
+
+// from modeldef.shotgun.txt
+Model AE_Off_NewShotgun
+{
+	Path "Models\Weapons\shotgun"
+	Model 0 "m37a2.md3"
+	SurfaceSkin 0 0 "m37a2.png"
+	SurfaceSkin 0 1 "m37a2.png"
+	SurfaceSkin 0 2 "m37a2.png"
+	SurfaceSkin 0 3 "shotgun_shell.png"
+
+	Scale -1.1 1.1 1.1
+	Offset 0.0 -30.0 -7.0
+
+	//Ready
+	FrameIndex ATSR A 0 14
+	FrameIndex ATSR B 0 15
+	FrameIndex ATSR C 0 16
+	FrameIndex ATSR D 0 17
+	FrameIndex ATSR E 0 18
+	FrameIndex ATSR F 0 19
+	FrameIndex ATSR G 0 20
+	FrameIndex ATSR H 0 21
+	FrameIndex ATSR I 0 22
+	FrameIndex ATSR J 0 23
+	FrameIndex ATSR K 0 24
+	FrameIndex ATSR L 0 25
+	FrameIndex ATSR M 0 26
+	FrameIndex ATSR N 0 27
+	FrameIndex ATSR O 0 28
+}
+
+// from modeldef.shotgun.txt
+Model AE_Off_NewShotgun
+{
+	Path "Models\Weapons\shotgun"
+	Model 0 "shotgun_mf.md3"
+	Skin 0 "shotgun_mf1.png"
+
+	Scale -1.1 1.1 1.1
+	Offset 0.0 -30.0 -7.0
+
+	//Ready
+	FrameIndex SGMF A 0 1
+	FrameIndex SGMF B 0 2
+}
+
+// from modeldef.shotgun.txt
+Model AE_Off_NewShotgun
+{
+	Path "Models\Weapons\shotgun"
+	Model 0 "m37a2_pickup.md3"
+	Skin 0 "m37a2.png"
+
+	Scale 2.8 2.8 2.8
+	Offset 0.0 0.0 5.0
+	
+	ROTATING
+	rotation-speed 0.2
+
+	//Ready
+	FrameIndex SHOT P 0 0
+}
+
+// from MODELDEF.rsrpump
+Model AE_Off_YutaniShotgun
+{
+	Path "models/weapons/shotgun"
+	Model 0 "m37a2.md3"
+	SurfaceSkin 0 0 "m37a2.png"
+	SurfaceSkin 0 1 "rsr_clear.png"
+	SurfaceSkin 0 2 "m37a2.png"
+	SurfaceSkin 0 3 "shotgun_shell.png"	// PATCHED BY HAND 2026-10-22: the shell surface has its own texture (its shader is shotgun_shell.png); m37a2.png here was the "fucked" texture
+	Scale -1.1000 1.1000 1.1000
+	Offset 0.0000 -30.0000 0.0
+	ZOffset -7.0000
+	FrameIndex RSJG A 0 0
+}
+
+// from modeldef.shotgun.txt
+Model AE_Off_YutaniShotgun
+{
+	Path "Models\Weapons\shotgun"
+	Model 0 "m37a2.md3"
+	Skin 0 "m37a2.png"
+
+	Scale -1.1 1.1 1.1
+	Offset 0.0 -30.0 -7.0
+
+	//Ready
+	FrameIndex YTSG A 0 0
+
+	//Fire
+	FrameIndex YTSG B 0 1
+	FrameIndex YTSG C 0 2
+	FrameIndex YTSG D 0 3
+
+	//Pump
+	FrameIndex YTSG E 0 4
+	FrameIndex YTSG F 0 5
+	FrameIndex YTSG G 0 6
+	FrameIndex YTSG H 0 7
+	FrameIndex YTSG I 0 8
+	FrameIndex YTSG J 0 9
+	FrameIndex YTSG K 0 10
+	FrameIndex YTSG L 0 11
+	FrameIndex YTSG M 0 12
+	FrameIndex YTSG N 0 13
+}
+
+// from modeldef.shotgun.txt
+Model AE_Off_YutaniShotgun
+{
+	Path "Models\Weapons\shotgun"
+	Model 0 "m37a2.md3"
+	SurfaceSkin 0 0 "m37a2.png"
+	SurfaceSkin 0 1 "m37a2.png"
+	SurfaceSkin 0 2 "m37a2.png"
+	SurfaceSkin 0 3 "shotgun_shell.png"
+
+	Scale -1.1 1.1 1.1
+	Offset 0.0 -30.0 -7.0
+
+	//Ready
+	FrameIndex YTSR A 0 14
+	FrameIndex YTSR B 0 15
+	FrameIndex YTSR C 0 16
+	FrameIndex YTSR D 0 17
+	FrameIndex YTSR E 0 18
+	FrameIndex YTSR F 0 19
+	FrameIndex YTSR G 0 20
+	FrameIndex YTSR H 0 21
+	FrameIndex YTSR I 0 22
+	FrameIndex YTSR J 0 23
+	FrameIndex YTSR K 0 24
+	FrameIndex YTSR L 0 25
+	FrameIndex YTSR M 0 26
+	FrameIndex YTSR N 0 27
+	FrameIndex YTSR O 0 28
+}
+
+// from modeldef.shotgun.txt
+Model AE_Off_YutaniShotgun
+{
+	Path "Models\Weapons\shotgun"
+	Model 0 "shotgun_mf.md3"
+	Skin 0 "shotgun_mf1.png"
+
+	Scale -1.1 1.1 1.1
+	Offset 0.0 -30.0 -7.0
+
+	//Ready
+	FrameIndex SGMF A 0 1
+	FrameIndex SGMF B 0 2
+}
+
+// from modeldef.shotgun.txt
+Model AE_Off_YutaniShotgun
+{
+	Path "Models\Weapons\shotgun"
+	Model 0 "m37a2_pickup.md3"
+	Skin 0 "m37a2.png"
+
+	Scale 2.8 2.8 2.8
+	Offset 0.0 0.0 5.0
+	
+	ROTATING
+	rotation-speed 0.2
+
+	//Ready
+	FrameIndex SHOT P 0 0
+}
+
+// from MODELDEF.rsr
+Model AE_Off_PulseRifle
+{
+	Path "models/weapons/rifle"
+	Model 0 "m41a.md3"
+	SurfaceSkin 0 0 "m41a.png"
+	SurfaceSkin 0 1 "m41a.png"
+	SurfaceSkin 0 2 "m41a.png"
+	SurfaceSkin 0 3 "m41a.png"
+	SurfaceSkin 0 4 "rsr_clear.png"
+	Scale -1.1000 1.1000 1.1000
+	Offset 0.0000 -30.0000 0.0
+	ZOffset -9.0000
+	FrameIndex RSLM A 0 0
+}
+
+// from MODELDEF.rsr
+Model AE_Off_PulseRifle
+{
+	Path "models/weapons/rifle"
+	Model 0 "m41a.md3"
+	SurfaceSkin 0 0 "m41a.png"
+	SurfaceSkin 0 1 "m41a.png"
+	SurfaceSkin 0 2 "m41a.png"
+	SurfaceSkin 0 3 "rsr_clear.png"
+	SurfaceSkin 0 4 "m41a.png"
+	Scale -1.1000 1.1000 1.1000
+	Offset 0.0000 -30.0000 0.0
+	ZOffset -9.0000
+	FrameIndex RSLM B 0 0
+}
+
+// from modeldef.rifle.txt
+Model AE_Off_PulseRifle
+{
+	Path "Models\Weapons\rifle"
+	Model 0 "m41a.md3"
+	Skin 0 "m41a.png"
+
+	Scale -1.1 1.1 1.1
+	Offset 0.0 -30.0 -9.0
+
+	//Ready
+	FrameIndex PULS A 0 0
+
+	//Fire
+	FrameIndex PULS B 0 1
+	FrameIndex PULS C 0 2
+	FrameIndex PULS D 0 3
+
+	//Fire grenade
+	FrameIndex PULS E 0 4
+	FrameIndex PULS F 0 5
+	FrameIndex PULS G 0 6
+	FrameIndex PULS H 0 7
+	FrameIndex PULS I 0 8
+	
+	//Pump
+	FrameIndex PULS J 0 9
+	FrameIndex PULS K 0 10
+	FrameIndex PULS L 0 11
+	FrameIndex PULS M 0 12
+	FrameIndex PULS N 0 13
+}
+
+// from modeldef.rifle.txt
+Model AE_Off_PulseRifle
+{
+	Path "Models\Weapons\rifle"
+	Model 0 "m41a.md3"
+	Skin 0 "m41a.png"
+
+	Scale -1.1 1.1 1.1
+	Offset 0.0 -30.0 -9.0
+
+	FrameIndex PLSR A 0 14
+	FrameIndex PLSR B 0 15
+	
+	//Insert new mag
+	FrameIndex PLSR J 0 22
+	FrameIndex PLSR K 0 23
+	FrameIndex PLSR L 0 24
+	FrameIndex PLSR M 0 25
+	FrameIndex PLSR N 0 26
+	FrameIndex PLSR O 0 27
+	
+	//End reloading
+	FrameIndex PLSR P 0 28
+	FrameIndex PLSR Q 0 29
+	FrameIndex PLSR R 0 30
+	FrameIndex PLSR S 0 31
+	FrameIndex PLSR T 0 32
+	FrameIndex PLSR U 0 33
+	FrameIndex PLSR V 0 34
+	FrameIndex PLSR W 0 35
+}
+
+// from modeldef.rifle.txt
+Model AE_Off_PulseRifle
+{
+	Path "Models\Weapons\rifle"
+	Model 0 "m41a.md3"
+	SurfaceSkin 0 0 "m41a.png"
+	SurfaceSkin 0 1 "m41a.png"
+	SurfaceSkin 0 2 "m41a.png"
+	SurfaceSkin 0 3 "m41a.png"
+	SurfaceSkin 0 4 "empty.png"
+
+	Scale -1.1 1.1 1.1
+	Offset 0.0 -30.0 -9.0
+	
+	NOINTERPOLATION
+	
+	//Drop mag
+	FrameIndex PLSR C 0 16
+	FrameIndex PLSR D 0 17
+	FrameIndex PLSR E 0 18
+	FrameIndex PLSR F 0 19
+	FrameIndex PLSR G 0 20
+	FrameIndex PLSR H 0 21
+	FrameIndex PLSR I 0 22
+}
+
+// from modeldef.rifle.txt
+Model AE_Off_PulseRifle
+{
+	Path "Models\Weapons\rifle"
+	Model 0 "pulse_mf.md3"
+	Skin 0 "pulse_mf.png"
+
+	Scale -1.1 1.1 1.1
+	Offset 0.0 -30.0 -9.0
+
+	//bullets
+	FrameIndex PLMF A 0 1
+	Skin 0 "pulse_mf2.png"
+	FrameIndex PLMF B 0 2
+	Skin 0 "pulse_mf3.png"
+	FrameIndex PLMF C 0 3
+	
+	//grenade
+	Skin 0 "pulse_mf2.png"
+	FrameIndex PLMF D 0 4
+	Skin 0 "pulse_mf3.png"
+	FrameIndex PLMF E 0 5
+}
+
+// from modeldef.rifle.txt
+Model AE_Off_PulseRifle
+{
+	Path "Models\Weapons\rifle"
+	Model 0 "m41a_pickup.md3"
+	Skin 0 "m41a.png"
+
+	Scale 2.8 2.8 2.8
+	Offset 0.0 0.0 5.0
+	
+	ROTATING
+	rotation-speed 0.2
+
+	//Ready
+	FrameIndex PLSP P 0 0
+}
+
+// from MODELDEF.rsr
+Model AE_Off_YutaniRifle
+{
+	Path "models/weapons/rifle"
+	Model 0 "m41a.md3"
+	SurfaceSkin 0 0 "m41a.png"
+	SurfaceSkin 0 1 "m41a.png"
+	SurfaceSkin 0 2 "m41a.png"
+	SurfaceSkin 0 3 "m41a.png"
+	SurfaceSkin 0 4 "rsr_clear.png"
+	Scale -1.1000 1.1000 1.1000
+	Offset 0.0000 -30.0000 0.0
+	ZOffset -9.0000
+	FrameIndex RSRM A 0 0
+}
+
+// from MODELDEF.rsr
+Model AE_Off_YutaniRifle
+{
+	Path "models/weapons/rifle"
+	Model 0 "m41a.md3"
+	SurfaceSkin 0 0 "m41a.png"
+	SurfaceSkin 0 1 "m41a.png"
+	SurfaceSkin 0 2 "m41a.png"
+	SurfaceSkin 0 3 "rsr_clear.png"
+	SurfaceSkin 0 4 "m41a.png"
+	Scale -1.1000 1.1000 1.1000
+	Offset 0.0000 -30.0000 0.0
+	ZOffset -9.0000
+	FrameIndex RSRM B 0 0
+}
+
+// from modeldef.rifle.txt
+Model AE_Off_YutaniRifle
+{
+	Path "Models\Weapons\rifle"
+	Model 0 "m41a.md3"
+	Skin 0 "m41a.png"
+
+	Scale -1.1 1.1 1.1
+	Offset 0.0 -30.0 -9.0
+
+	//Ready
+	FrameIndex YULS A 0 0
+
+	//Fire
+	FrameIndex YULS B 0 1
+	FrameIndex YULS C 0 2
+	FrameIndex YULS D 0 3
+
+	//Fire grenade
+	FrameIndex YULS E 0 4
+	FrameIndex YULS F 0 5
+	FrameIndex YULS G 0 6
+	FrameIndex YULS H 0 7
+	FrameIndex YULS I 0 8
+	
+	//Pump
+	FrameIndex YULS J 0 9
+	FrameIndex YULS K 0 10
+	FrameIndex YULS L 0 11
+	FrameIndex YULS M 0 12
+	FrameIndex YULS N 0 13
+}
+
+// from modeldef.rifle.txt
+Model AE_Off_YutaniRifle
+{
+	Path "Models\Weapons\rifle"
+	Model 0 "m41a.md3"
+	Skin 0 "m41a.png"
+
+	Scale -1.1 1.1 1.1
+	Offset 0.0 -30.0 -9.0
+
+	FrameIndex PLSR A 0 14
+	FrameIndex PLSR B 0 15
+	
+	//Insert new mag
+	FrameIndex PLSR J 0 22
+	FrameIndex PLSR K 0 23
+	FrameIndex PLSR L 0 24
+	FrameIndex PLSR M 0 25
+	FrameIndex PLSR N 0 26
+	FrameIndex PLSR O 0 27
+	
+	//End reloading
+	FrameIndex PLSR P 0 28
+	FrameIndex PLSR Q 0 29
+	FrameIndex PLSR R 0 30
+	FrameIndex PLSR S 0 31
+	FrameIndex PLSR T 0 32
+	FrameIndex PLSR U 0 33
+	FrameIndex PLSR V 0 34
+	FrameIndex PLSR W 0 35
+}
+
+// from modeldef.rifle.txt
+Model AE_Off_YutaniRifle
+{
+	Path "Models\Weapons\rifle"
+	Model 0 "m41a.md3"
+	SurfaceSkin 0 0 "m41a.png"
+	SurfaceSkin 0 1 "m41a.png"
+	SurfaceSkin 0 2 "m41a.png"
+	SurfaceSkin 0 3 "m41a.png"
+	SurfaceSkin 0 4 "empty.png"
+
+	Scale -1.1 1.1 1.1
+	Offset 0.0 -30.0 -9.0
+	
+	NOINTERPOLATION
+	
+	//Drop mag
+	FrameIndex PLSR C 0 16
+	FrameIndex PLSR D 0 17
+	FrameIndex PLSR E 0 18
+	FrameIndex PLSR F 0 19
+	FrameIndex PLSR G 0 20
+	FrameIndex PLSR H 0 21
+	FrameIndex PLSR I 0 22
+}
+
+// from modeldef.rifle.txt
+Model AE_Off_YutaniRifle
+{
+	Path "Models\Weapons\rifle"
+	Model 0 "pulse_mf.md3"
+	Skin 0 "pulse_mf.png"
+
+	Scale -1.1 1.1 1.1
+	Offset 0.0 -30.0 -9.0
+
+	//bullets
+	FrameIndex PLMF A 0 1
+	Skin 0 "pulse_mf2.png"
+	FrameIndex PLMF B 0 2
+	Skin 0 "pulse_mf3.png"
+	FrameIndex PLMF C 0 3
+	
+	//grenade
+	Skin 0 "pulse_mf2.png"
+	FrameIndex PLMF D 0 4
+	Skin 0 "pulse_mf3.png"
+	FrameIndex PLMF E 0 5
+}
+
+// from modeldef.rifle.txt
+Model AE_Off_YutaniRifle
+{
+	Path "Models\Weapons\rifle"
+	Model 0 "m41a_pickup.md3"
+	Skin 0 "m41a.png"
+
+	Scale 2.8 2.8 2.8
+	Offset 0.0 0.0 5.0
+	
+	ROTATING
+	rotation-speed 0.2
+
+	//Ready
+	FrameIndex PLSP P 0 0
+}
+
+// from MODELDEF.rsr
+Model AE_Off_Flamer
+{
+	Path "models/weapons/flamer"
+	Model 0 "m260b.md3"
+	SurfaceSkin 0 0 "m260b.png"
+	SurfaceSkin 0 1 "rsr_clear.png"
+	SurfaceSkin 0 2 "m260b.png"
+	Scale -1.1000 1.1000 1.1000
+	Offset 0.0000 -30.0000 0.0
+	ZOffset -7.0000
+	FrameIndex RSFM A 0 0
+}
+
+// from modeldef.flamethrower.txt
+Model AE_Off_Flamer
+{
+	Path "Models\Weapons\flamer"
+	Model 0 "m260b.md3"
+	Skin 0 "m260b.png"
+
+	Scale -1.1 1.1 1.1
+	Offset 0.0 -30.0 -7.0
+
+	//Ready
+	FrameIndex FLBF A 0 0
+	FrameIndex FLMT A 0 0
+
+	//Fire
+	FrameIndex FLMT B 0 1
+	FrameIndex FLMT C 0 2
+	FrameIndex FLMT D 0 3
+
+	//Reloading - drop canister
+	FrameIndex FLMT E 0 5
+	FrameIndex FLMT F 0 6
+	FrameIndex FLMT G 0 7
+	FrameIndex FLMT H 0 8
+	FrameIndex FLMT I 0 9
+
+	//Reloading - add new canister
+	FrameIndex FLMT L 0 11
+	FrameIndex FLMT M 0 12
+	FrameIndex FLMT N 0 13
+	FrameIndex FLMT O 0 14
+	FrameIndex FLMT P 0 15
+	FrameIndex FLMT Q 0 16
+	FrameIndex FLMT R 0 17
+	FrameIndex FLMT S 0 18
+	FrameIndex FLMT T 0 19
+}
+
+// from modeldef.flamethrower.txt
+Model AE_Off_Flamer
+{
+	Path "Models\Weapons\flamer"
+	Model 0 "m260b.md3"
+	SurfaceSkin 0 0 "m260b.png"
+	SurfaceSkin 0 1 "empty.png"
+	SurfaceSkin 0 2 "m260b.png"
+
+	Scale -1.1 1.1 1.1
+	Offset 0.0 -30.0 -7.0
+
+	//Ready
+	FrameIndex FLMT J 0 10
+	FrameIndex FLMT K 0 11
+}
+
+// from modeldef.flamethrower.txt
+Model AE_Off_Flamer
+{
+	Path "Models\Weapons\flamer"
+	Model 0 "m260b_pickup.md3"
+	Skin 0 "m260b.png"
+
+	Scale 2.5 2.5 2.5
+	Offset 0.0 0.0 5.0
+	
+	ROTATING
+	rotation-speed 0.2
+
+	//Ready
+	FrameIndex WFLM P 0 0
+}
+
+// from MODELDEF.rsr
+Model AE_Off_YutaniFlamer
+{
+	Path "models/weapons/flamer"
+	Model 0 "m260b.md3"
+	SurfaceSkin 0 0 "m260b.png"
+	SurfaceSkin 0 1 "rsr_clear.png"
+	SurfaceSkin 0 2 "m260b.png"
+	Scale -1.1000 1.1000 1.1000
+	Offset 0.0000 -30.0000 0.0
+	ZOffset -7.0000
+	FrameIndex RSEM A 0 0
+}
+
+// from modeldef.flamethrower.txt
+Model AE_Off_YutaniFlamer
+{
+	Path "Models\Weapons\flamer"
+	Model 0 "m260b.md3"
+	Skin 0 "m260b.png"
+
+	Scale -1.1 1.1 1.1
+	Offset 0.0 -30.0 -7.0
+
+	//Ready
+	FrameIndex YLAM A 0 0
+	FrameIndex YLAM E 0 0
+
+	//Fire
+	FrameIndex YLAM F 0 1
+	FrameIndex YLAM G 0 2
+	FrameIndex YLAM H 0 3
+
+	//Reloading - drop canister
+	FrameIndex FLMT E 0 5
+	FrameIndex FLMT F 0 6
+	FrameIndex FLMT G 0 7
+	FrameIndex FLMT H 0 8
+	FrameIndex FLMT I 0 9
+
+	//Reloading - add new canister
+	FrameIndex FLMT L 0 11
+	FrameIndex FLMT M 0 12
+	FrameIndex FLMT N 0 13
+	FrameIndex FLMT O 0 14
+	FrameIndex FLMT P 0 15
+	FrameIndex FLMT Q 0 16
+	FrameIndex FLMT R 0 17
+	FrameIndex FLMT S 0 18
+	FrameIndex FLMT T 0 19
+}
+
+// from modeldef.flamethrower.txt
+Model AE_Off_YutaniFlamer
+{
+	Path "Models\Weapons\flamer"
+	Model 0 "m260b.md3"
+	SurfaceSkin 0 0 "m260b.png"
+	SurfaceSkin 0 1 "empty.png"
+	SurfaceSkin 0 2 "m260b.png"
+
+	Scale -1.1 1.1 1.1
+	Offset 0.0 -30.0 -7.0
+
+	//Ready
+	FrameIndex FLMT J 0 10
+	FrameIndex FLMT K 0 11
+}
+
+// from modeldef.flamethrower.txt
+Model AE_Off_YutaniFlamer
+{
+	Path "Models\Weapons\flamer"
+	Model 0 "m260b_pickup.md3"
+	Skin 0 "m260b.png"
+
+	Scale 2.5 2.5 2.5
+	Offset 0.0 0.0 5.0
+	
+	ROTATING
+	rotation-speed 0.2
+
+	//Ready
+	FrameIndex WFLM P 0 0
+}
+
+
+// DUAL WIELD hands (2026-10-22): the gun hand on each off-hand copy, hand.md3 bound to the copy's
+// class, the gun's GunHook (handtable.zs, x left y up z back, cm) baked into Offset since the
+// copy's class has no ModifyBobLayer3D. Regenerate when GunHook changes.
+
+Model AE_Off_M4A3Pistol
+{
+	Path "models/rsq"
+	Model 0 "hand.md3"
+	Skin 0 "hand.png"
+	Scale -1.0 1.0 1.0
+	Offset 0.000 -22.500 -7.500
+	FrameIndex RQGS A 0 0	// Ermac hand.md3 frame 0
+	FrameIndex RQGS B 0 1	// Ermac hand.md3 frame 1
+	FrameIndex RQGS C 0 2	// Ermac hand.md3 frame 19
+	FrameIndex RQGS D 0 3	// Ermac hand.md3 frame 29
+	FrameIndex RQGS E 0 4	// Ermac hand.md3 frame 30
+	FrameIndex RQGS F 0 5	// Ermac hand.md3 frame 106
+	FrameIndex RQGT A 0 6	// index finger on the trigger
+	FrameIndex RQGU A 0 7	// trigger squeezed
+	FrameIndex RQGT B 0 8	// index finger on the trigger
+	FrameIndex RQGU B 0 9	// trigger squeezed
+	FrameIndex RQGT C 0 10	// index finger on the trigger
+	FrameIndex RQGU C 0 11	// trigger squeezed
+	FrameIndex RQGT D 0 12	// index finger on the trigger
+	FrameIndex RQGU D 0 13	// trigger squeezed
+	FrameIndex RQGT E 0 14	// index finger on the trigger
+	FrameIndex RQGU E 0 15	// trigger squeezed
+}
+
+Model AE_Off_MercPistol
+{
+	Path "models/rsq"
+	Model 0 "hand.md3"
+	Skin 0 "hand.png"
+	Scale -1.0 1.0 1.0
+	Offset 0.000 -22.500 -7.500
+	FrameIndex RQGS A 0 0	// Ermac hand.md3 frame 0
+	FrameIndex RQGS B 0 1	// Ermac hand.md3 frame 1
+	FrameIndex RQGS C 0 2	// Ermac hand.md3 frame 19
+	FrameIndex RQGS D 0 3	// Ermac hand.md3 frame 29
+	FrameIndex RQGS E 0 4	// Ermac hand.md3 frame 30
+	FrameIndex RQGS F 0 5	// Ermac hand.md3 frame 106
+	FrameIndex RQGT A 0 6	// index finger on the trigger
+	FrameIndex RQGU A 0 7	// trigger squeezed
+	FrameIndex RQGT B 0 8	// index finger on the trigger
+	FrameIndex RQGU B 0 9	// trigger squeezed
+	FrameIndex RQGT C 0 10	// index finger on the trigger
+	FrameIndex RQGU C 0 11	// trigger squeezed
+	FrameIndex RQGT D 0 12	// index finger on the trigger
+	FrameIndex RQGU D 0 13	// trigger squeezed
+	FrameIndex RQGT E 0 14	// index finger on the trigger
+	FrameIndex RQGU E 0 15	// trigger squeezed
+}
+
+Model AE_Off_SynthPistol
+{
+	Path "models/rsq"
+	Model 0 "hand.md3"
+	Skin 0 "hand.png"
+	Scale -1.0 1.0 1.0
+	Offset 0.000 -22.500 -7.500
+	FrameIndex RQGS A 0 0	// Ermac hand.md3 frame 0
+	FrameIndex RQGS B 0 1	// Ermac hand.md3 frame 1
+	FrameIndex RQGS C 0 2	// Ermac hand.md3 frame 19
+	FrameIndex RQGS D 0 3	// Ermac hand.md3 frame 29
+	FrameIndex RQGS E 0 4	// Ermac hand.md3 frame 30
+	FrameIndex RQGS F 0 5	// Ermac hand.md3 frame 106
+	FrameIndex RQGT A 0 6	// index finger on the trigger
+	FrameIndex RQGU A 0 7	// trigger squeezed
+	FrameIndex RQGT B 0 8	// index finger on the trigger
+	FrameIndex RQGU B 0 9	// trigger squeezed
+	FrameIndex RQGT C 0 10	// index finger on the trigger
+	FrameIndex RQGU C 0 11	// trigger squeezed
+	FrameIndex RQGT D 0 12	// index finger on the trigger
+	FrameIndex RQGU D 0 13	// trigger squeezed
+	FrameIndex RQGT E 0 14	// index finger on the trigger
+	FrameIndex RQGU E 0 15	// trigger squeezed
+}
+
+Model AE_Off_YutaniPistol
+{
+	Path "models/rsq"
+	Model 0 "hand.md3"
+	Skin 0 "hand.png"
+	Scale -1.0 1.0 1.0
+	Offset 0.000 -22.500 -7.500
+	FrameIndex RQGS A 0 0	// Ermac hand.md3 frame 0
+	FrameIndex RQGS B 0 1	// Ermac hand.md3 frame 1
+	FrameIndex RQGS C 0 2	// Ermac hand.md3 frame 19
+	FrameIndex RQGS D 0 3	// Ermac hand.md3 frame 29
+	FrameIndex RQGS E 0 4	// Ermac hand.md3 frame 30
+	FrameIndex RQGS F 0 5	// Ermac hand.md3 frame 106
+	FrameIndex RQGT A 0 6	// index finger on the trigger
+	FrameIndex RQGU A 0 7	// trigger squeezed
+	FrameIndex RQGT B 0 8	// index finger on the trigger
+	FrameIndex RQGU B 0 9	// trigger squeezed
+	FrameIndex RQGT C 0 10	// index finger on the trigger
+	FrameIndex RQGU C 0 11	// trigger squeezed
+	FrameIndex RQGT D 0 12	// index finger on the trigger
+	FrameIndex RQGU D 0 13	// trigger squeezed
+	FrameIndex RQGT E 0 14	// index finger on the trigger
+	FrameIndex RQGU E 0 15	// trigger squeezed
+}
+
+Model AE_Off_NewShotgun
+{
+	Path "models/rsq"
+	Model 0 "hand.md3"
+	Skin 0 "hand.png"
+	Scale -1.0 1.0 1.0
+	Offset 0.000 -24.000 -10.000
+	FrameIndex RQGS A 0 0	// Ermac hand.md3 frame 0
+	FrameIndex RQGS B 0 1	// Ermac hand.md3 frame 1
+	FrameIndex RQGS C 0 2	// Ermac hand.md3 frame 19
+	FrameIndex RQGS D 0 3	// Ermac hand.md3 frame 29
+	FrameIndex RQGS E 0 4	// Ermac hand.md3 frame 30
+	FrameIndex RQGS F 0 5	// Ermac hand.md3 frame 106
+	FrameIndex RQGT A 0 6	// index finger on the trigger
+	FrameIndex RQGU A 0 7	// trigger squeezed
+	FrameIndex RQGT B 0 8	// index finger on the trigger
+	FrameIndex RQGU B 0 9	// trigger squeezed
+	FrameIndex RQGT C 0 10	// index finger on the trigger
+	FrameIndex RQGU C 0 11	// trigger squeezed
+	FrameIndex RQGT D 0 12	// index finger on the trigger
+	FrameIndex RQGU D 0 13	// trigger squeezed
+	FrameIndex RQGT E 0 14	// index finger on the trigger
+	FrameIndex RQGU E 0 15	// trigger squeezed
+}
+
+Model AE_Off_YutaniShotgun
+{
+	Path "models/rsq"
+	Model 0 "hand.md3"
+	Skin 0 "hand.png"
+	Scale -1.0 1.0 1.0
+	Offset 0.000 -24.000 -10.000
+	FrameIndex RQGS A 0 0	// Ermac hand.md3 frame 0
+	FrameIndex RQGS B 0 1	// Ermac hand.md3 frame 1
+	FrameIndex RQGS C 0 2	// Ermac hand.md3 frame 19
+	FrameIndex RQGS D 0 3	// Ermac hand.md3 frame 29
+	FrameIndex RQGS E 0 4	// Ermac hand.md3 frame 30
+	FrameIndex RQGS F 0 5	// Ermac hand.md3 frame 106
+	FrameIndex RQGT A 0 6	// index finger on the trigger
+	FrameIndex RQGU A 0 7	// trigger squeezed
+	FrameIndex RQGT B 0 8	// index finger on the trigger
+	FrameIndex RQGU B 0 9	// trigger squeezed
+	FrameIndex RQGT C 0 10	// index finger on the trigger
+	FrameIndex RQGU C 0 11	// trigger squeezed
+	FrameIndex RQGT D 0 12	// index finger on the trigger
+	FrameIndex RQGU D 0 13	// trigger squeezed
+	FrameIndex RQGT E 0 14	// index finger on the trigger
+	FrameIndex RQGU E 0 15	// trigger squeezed
+}
+
+Model AE_Off_PulseRifle
+{
+	Path "models/rsq"
+	Model 0 "hand.md3"
+	Skin 0 "hand.png"
+	Scale -1.0 1.0 1.0
+	Offset 0.000 -23.500 -10.000
+	FrameIndex RQGS A 0 0	// Ermac hand.md3 frame 0
+	FrameIndex RQGS B 0 1	// Ermac hand.md3 frame 1
+	FrameIndex RQGS C 0 2	// Ermac hand.md3 frame 19
+	FrameIndex RQGS D 0 3	// Ermac hand.md3 frame 29
+	FrameIndex RQGS E 0 4	// Ermac hand.md3 frame 30
+	FrameIndex RQGS F 0 5	// Ermac hand.md3 frame 106
+	FrameIndex RQGT A 0 6	// index finger on the trigger
+	FrameIndex RQGU A 0 7	// trigger squeezed
+	FrameIndex RQGT B 0 8	// index finger on the trigger
+	FrameIndex RQGU B 0 9	// trigger squeezed
+	FrameIndex RQGT C 0 10	// index finger on the trigger
+	FrameIndex RQGU C 0 11	// trigger squeezed
+	FrameIndex RQGT D 0 12	// index finger on the trigger
+	FrameIndex RQGU D 0 13	// trigger squeezed
+	FrameIndex RQGT E 0 14	// index finger on the trigger
+	FrameIndex RQGU E 0 15	// trigger squeezed
+}
+
+Model AE_Off_YutaniRifle
+{
+	Path "models/rsq"
+	Model 0 "hand.md3"
+	Skin 0 "hand.png"
+	Scale -1.0 1.0 1.0
+	Offset 0.000 -23.500 -10.000
+	FrameIndex RQGS A 0 0	// Ermac hand.md3 frame 0
+	FrameIndex RQGS B 0 1	// Ermac hand.md3 frame 1
+	FrameIndex RQGS C 0 2	// Ermac hand.md3 frame 19
+	FrameIndex RQGS D 0 3	// Ermac hand.md3 frame 29
+	FrameIndex RQGS E 0 4	// Ermac hand.md3 frame 30
+	FrameIndex RQGS F 0 5	// Ermac hand.md3 frame 106
+	FrameIndex RQGT A 0 6	// index finger on the trigger
+	FrameIndex RQGU A 0 7	// trigger squeezed
+	FrameIndex RQGT B 0 8	// index finger on the trigger
+	FrameIndex RQGU B 0 9	// trigger squeezed
+	FrameIndex RQGT C 0 10	// index finger on the trigger
+	FrameIndex RQGU C 0 11	// trigger squeezed
+	FrameIndex RQGT D 0 12	// index finger on the trigger
+	FrameIndex RQGU D 0 13	// trigger squeezed
+	FrameIndex RQGT E 0 14	// index finger on the trigger
+	FrameIndex RQGU E 0 15	// trigger squeezed
+}
+
+Model AE_Off_Flamer
+{
+	Path "models/rsq"
+	Model 0 "hand.md3"
+	Skin 0 "hand.png"
+	Scale -1.0 1.0 1.0
+	Offset 0.000 -24.000 -10.000
+	FrameIndex RQGS A 0 0	// Ermac hand.md3 frame 0
+	FrameIndex RQGS B 0 1	// Ermac hand.md3 frame 1
+	FrameIndex RQGS C 0 2	// Ermac hand.md3 frame 19
+	FrameIndex RQGS D 0 3	// Ermac hand.md3 frame 29
+	FrameIndex RQGS E 0 4	// Ermac hand.md3 frame 30
+	FrameIndex RQGS F 0 5	// Ermac hand.md3 frame 106
+	FrameIndex RQGT A 0 6	// index finger on the trigger
+	FrameIndex RQGU A 0 7	// trigger squeezed
+	FrameIndex RQGT B 0 8	// index finger on the trigger
+	FrameIndex RQGU B 0 9	// trigger squeezed
+	FrameIndex RQGT C 0 10	// index finger on the trigger
+	FrameIndex RQGU C 0 11	// trigger squeezed
+	FrameIndex RQGT D 0 12	// index finger on the trigger
+	FrameIndex RQGU D 0 13	// trigger squeezed
+	FrameIndex RQGT E 0 14	// index finger on the trigger
+	FrameIndex RQGU E 0 15	// trigger squeezed
+}
+
+Model AE_Off_YutaniFlamer
+{
+	Path "models/rsq"
+	Model 0 "hand.md3"
+	Skin 0 "hand.png"
+	Scale -1.0 1.0 1.0
+	Offset 0.000 -24.000 -10.000
+	FrameIndex RQGS A 0 0	// Ermac hand.md3 frame 0
+	FrameIndex RQGS B 0 1	// Ermac hand.md3 frame 1
+	FrameIndex RQGS C 0 2	// Ermac hand.md3 frame 19
+	FrameIndex RQGS D 0 3	// Ermac hand.md3 frame 29
+	FrameIndex RQGS E 0 4	// Ermac hand.md3 frame 30
+	FrameIndex RQGS F 0 5	// Ermac hand.md3 frame 106
+	FrameIndex RQGT A 0 6	// index finger on the trigger
+	FrameIndex RQGU A 0 7	// trigger squeezed
+	FrameIndex RQGT B 0 8	// index finger on the trigger
+	FrameIndex RQGU B 0 9	// trigger squeezed
+	FrameIndex RQGT C 0 10	// index finger on the trigger
+	FrameIndex RQGU C 0 11	// trigger squeezed
+	FrameIndex RQGT D 0 12	// index finger on the trigger
+	FrameIndex RQGU D 0 13	// trigger squeezed
+	FrameIndex RQGT E 0 14	// index finger on the trigger
+	FrameIndex RQGU E 0 15	// trigger squeezed
+}

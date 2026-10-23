@@ -1,0 +1,23 @@
+// RS real VR reload (zscript/rsr/vreload.zs). rsq_reload 1 turns it on for the guns that have it.
+//
+// This line is the reload's master switch and it was MISSING. vreload.zs gates
+// everything on RSR.PlayerInt(p, 'rsq_reload', 0) == 1; with the cvar
+// undeclared GetCVar returns null, the default 0 applies, and the entire real
+// reload could never run -- while every file parsed and every name lined up.
+// BD22 declares it on the RSQ (hands) side, which is the half this pack
+// provides, so it belongs here. tf/check_cvars.py now fails the build if any
+// cvar read with a disabling default is left undeclared.
+server int rsq_reload = 1;			// 0 the set's own canned reload, 1 the real VR reload
+user string rsr_grip_keys = "443 436";	// key codes that are the off-hand grip (it grabs only 50 cm or more from the gun hand, or with vr_two_handed_weapons 0): 443 KEY_PAD_RTHUMB, 436 KEY_PAD_DPAD_UP (with the main grip held as a shift)
+user int rsr_grab_buttons = 67108864;	// usercmd buttons that grab anywhere: BT_OFFHANDATTACK (off-hand trigger); 0 = none
+user int rsr_magrelease = 268435456;	// usercmd buttons that drop the magazine: BT_OFFHANDRELOAD; the gun's own reload always does
+user int rsr_pouch = 0;				// where a new magazine is taken: 0 anywhere 20 cm from the gun, 1 low (40 cm below the eyes)
+user bool rsr_eat_grip = true;		// while a reload has the off hand, its grip key does nothing else (rthumb is +speed in some layouts)
+user bool rsr_debug = false;		// print every key code pressed, and each reload step
+
+// 2026-10-22 RSR-ASSIST (zscript/rsr/rsr_assist.zs, from BD22 1.92): the capture zones of the reload.
+user float rsr_assist = 1.0;		// 0.5 .. 3.0: scales every capture radius and tolerance at once
+user bool rsr_assist_debug = false;	// draw the capture zones (particles, from the menu: no console in a headset)
+
+// 2026-10-22 RSR-PUMP 1.92 (zscript/rsr/rsr_pump.zs)
+user int rsr_shell_credit = 1;		// shells credited per shell pushed home (1 = one; up to 4 for a quicker top-off)
