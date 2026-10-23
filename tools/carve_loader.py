@@ -131,12 +131,18 @@ def main():
         print('  wrote %-22s verts=%-5d tris=%-5d %d bytes'
               % (os.path.basename(out), s['nverts'], s['ntris'], n))
 
+    # FIXED 2026-10-23: the cage used to be MechGuard.001 ALONE, so the cab had a frame and
+    # no roof -- you looked up and saw the sky. MechCover is the 48 x 30 cm grate panel above
+    # the head and it belongs in the same file. Surface 0 is the frame, surface 1 the grate;
+    # modeldef.loader.txt skins them in that order.
     cage = dict(by['MechGuard.001'])
     cage['name'] = 'loader_cage'
+    cover = dict(by['MechCover'])
+    cover['name'] = 'loader_cover'
     out = os.path.join(MECH, 'loader_cage.md3')
-    n = write_md3(src, [cage], out, 'loader_cage')
-    print('  wrote %-22s verts=%-5d tris=%-5d %d bytes'
-          % (os.path.basename(out), cage['nverts'], cage['ntris'], n))
+    n = write_md3(src, [cage, cover], out, 'loader_cage')
+    print('  wrote %-22s frame=%d verts, roof=%d verts, %d bytes'
+          % (os.path.basename(out), cage['nverts'], cover['nverts'], n))
 
 
 if __name__ == '__main__':

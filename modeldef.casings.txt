@@ -1,0 +1,55 @@
+// SPENT CASINGS, 2026-10-23. Meshes and skins from RS_Ballistics (models/casings, built by
+// its tools/gen_casings.py in millimetres at real size); the 1/30.5 scale is its own, a
+// 56-unit marine being 1.71 m. USEACTORPITCH/ROLL let the actor tumble the mesh, and every
+// RSCS frame shows the one model frame, so the tumble is the actor's and not an animation.
+
+Model RSQ_Casing9mm
+{
+	Path "models/casings"
+	Model 0 "casing_9mm.md3"
+	SurfaceSkin 0 0 "casing_brass.png"
+	SurfaceSkin 0 1 "casing_inner.png"
+	SurfaceSkin 0 2 "casing_primer.png"
+	Scale 0.03279 0.03279 0.03279
+	USEACTORPITCH
+	USEACTORROLL
+	FrameIndex RSCS A 0 0
+	FrameIndex RSCS B 0 0
+	FrameIndex RSCS C 0 0
+	FrameIndex RSCS D 0 0
+	FrameIndex RSCS E 0 0
+}
+
+Model RSQ_CasingRifle
+{
+	Path "models/casings"
+	Model 0 "casing_rifle.md3"
+	SurfaceSkin 0 0 "casing_brass.png"
+	SurfaceSkin 0 1 "casing_inner.png"
+	Scale 0.03279 0.03279 0.03279
+	USEACTORPITCH
+	USEACTORROLL
+	FrameIndex RSCS A 0 0
+	FrameIndex RSCS B 0 0
+	FrameIndex RSCS C 0 0
+	FrameIndex RSCS D 0 0
+	FrameIndex RSCS E 0 0
+}
+
+Model RSQ_Shell12ga
+{
+	Path "models/casings"
+	Model 0 "shell_12ga.md3"
+	SurfaceSkin 0 0 "casing_brass.png"
+	SurfaceSkin 0 1 "shell_hull.png"
+	SurfaceSkin 0 2 "shell_inner.png"
+	SurfaceSkin 0 3 "casing_primer.png"
+	Scale 0.03279 0.03279 0.03279
+	USEACTORPITCH
+	USEACTORROLL
+	FrameIndex RSCS A 0 0
+	FrameIndex RSCS B 0 0
+	FrameIndex RSCS C 0 0
+	FrameIndex RSCS D 0 0
+	FrameIndex RSCS E 0 0
+}

@@ -41,6 +41,7 @@ class AE_Smart abstract
 {
 	const CONE      = 35.0;		// degrees off the gun's forward a target can be
 	const RANGE     = 2048.0;	// map units
+	const HUDLAYER  = 1001;		// the gun's own display: A_Overlay(1001, "SmartHud")
 	const MAX_YAW   = 22.0;		// how far the harness swings, degrees
 	const MAX_PITCH = 16.0;
 	const EASE      = 0.18;		// per tic, toward the wanted angle (0..1)
@@ -167,12 +168,8 @@ class AE_SmartHandler : EventHandler
 		s.pitch = 0;
 		if (s.putX == 0 && s.putY == 0)
 			return;
-		let psp = p.FindPSprite(PSP_WEAPON);
-		if (psp)
-		{
-			psp.x -= s.putX;			// hand back exactly what was borrowed
-			psp.y -= s.putY;
-		}
+		Give(p.FindPSprite(PSP_WEAPON), -s.putX, -s.putY);	// hand back exactly what was borrowed
+		Give(p.FindPSprite(AE_Smart.HUDLAYER), -s.putX, -s.putY);
 		s.putX = 0;
 		s.putY = 0;
 	}
@@ -186,17 +183,43 @@ class AE_SmartHandler : EventHandler
 	// animation the set already has. Instead the gimbal remembers what IT put
 	// there last tic, takes that back off, and adds the new value to whatever
 	// the weapon has meanwhile set for itself.
+	// FIXED 2026-10-23 (owner: the gun's own display "goes crazy during firing"). Two faults,
+	// both here:
+	//
+	// 1. oldx/oldy WERE NEVER CARRIED. Nothing in the playsim advances them -- p_pspr.h:114
+	//    ResetInterpolation() is the only writer, and hw_weapon.cpp calls it on firstTic only,
+	//    then interpolates oldx + (x - oldx) * ticFrac EVERY FRAME. Leave them and they sit at
+	//    0 for good, so the harness tilt ramps from neutral to full inside every single tic:
+	//    a shake, not a follow, and worst while firing because that is when the gimbal is
+	//    tracking hardest. zscript/rsq/hands.zs:693 and zscript/ae/loader.zs:432 already carry
+	//    them by hand for exactly this reason; this file was the one that did not.
+	//
+	// 2. THE HUD DID NOT COME WITH IT. The gun's own display is a separate psprite overlay
+	//    (actors/weapons/smartgun.txt: A_Overlay(1001, "SmartHud")), and only PSP_WEAPON was
+	//    being tilted -- so the harness swung the gun out from under a display that is bolted
+	//    to it. Both layers take the same borrow now.
 	static void Apply(PlayerInfo p, AE_SmartState s, double yaw, double pitch)
 	{
-		let psp = p.FindPSprite(PSP_WEAPON);
-		if (!psp)
+		double newX = yaw * 4.0;
+		double newY = -pitch * 4.0;
+		// each layer keeps whatever the weapon's own states put there; only the gimbal's
+		// share is taken back and re-applied
+		Give(p.FindPSprite(PSP_WEAPON), newX - s.putX, newY - s.putY);
+		Give(p.FindPSprite(AE_Smart.HUDLAYER), newX - s.putX, newY - s.putY);
+		s.putX = newX;
+		s.putY = newY;
+	}
+
+	// add a delta to a layer's tilt, carrying last tic's value so the renderer interpolates
+	// from where the layer WAS rather than from zero
+	static void Give(PSprite psp, double dx, double dy)
+	{
+		if (!psp || dx == 0 && dy == 0)
 			return;
-		double ownX = psp.x - s.putX;			// the gun's own offset this tic
-		double ownY = psp.y - s.putY;
-		s.putX = yaw * 4.0;
-		s.putY = -pitch * 4.0;
-		psp.x = ownX + s.putX;
-		psp.y = ownY + s.putY;
+		psp.oldx = psp.x;
+		psp.oldy = psp.y;
+		psp.x += dx;
+		psp.y += dy;
 	}
 
 	// Point the gun's own rounds at the gun's own lock. Caught by class name so

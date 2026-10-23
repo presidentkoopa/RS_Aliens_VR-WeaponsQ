@@ -7,6 +7,8 @@ version "4.10"
 #include "zscript/rsq/hands.zs"
 #include "zscript/rsq/counter.zs"	// 2026-10-22 pulse rifle ammo counter
 #include "zscript/rsq/melee.zs"	// 2026-10-22 VR melee by motion (knife stab, free fist)
+#include "zscript/rsq/casings.zs"	// 2026-10-23 spent casings (meshes from RS_Ballistics)
+#include "zscript/rsq/muzzle.zs"	// 2026-10-23 the round leaves the bore, not the controller
 #include "zscript/rsq/pumpgl.zs"	// 2026-10-22 pulse rifle: pump to load the launcher
 #include "zscript/rsq/switch.zs"
 #include "zscript/rsq/smartgun.zs"

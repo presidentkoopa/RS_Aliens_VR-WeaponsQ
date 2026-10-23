@@ -629,6 +629,20 @@ class RSQ_HandHandler : EventHandler
 			if (hands)
 				hands.holding = hold;
 
+			// 2026-10-23: the gun hand's OWN pose changes with the second hand, as BD22 1.92
+			// does (`String g = hold ? GunTwo(i) : GunOne(i)`). Until now this pack had one
+			// letter per gun and it was the two-handed grip, so a pistol held in one hand was
+			// still posed as though the other hand were on it. The letters and their trigger
+			// frames came out of BD22's own hand.md3 -- the same Ermac mesh, no new art.
+			// Recomputed here rather than at the top because `hold` is not known until now.
+			if (i > 0)
+			{
+				g = hold ? RSQ_HandTable.GunTwo(i) : RSQ_HandTable.GunOne(i);
+				String t1 = hold ? RSQ_HandTable.Trigger(i) : RSQ_HandTable.TriggerOne(i);
+				gl = t1 != "" ? ((p.cmd.buttons & BT_ATTACK) ? "Sqz" .. t1 : "Trg" .. t1)
+				              : "Gun" .. g;
+			}
+
 			SetLayer(p, RSQ_Layers.GUNHAND, gunOwner, (!dual && g != "") ? gl : "Hidden");
 			SetLayer(p, RSQ_Layers.SUPPORT, gunOwner, (!dual && hold && s != "") ? "Sup" .. s : "Hidden");
 			// Dual: the off hand holds a gun, so it shows that gun's grip pose

@@ -58,6 +58,40 @@ class RSQ_HandTable abstract
 		return 0;
 	}
 
+	// TWO gun-hand poses per gun, the shape BD22 1.92 has: the hand would change when the
+	// support hand comes onto the gun. Both return GunPose here, and that is CORRECT, not a
+	// stub. Read BD22's own hands.zs before changing it:
+	//
+	//     String g = hold ? GunTwo(i) : GunOne(i);
+	//     String tf = Trigger(i);
+	//     String gl = tf != "" ? ("Sqz"/"Trg" .. tf) : "Gun" .. g;
+	//
+	// When a gun HAS a trigger pose, g never picks the frame -- it only decides whether the
+	// gun hand is drawn at all. Every pistol here has one (Trigger 3/4/9/12 = "B"), and so
+	// does BD22's (its Trigger index 4 = "C"). So the two poses are INERT ON PISTOLS IN THE
+	// REFERENCE TOO; the feature is for guns with no trigger solve.
+	//
+	// BD22 also has ONE GunHook and ONE Trigger per gun, shared by both poses -- there is no
+	// per-pose fit anywhere in it. On 2026-10-23 a "TriggerOne" was invented here, pointing
+	// at hand frames appended from BD22's mesh with no trigger solve behind them, and it
+	// broke the pistol hands on sight. The frames have been removed again. Do not re-add a
+	// per-pose trigger letter.
+	clearscope static String GunOne(int i)
+	{
+		return GunPose(i);
+	}
+
+	clearscope static String GunTwo(int i)
+	{
+		return GunPose(i);
+	}
+
+	// the trigger letter that goes with GunOne: the one-handed pose has its own pair
+	clearscope static String TriggerOne(int i)
+	{
+		return Trigger(i);		// see GunOne: no one-handed fit yet
+	}
+
 	clearscope static String GunPose(int i)
 	{
 		static const String v[] = { "", "D", "F", "C", "C", "E", "F", "A", "F", "C", "F", "D", "C", "F", "A", "E", "F" };

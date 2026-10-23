@@ -252,6 +252,41 @@ Model AE_LoaderWorn
 // which controller it lands on (models.cpp:221):
 //     AE_LoaderArms  an inventory item   -> main controller -> right arm
 //     RSQ_Hands      the off-hand weapon -> off controller  -> left arm
+Model AE_LoaderCageSpark
+{
+	Path "Models\Weapons\mech"
+	Model 0 "mechaloader_spark.md3"
+	Skin 0 "loader_spark.png"
+
+	Scale 1.0 1.0 1.0
+
+	FrameIndex AESP A 0 0
+	FrameIndex AESP B 0 1
+	FrameIndex AESP C 0 2
+	FrameIndex AESP D 0 3
+}
+
+// 2026-10-23 THE CAB CAGE, over the operator's head. MechGuard.001 + MechCover carved out of
+// mechloader.md3 with their original coordinates, so it takes the ARMS' offset, not the
+// beacon's -- both come off the same mesh and the held mesh's origin is the operator.
+Model AE_LoaderWorn
+{
+	Path "Models\Weapons\mech"
+	Model 0 "loader_cage.md3"
+	// TWO surfaces, in the order tools/carve_loader.py writes them:
+	//   0  MechGuard.001  1245 verts  the cab frame around you
+	//   1  MechCover        18 verts  the 48 x 30 cm roof grate over your head
+	// The carve emitted the frame alone at first, so the cab had no roof. Checked against the
+	// mesh after re-carving, not assumed.
+	SurfaceSkin 0 0 "loader_upper.png"
+	SurfaceSkin 0 1 "loader_grate.png"
+
+	Scale -1.0 1.0 1.0
+	Offset -10.0 40.0 -10.0
+
+	FrameIndex AELC A 0 0
+}
+
 Model AE_LoaderArms
 {
 	Path "Models\Weapons\mech"

@@ -31,6 +31,33 @@ class AE_LoaderLayers abstract
 	// 2301 the engine created it and something removed it again within the tic.
 	const ARM_OFF  = 2211;
 	const BEACON   = 2304;
+	// 2026-10-23 the cab cage over the operator's head. The design hangs this on the body
+	// frame (step 7), but the owner cut the body and the legs, so it goes on a psprite layer
+	// beside the beacon instead -- which it can, because loader_cage.md3 was carved out of
+	// mechloader.md3 KEEPING ITS ORIGINAL COORDINATES, and the held mesh's origin is the
+	// operator. Same mesh origin as the arms means the same MODELDEF Offset places it.
+	const CAGE     = 2305;
+}
+
+// The spark the cage throws when it eats a hit. mechaloader_spark.md3 already ships with the
+// set; this is the actor that carries it, so no new art.
+class AE_LoaderCageSpark : Actor
+{
+	Default
+	{
+		Radius 1;
+		Height 1;
+		RenderStyle "Add";
+		Alpha 0.9;
+		Scale 0.7;
+		+NOBLOCKMAP +NOGRAVITY +NOINTERACTION +BRIGHT +CLIENTSIDEONLY
+	}
+	States
+	{
+	Spawn:
+		AESP ABCD 2 BRIGHT;
+		Stop;
+	}
 }
 
 class AE_LoaderWorn : Inventory
@@ -41,6 +68,37 @@ class AE_LoaderWorn : Inventory
 		+INVENTORY.UNDROPPABLE
 		+INVENTORY.UNTOSSABLE
 		+INVENTORY.QUIET
+	}
+
+	// THE CAGE TAKES ITS SHARE. ModifyDamage runs on every item the victim is carrying
+	// (inventory.zs), so the worn token is the right place for this -- no new actor, and it
+	// stops the moment the loader comes off. Sparks are fired along the bearing the hit came
+	// from, so you see where the cage saved you.
+	override void ModifyDamage(int damage, Name damageType, out int newdamage, bool passive,
+	                           Actor inflictor, Actor source, int flags)
+	{
+		if (!passive || damage <= 0 || !Owner)
+			return;
+		let cv = CVar.FindCVar('ae_loader_cage_absorb');
+		double frac = clamp(cv ? cv.GetFloat() : 0.35, 0.0, 0.9);
+		if (frac <= 0)
+			return;
+		int taken = int(damage * frac);
+		if (taken <= 0)
+			return;
+		newdamage = max(1, damage - taken);		// never absorb a hit entirely
+
+		// the bearing the blow came from, so the sparks land on the side that was struck
+		Actor from = inflictor ? inflictor : source;
+		double ang = from && from != Owner ? Owner.AngleTo(from) : Owner.angle;
+		Owner.A_StartSound("ALIECLW1", CHAN_AUTO, CHANF_OVERLAP, 0.7);
+		let sp = Owner.Spawn('AE_LoaderCageSpark',
+			Owner.Vec3Angle(22.0, ang, Owner.height * 0.9), ALLOW_REPLACE);
+		if (sp)
+		{
+			sp.target = Owner;
+			sp.angle = ang;
+		}
 	}
 
 	// The only hook that actually slows a VR player down. 1.0 is normal speed.
@@ -59,6 +117,10 @@ class AE_LoaderWorn : Inventory
 	// class and this sprite (modeldef.loader.txt).
 	Beacon:
 		AELB A -1;
+		Stop;
+	// The cab cage. Same trick: the sprite name exists because this state names it.
+	Cage:
+		AELC A -1;
 		Stop;
 	Hidden:
 		TNT1 A -1;
@@ -143,6 +205,8 @@ class AE_LoaderHandler : EventHandler
 	int     swingQuiet[MAXPLAYERS * 2];
 
 	// STEP 6, GRAB / CARRY / THROW / PIN / CRUSH.
+	bool    ramPrev[MAXPLAYERS * 2];	// alt fire was down last tic
+	int     ramQuiet[MAXPLAYERS * 2];	// tics before this arm may ram again
 	Actor   held[MAXPLAYERS * 2];
 	int     crushFor[MAXPLAYERS * 2];
 	bool    heldGrav[MAXPLAYERS * 2];
@@ -245,6 +309,9 @@ class AE_LoaderHandler : EventHandler
 			// Arms() needs no hand DATA -- each layer reaches the right controller purely by
 			// its caller -- so like the beacon it must not sit behind the VR gate below.
 			Arms(mo, n);
+			// The cage is bolted to the machine too: no hand data, so it goes above the gate
+			// with the beacon and the arms.
+			Cage(mo, n);
 
 			// Everything below reads AttackPos/OffhandPos, which exist only for a local VR
 			// player. Desktop and remote players get the weight and the shake but no arm
@@ -292,6 +359,7 @@ class AE_LoaderHandler : EventHandler
 
 				Clunk(mo, i, best, h == 1);
 				Claw(mo, n, best, h);
+				Ram(mo, n, h);			// the arms' second fire mode
 				HandGrab(mo, n, h, best);
 				loud = max(loud, best);
 			}
@@ -391,6 +459,36 @@ class AE_LoaderHandler : EventHandler
 	// key on, which is the diagnosis of why the worn loader never lit anything. Because HUD
 	// models gather light from around the player (hw_weapon.cpp:988), a light on the pawn
 	// washes orange across the arms, which is most of the effect.
+	// THE CAB CAGE. Shown while the loader is worn and taken away when it is not. It needs no
+	// hand data and no body frame -- the mesh keeps mechloader.md3's own coordinates and that
+	// mesh's origin is the operator, so the layer simply draws it where it already belongs.
+	void Cage(PlayerPawn mo, int n)
+	{
+		let p = mo.player;
+		let psp = p.FindPSprite(AE_LoaderLayers.CAGE);
+		bool on = F('ae_loader_cage', 1.0) > 0 && mo.FindInventory('AE_LoaderWorn');
+		if (!on)
+		{
+			if (psp)
+				p.SetPsprite(AE_LoaderLayers.CAGE, null);
+			return;
+		}
+		if (psp)
+			return;
+		let worn = mo.FindInventory('AE_LoaderWorn');
+		p.SetPsprite(AE_LoaderLayers.CAGE, worn.FindState('Cage'), false, worn);
+		psp = p.FindPSprite(AE_LoaderLayers.CAGE);
+		if (!psp)
+			return;
+		// it does not bob and it does not swing with the gun: it is part of the cab
+		psp.bAddWeapon = false;
+		psp.bAddBob = false;
+		psp.y = WEAPONTOP;
+		psp.oldy = psp.y;
+		psp.x = 0;
+		psp.oldx = 0;
+	}
+
 	void Beacon(PlayerPawn mo, int n)
 	{
 		let p = mo.player;
@@ -615,6 +713,41 @@ class AE_LoaderHandler : EventHandler
 		                              int(pt.z * 8) | (h << 24));
 	}
 
+	// THE RAM -- the arms' second fire mode, 2026-10-23 (owner: "we can have multiple fire
+	// modes for each arm").
+	//
+	// The claw's own trigger is for taking hold of something: close, carry, crush, throw. That
+	// is a deliberate, two-step thing, and it is no use at all when something is already on
+	// you. So alt fire is the other half of a loader: a straight hydraulic shove. No grab, no
+	// wind-up -- what is in front of the claw goes away from you, hard, and takes a hit doing
+	// it. It is the move the machine is FOR.
+	//
+	// It will not fire while that arm is holding something: a hand that has hold of a barrel
+	// is not free to punch with, and firing it would silently drop what you were carrying.
+	void Ram(PlayerPawn mo, int n, int h)
+	{
+		int i = n * 2 + h;
+		if (ramQuiet[i] > 0)
+			ramQuiet[i]--;
+		let p = mo.player;
+		bool down = (p.cmd.buttons & (h == 0 ? BT_ALTATTACK : BT_OFFHANDALTATTACK)) != 0;
+		bool press = down && !ramPrev[i];
+		ramPrev[i] = down;
+		if (!press || ramQuiet[i] > 0 || held[i])
+			return;
+		if (F('ae_loader_ram', 1.0) <= 0)
+			return;
+		ramQuiet[i] = int(max(F('ae_loader_ram_gap', 20.0), 1.0));
+
+		Vector3 pt = ClawPoint(mo, h == 1);
+		// ONE event, as the claw sends: the point in eighths with the hand in the top byte.
+		// The shove direction is taken from the claw point back to the player on the far side
+		// rather than sent as a second event -- two events for one action can arrive split up,
+		// and the line from you to your own claw IS the arm's forward.
+		EventHandler.SendNetworkEvent("ae_ram", int(pt.x * 8), int(pt.y * 8),
+		                              int(pt.z * 8) | (h << 24));
+	}
+
 	static Vector3 ClawPoint(PlayerPawn mo, bool off)
 	{
 		double ps = mo.Level.pixelstretch;
@@ -636,7 +769,8 @@ class AE_LoaderHandler : EventHandler
 	override void NetworkProcess(ConsoleEvent e)
 	{
 		int hand = 0;
-		if (e.Name == "ae_grab" || e.Name == "ae_drop" || e.Name == "ae_crush" || e.Name == "ae_claw")
+		if (e.Name == "ae_grab" || e.Name == "ae_drop" || e.Name == "ae_crush"
+		    || e.Name == "ae_claw" || e.Name == "ae_ram")
 			hand = e.Name == "ae_crush" ? e.Args[0] : ((e.Args[2] >> 24) & 1);
 		else
 			return;
@@ -680,6 +814,39 @@ class AE_LoaderHandler : EventHandler
 			Vector3 v = (e.Args[0] / 64.0, e.Args[1] / 64.0,
 			             ((e.Args[2] << 8) >> 8) / 64.0);
 			Drop(n * 2 + hand, v);
+			return;
+		}
+
+		if (e.Name == "ae_ram")
+		{
+			Vector3 pt = (e.Args[0] / 8.0, e.Args[1] / 8.0, (e.Args[2] & 0xFFFFFF) / 8.0);
+			// the shove runs from the player out through the claw: that line is the arm
+			Vector3 away = pt - mo.pos;
+			double len = away.Length();
+			if (len < 1)
+				return;
+			away /= len;
+			double rad = F2('ae_loader_ram_radius', 56.0);
+			int dmg = int(F2('ae_loader_ram_damage', 60.0));
+			double push = F2('ae_loader_ram_push', 26.0);
+			bool any = false;
+			let it = BlockThingsIterator.CreateFromPos(pt.x, pt.y, pt.z, 0, rad, false);
+			while (it.Next())
+			{
+				let t = it.thing;
+				if (!t || t == mo || !t.bSHOOTABLE || t.health <= 0)
+					continue;
+				if ((t.pos - pt).Length() > rad + t.radius)
+					continue;
+				// a shove throws things OFF you: out along the arm and a little up, so a body
+				// leaves the floor instead of grinding along it
+				t.vel += away * push + (0, 0, push * 0.35);
+				t.DamageMobj(mo, mo, dmg, 'Melee', DMG_THRUSTLESS);
+				any = true;
+			}
+			mo.A_StartSound(any ? "melee/hitwall" : "ALIECLW1", CHAN_AUTO, CHANF_OVERLAP, 0.9);
+			if (any)
+				RSQ_MeleeHandler.Buzz(mo);
 			return;
 		}
 

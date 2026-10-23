@@ -28,6 +28,210 @@ ACTOR AE_Off_M4A3Pistol : M4A3Pistol_3D
 	+WEAPON.CHEATNOTWEAPON
 	Weapon.AmmoType1 "AE_M4A3PistolMagOff"		// its own magazine
 	Weapon.AmmoType2 "PistolClip"		// the shared reserve
+
+	// GENERATED from M4A3Pistol_3D: its whole state machine with PistolLoaded -> AE_M4A3PistolMagOff (8 swapped).
+	// Inheriting the parent's states instead would load the PARENT's magazine.
+	States
+	{
+  Ready:
+    TNT1 A 0 ACS_NamedExecuteAlways("LOADDOWN", 0, 20, 56)
+    //TNT1 A 0 A_JumpifInventory("NormalStance", 1, "RealReady")
+	//TNT1 A 0 A_JumpifInventory("IsSight", 1, "SightReady")	 
+    //Loop
+  RealReady:
+    //TNT1 A 0 Bright A_ZoomFactor(1.0)
+	MM91 A 0 A_SetSpeed (0.7)
+    //TNT1 A 0 A_SetCrosshair(0)
+    MM91 A 1 A_WeaponReady(WRF_ALLOWRELOAD)
+     Goto Ready
+	 /*
+  SightReady:
+     TNT1 A 0 A_ZoomFactor(1.4)
+	 TNT1 A 0 A_SetSpeed (0.35)
+     TNT1 A 0 A_SetCrosshair(8)
+     PISI A 1 Bright A_WeaponReady(WRF_ALLOWRELOAD)
+     Goto Ready
+	 */
+  Deselect:
+    MM91 A 0 Bright A_ZoomFactor(1.0)
+	MM91 A 0 A_SetSpeed (0.7)
+	MM91 A 0 A_SetCrosshair(0)
+	//MM91 A 0 A_TakeInventory("NormalStance", 1)
+    //TNT1 A 0 A_TakeInventory("IsSight", 1)
+    MM91 A 1 A_Lower(12)
+    Loop
+  Select:
+    //MM91 A 0 A_GiveInventory("NormalStance", 1)
+	//TNT1 A 0 A_TakeInventory("IsSight", 1)
+    MM91 A 1 A_Raise(12)
+    Loop
+	EmptyReady:
+	MM91 A 1 A_WeaponReady(WRF_ALLOWRELOAD)
+	Loop
+	Dryfire:
+    //TNT1 A 0 A_JumpifInventory("IsSight", 1, "IronSightDryFire")
+	MM91 A 2 A_PlaySound ("DRYFIRE")
+	Goto Reload
+	/*
+  IronSightDryFire:
+     PISI A 15 Bright A_PlaySound("DRYFIRE", 1)
+     Goto Reload
+	 */
+  Fire:
+	/*
+    TNT1 A 0 A_JumpIfnoAmmo("Dryfire")
+	TNT1 A 0 A_JumpifInventory("IsSight", 1, "SightFire")
+	TNT1 A 0 A_PlaySound ("COLTFIRE", 1, 0.4)
+    TNT1 A 0 A_AlertMonsters
+    TNT1 A 0 A_FireCustomMissile("DummyProjectile1", 0, 0, 0, 0, 0, 0)
+	MM91 B 4 Bright A_FireProjectile ("ColPistol", 0, -1, 0, 8, 0, 0)
+    MM91 C 4 Bright A_Light(3)
+	MM91 D 1
+	TNT1 A 0 A_Gunflash
+	MM91 A 1 A_WeaponReady
+	*/
+    MM91 A 0 A_JumpIfnoAmmo("Dryfire")
+	MM91 A 0 A_Gunflash
+	MM91 A 0 A_PlaySound ("COLTFIRE", 1, 0.4)
+    MM91 A 0 A_AlertMonsters
+    MM91 A 0 A_FireCustomMissile("DummyProjectile1", 0, 0, 0, 0, 0, 0)
+    MM91 B 2 Bright A_Light(3)
+	MM91 C 2 Bright A_FireProjectile ("ColPistol", 0, -1, 0, 8, 0, 0)
+    MM91 DE 2
+	MM91 F 2
+	"####" # 0 A_JumpIf(GetCVAR("avw_weapons")==0, "Ready")
+	"####" # 0 A_FireProjectile("GunBarrelSmoke",0,0,0,0,FPF_NOAUTOAIM,0)
+    Goto Ready
+	/*
+  SightFire:
+     TNT1 A 0 A_JumpIfnoAmmo("Dryfire")
+	 TNT1 A 0 A_PlaySound ("COLTFIRE", 1, 0.45)
+     TNT1 A 0 A_AlertMonsters
+     TNT1 A 0 A_FireCustomMissile("DummyProjectile1", 0, 0, 0, 0, 0, 0)
+	 PISI B 2 Bright A_FireProjectile ("ColPistol", 0, -1, 0, 8, 0, 3)
+	 PISI C 1 Bright A_Light(3)
+	 PISI D 5 Bright A_GunFlash
+	 TNT1 A 0 A_SetAngle(frandom(0, -0.2) + angle)
+     TNT1 A 0 A_SetPitch(-0.25 + pitch)
+	 TNT1 A 0 A_WeaponReady
+     Goto Ready
+	 */
+	Reload:
+  MM91 A 0 A_JumpIfInventory("AE_M4A3PistolMagOff", 12, 2)
+  MM91 A 0 A_JumpIfInventory("PistolClip", 1, "ReloadWork")
+  MM91 A 0
+  Goto Ready
+  ReloadWork:
+  	MM91 A 0 A_GiveInventory("RSR_Go", 1)
+  	Goto RSR_Start
+  ReloadWork_Stock:
+	//MM91 A 0 A_PlaySound("PTCLIPOU")
+	//MM91 A 0 Bright A_ZoomFactor(1.0)
+	MM91 A 0 A_SetSpeed (0.7)
+    //MM91 A 0 A_SetCrosshair(0)
+	//MM91 A 0 A_GiveInventory("NormalStance", 1)
+	//MM91 A 0 A_TakeInventory("IsSight", 1)
+	//MM91 E 4
+	MM91 GHI 1
+	ReloadLoop:
+    MM91 A 0 A_TakeInventory("PistolClip", 1)
+    MM91 A 0 A_GiveInventory("AE_M4A3PistolMagOff", 1)
+    MM91 A 0 A_JumpIfInventory("AE_M4A3PistolMagOff", 12, "ReloadFinish")
+    MM91 A 0 A_JumpIfInventory("PistolClip", 1, "ReloadLoop")
+	ReloadFinish:
+	/*
+	TNT1 A 0 A_PlaySound("PTCLIPIN")
+    TNT1 A 0 
+	MM91 F 5
+	MM91 G 4
+	MM91 A 3
+	*/
+	MM91 J 1 A_PlaySound("PTCLIPOU")
+    MM91 K 1 
+    MM91 L 4 
+	MM91 MN 1
+	MM91 O 1 A_PlaySound("PTCLIPIN")
+	MM91 PQRST 1
+	Goto Ready
+  Flash:
+	TNT1 A 0 A_JumpIf(GetCVAR("avw_tracers")==false, 2)
+	TNT1 A 0 A_FireProjectile("BulletTracer",random(-1,1),0,0,0,FPF_NOAUTOAIM,random(-1,1))
+	TNT1 A 0 A_JumpIf(GetCVAR("avw_weapons_mf")==1, "MuzzleFlash")
+	TNT1 A 2
+    TNT1 A 2 Bright A_Light1
+    Goto LightDone
+  MuzzleFlash:
+	TNT1 A 2
+    PSMF AB 1 Bright A_Light1
+    TNT1 A 0 A_Light0
+	Stop
+  Spawn:
+	M4A3 A 0 A_JumpIf(GetCVAR("avw_pickupmodel")==1, "Spawn3D")
+    M4A3 A 1
+    Loop
+  Spawn3D:
+	M4A3 A 0 A_JumpIf(GetCVAR("avw_pickupmodel")==0, "Spawn")
+    M4A3 P 1 Bright
+    Loop
+  
+	// RSR: real VR reload (zscript/rsr/vreload.zs, tools/rsr_patch_ae.py AE_GUNS).
+	// Not in VR, or with real reload off, RSR_Start falls through to the
+	// set's own canned reload and nothing below runs.
+	RSR_Start:
+		MM91 A 0 A_TakeInventory("RSR_Go", 1)
+		MM91 A 0 A_GiveInventory("RSR_Start", 1)
+		MM91 A 0 A_JumpIfInventory("RSR_Go", 1, "RSR_Out")
+		Goto ReloadWork_Stock
+	RSR_Out:
+		MM91 A 0 A_TakeInventory("RSR_Go", 1)
+		MM91 A 0 A_JumpIfInventory("RSR_NoMag_M4A3Pistol", 1, "RSR_Wait")	// no magazine in the gun
+		MM91 A 0 A_JumpIfInventory("RSR_Charge", 1, "RSR_Filled")	// magazine in, handle still due
+		MM91 A 0 A_GiveInventory("RSR_MagOut", 1)	// the magazine drops out (its own sound)
+	RSR_Unload:	// the rounds are held aside and come back when a magazine is home, so
+				// the count ends where the gun's own reload would have ended it
+		MM91 A 0 A_JumpIfInventory("AE_M4A3PistolMagOff", 1, "RSR_Unload1")
+		MM91 A 0 A_GiveInventory("RSR_NoMag_M4A3Pistol", 1)
+		Goto RSR_Wait
+	RSR_Unload1:
+		MM91 A 0 A_TakeInventory("AE_M4A3PistolMagOff", 1)
+		MM91 A 0 A_GiveInventory("RSR_Held_M4A3Pistol_3D", 1)
+		Goto RSR_Unload
+	RSR_Wait:		// the gun as the script shows it ("####" "#"); the script runs every tic
+		"####" "#" 1 A_WeaponReady(WRF_NOBOB|WRF_NOFIRE)
+		"####" "#" 0 A_GiveInventory("RSR_Tick", 1)
+		"####" "#" 0 A_JumpIfInventory("RSR_Seated", 1, "RSR_Fill")
+		"####" "#" 0 A_JumpIfInventory("RSR_Done", 1, "RSR_Done")
+		Goto RSR_Wait
+	RSR_Fill:	// the magazine is home: the gun's own fill loop, its own items
+		MM91 A 0 A_TakeInventory("RSR_Seated", 1)
+		MM91 A 0 A_TakeInventory("RSR_NoMag_M4A3Pistol", 1)
+	RSR_Return:	// the held rounds first
+		MM91 A 0 A_JumpIfInventory("RSR_Held_M4A3Pistol_3D", 1, "RSR_Return1")
+		Goto RSR_FillGo
+	RSR_Return1:
+		MM91 A 0 A_TakeInventory("RSR_Held_M4A3Pistol_3D", 1)
+		MM91 A 0 A_GiveInventory("AE_M4A3PistolMagOff", 1)
+		Goto RSR_Return
+	RSR_FillGo:
+		MM91 A 0 A_GiveInventory("RSR_Charge", 1)	// the handle is due (vreload.zs: ChargeToken)
+		Goto RSR_FillA
+	RSR_FillA:
+		MM91 A 0 A_JumpIfInventory("AE_M4A3PistolMagOff", 12, "RSR_Filled")
+		MM91 A 0 A_JumpIfInventory("PistolClip", 1, "RSR_FillAa")
+		Goto RSR_Filled
+	RSR_FillAa:
+		MM91 A 0 A_GiveInventory("AE_M4A3PistolMagOff", 1)
+		MM91 A 0 A_TakeInventory("PistolClip", 1, TIF_NOTAKEINFINITE)
+		Goto RSR_FillA
+	RSR_Filled:
+		MM91 A 0 A_GiveInventory("RSR_Filled", 1)	// the script: the handle if due, else done
+		Goto RSR_Wait
+	RSR_Done:
+		MM91 A 0 A_TakeInventory("RSR_Done", 1)
+		MM91 A 0 A_TakeInventory("RSR_Charge", 1)
+		MM91 A 0 A_SetSpeed(1.0)
+		Goto Ready
+	}
 }
 
 ACTOR AE_MercPistolMagOff : Ammo
@@ -50,6 +254,208 @@ ACTOR AE_Off_MercPistol : MercPistol_3D
 	+WEAPON.CHEATNOTWEAPON
 	Weapon.AmmoType1 "AE_MercPistolMagOff"		// its own magazine
 	Weapon.AmmoType2 "PistolClip"		// the shared reserve
+
+	// GENERATED from MercPistol_3D: its whole state machine with PistolLoaded -> AE_MercPistolMagOff (8 swapped).
+	// Inheriting the parent's states instead would load the PARENT's magazine.
+	States
+	{
+  Ready:
+    MM91 A 0 ACS_NamedExecuteAlways("LOADDOWN", 0, 20, 56)
+    //MM91 A 0 A_JumpifInventory("NormalStance", 1, "RealReady")
+	//TNT1 A 0 A_JumpifInventory("IsSight", 1, "SightReady")	 
+    //Loop
+  RealReady:
+    //TNT1 A 0 Bright A_ZoomFactor(1.0)
+	MM91 A 0 A_SetSpeed (0.7)
+    //TNT1 A 0 A_SetCrosshair(0)
+    MM91 A 1 A_WeaponReady(WRF_ALLOWRELOAD)
+     Goto Ready
+	 /*
+  SightReady:
+     TNT1 A 0 Bright A_ZoomFactor(1.4)
+	 TNT1 A 0 A_SetSpeed (0.35)
+     TNT1 A 0 A_SetCrosshair(8)
+     PISI A 1 Bright A_WeaponReady(WRF_ALLOWRELOAD)
+     Goto Ready
+	 */
+  Deselect:
+    //TNT1 A 0 Bright A_ZoomFactor(1.0)
+	MM91 A 0 A_SetSpeed (0.7)
+	//TNT1 A 0 A_SetCrosshair(0)
+	//MM91 A 0 A_TakeInventory("NormalStance", 1)
+    //TNT1 A 0 A_TakeInventory("IsSight", 1)
+    MM91 A 1 A_Lower(12)
+    Loop
+  Select:
+    //MM91 A 0 A_GiveInventory("NormalStance", 1)
+	//TNT1 A 0 A_TakeInventory("IsSight", 1)
+    MM91 A 1 A_Raise(12)
+    Loop
+	EmptyReady:
+	MM91 A 1 A_WeaponReady(WRF_ALLOWRELOAD)
+	Loop
+	Dryfire:
+    //TNT1 A 0 A_JumpifInventory("IsSight", 1, "IronSightDryFire")
+	MM91 A 2 A_PlaySound ("DRYFIRE")
+	Goto Reload
+	/*
+  IronSightDryFire:
+     PISI A 15 Bright A_PlaySound("DRYFIRE", 1)
+     Goto Reload
+	 */
+  Fire:
+	/*
+    TNT1 A 0 A_JumpIfnoAmmo("Dryfire")
+	TNT1 A 0 A_JumpifInventory("IsSight", 1, "SightFire")
+	TNT1 A 0 A_PlaySound ("COLTFIRE", 1, 0.4)
+    TNT1 A 0 A_AlertMonsters
+    TNT1 A 0 A_FireCustomMissile("DummyProjectile1", 0, 0, 0, 0, 0, 0)
+	MM91 B 2 Bright A_FireProjectile ("MerPistol", random(-1, 1), -1, 0, 8, 0, random(-1, 1))
+    MM91 C 1 Bright A_Light(3)
+	MM91 D 1
+	TNT1 A 0 A_Gunflash
+	MM91 A 1 A_WeaponReady
+	*/
+    MM91 A 0 A_JumpIfnoAmmo("Dryfire")
+	MM91 A 0 A_Gunflash
+	MM91 A 0 A_PlaySound ("COLTFIRE", 1, 0.4)
+    MM91 A 0 A_AlertMonsters
+    MM91 A 0 A_FireCustomMissile("DummyProjectile1", 0, 0, 0, 0, 0, 0)
+    MM91 B 1 Bright A_Light(3)
+	MM91 C 1 Bright A_FireProjectile ("ColPistol", 0, -1, 0, 8, 0, 0)
+    MM91 DE 1
+	MM91 F 1
+	"####" # 0 A_JumpIf(GetCVAR("avw_weapons")==0, "Ready")
+	"####" # 0 A_FireProjectile("GunBarrelSmoke",0,0,0,0,FPF_NOAUTOAIM,0)
+    Goto Ready
+	/*
+  SightFire:
+     TNT1 A 0 A_JumpIfnoAmmo("Dryfire")
+	 TNT1 A 0 A_PlaySound ("COLTFIRE", 1, 0.45)
+     TNT1 A 0 A_AlertMonsters
+     TNT1 A 0 A_FireCustomMissile("DummyProjectile1", 0, 0, 0, 0, 0, 0)
+	 PISI B 2 Bright A_FireProjectile ("MerPistol", 0, -1, 0, 8, 0, 3)
+	 TNT1 A 0 A_SetAngle(frandom(0, -0.2) + angle)
+     TNT1 A 0 A_SetPitch(-0.25 + pitch)
+	 PISI C 1 Bright A_Gunflash
+	 PISI D 1 Bright A_WeaponReady
+     Goto Ready
+	 */
+	Reload:
+  MM91 A 0 A_JumpIfInventory("AE_MercPistolMagOff", 12, 2)
+  MM91 A 0 A_JumpIfInventory("PistolClip", 1, "ReloadWork")
+  MM91 A 0
+  Goto Ready
+  ReloadWork:
+  	MM91 A 0 A_GiveInventory("RSR_Go", 1)
+  	Goto RSR_Start
+  ReloadWork_Stock:
+	//MM91 A 0 A_PlaySound("PTCLIPOU")
+	//TNT1 A 0 Bright A_ZoomFactor(1.0)
+	MM91 A 0 A_SetSpeed (0.7)
+    //TNT1 A 0 A_SetCrosshair(0)
+	//MM91 A 0 A_GiveInventory("NormalStance", 1)
+	//TNT1 A 0 A_TakeInventory("IsSight", 1)
+	//MM91 E 6
+	MM91 GHI 1
+	ReloadLoop:
+    MM91 A 0 A_TakeInventory("PistolClip", 1)
+    MM91 A 0 A_GiveInventory("AE_MercPistolMagOff", 1)
+    MM91 A 0 A_JumpIfInventory("AE_MercPistolMagOff", 12, "ReloadFinish")
+    MM91 A 0 A_JumpIfInventory("PistolClip", 1, "ReloadLoop")
+	ReloadFinish:
+	/*
+	TNT1 A 0 A_PlaySound("PTCLIPIN")
+    TNT1 A 0 
+	MM91 F 7
+	MM91 G 6
+	MM91 A 5
+	*/
+	MM91 J 1 A_PlaySound("PTCLIPOU")
+    MM91 K 1 
+    MM91 L 6
+	MM91 M 6
+	MM91 N 1
+	MM91 O 1 A_PlaySound("PTCLIPIN")
+	MM91 PQRST 1
+	Goto Ready
+  Flash:
+	TNT1 A 0 A_JumpIf(GetCVAR("avw_tracers")==false, 2)
+	TNT1 A 0 A_FireProjectile("BulletTracer",random(-1,1),0,0,0,FPF_NOAUTOAIM,random(-1,1))
+	TNT1 A 0 A_JumpIf(GetCVAR("avw_weapons_mf")==1, "MuzzleFlash")
+    TNT1 A 0 Bright A_Light1
+    Goto LightDone
+  MuzzleFlash:
+	TNT1 A 1
+    PSMF AB 1 Bright A_Light1
+    TNT1 A 0 A_Light0
+	Stop
+  Spawn:
+	M4A3 A 0 A_JumpIf(GetCVAR("avw_pickupmodel")==1, "Spawn3D")
+    M4A3 A 1
+    Loop
+  Spawn3D:
+	M4A3 A 0 A_JumpIf(GetCVAR("avw_pickupmodel")==0, "Spawn")
+    M4A3 P 1 Bright
+    Loop
+  
+	// RSR: real VR reload (zscript/rsr/vreload.zs, tools/rsr_patch_ae.py AE_GUNS).
+	// Not in VR, or with real reload off, RSR_Start falls through to the
+	// set's own canned reload and nothing below runs.
+	RSR_Start:
+		MM91 A 0 A_TakeInventory("RSR_Go", 1)
+		MM91 A 0 A_GiveInventory("RSR_Start", 1)
+		MM91 A 0 A_JumpIfInventory("RSR_Go", 1, "RSR_Out")
+		Goto ReloadWork_Stock
+	RSR_Out:
+		MM91 A 0 A_TakeInventory("RSR_Go", 1)
+		MM91 A 0 A_JumpIfInventory("RSR_NoMag_MercPistol", 1, "RSR_Wait")	// no magazine in the gun
+		MM91 A 0 A_JumpIfInventory("RSR_Charge", 1, "RSR_Filled")	// magazine in, handle still due
+		MM91 A 0 A_GiveInventory("RSR_MagOut", 1)	// the magazine drops out (its own sound)
+	RSR_Unload:	// the rounds are held aside and come back when a magazine is home, so
+				// the count ends where the gun's own reload would have ended it
+		MM91 A 0 A_JumpIfInventory("AE_MercPistolMagOff", 1, "RSR_Unload1")
+		MM91 A 0 A_GiveInventory("RSR_NoMag_MercPistol", 1)
+		Goto RSR_Wait
+	RSR_Unload1:
+		MM91 A 0 A_TakeInventory("AE_MercPistolMagOff", 1)
+		MM91 A 0 A_GiveInventory("RSR_Held_MercPistol_3D", 1)
+		Goto RSR_Unload
+	RSR_Wait:		// the gun as the script shows it ("####" "#"); the script runs every tic
+		"####" "#" 1 A_WeaponReady(WRF_NOBOB|WRF_NOFIRE)
+		"####" "#" 0 A_GiveInventory("RSR_Tick", 1)
+		"####" "#" 0 A_JumpIfInventory("RSR_Seated", 1, "RSR_Fill")
+		"####" "#" 0 A_JumpIfInventory("RSR_Done", 1, "RSR_Done")
+		Goto RSR_Wait
+	RSR_Fill:	// the magazine is home: the gun's own fill loop, its own items
+		MM91 A 0 A_TakeInventory("RSR_Seated", 1)
+		MM91 A 0 A_TakeInventory("RSR_NoMag_MercPistol", 1)
+	RSR_Return:	// the held rounds first
+		MM91 A 0 A_JumpIfInventory("RSR_Held_MercPistol_3D", 1, "RSR_Return1")
+		Goto RSR_FillGo
+	RSR_Return1:
+		MM91 A 0 A_TakeInventory("RSR_Held_MercPistol_3D", 1)
+		MM91 A 0 A_GiveInventory("AE_MercPistolMagOff", 1)
+		Goto RSR_Return
+	RSR_FillGo:
+		MM91 A 0 A_GiveInventory("RSR_Charge", 1)	// the handle is due (vreload.zs: ChargeToken)
+		Goto RSR_FillA
+	RSR_FillA:
+		MM91 A 0 A_JumpIfInventory("AE_MercPistolMagOff", 12, "RSR_Filled")
+		MM91 A 0 A_JumpIfInventory("PistolClip", 1, "RSR_FillAa")
+		Goto RSR_Filled
+	RSR_FillAa:
+		MM91 A 0 A_GiveInventory("AE_MercPistolMagOff", 1)
+		MM91 A 0 A_TakeInventory("PistolClip", 1, TIF_NOTAKEINFINITE)
+		Goto RSR_FillA
+	RSR_Filled:
+		MM91 A 0 A_GiveInventory("RSR_Filled", 1)	// the script: the handle if due, else done
+		Goto RSR_Wait
+	RSR_Done:
+		MM91 A 0 A_TakeInventory("RSR_Done", 1)
+		MM91 A 0 A_TakeInventory("RSR_Charge", 1)
+		Goto Ready
+	}
 }
 
 ACTOR AE_SynthPistolMagOff : Ammo
@@ -72,6 +478,270 @@ ACTOR AE_Off_SynthPistol : SynthPistol_3D
 	+WEAPON.CHEATNOTWEAPON
 	Weapon.AmmoType1 "AE_SynthPistolMagOff"		// its own magazine
 	Weapon.AmmoType2 "PistolClip"		// the shared reserve
+
+	// GENERATED from SynthPistol_3D: its whole state machine with SynthLoaded -> AE_SynthPistolMagOff (8 swapped).
+	// Inheriting the parent's states instead would load the PARENT's magazine.
+	States
+	{
+  Ready:
+    MM91 A 0 ACS_NamedExecuteAlways("LOADDOWN", 0, 20, 56)
+    //MM91 A 0 A_JumpifInventory("NormalStance", 1, "RealReady")
+	//TNT1 A 0 A_JumpifInventory("IsSight", 1, "SightReady")	 
+    //Loop
+  RealReady:
+    //TNT1 A 0 Bright A_ZoomFactor(1.0)
+	MM91 A 0 A_SetSpeed (0.7)
+    //TNT1 A 0 A_SetCrosshair(0)
+    MM91 A 1 A_WeaponReady(WRF_ALLOWRELOAD)
+     Goto Ready
+	 /*
+  SightReady:
+     TNT1 A 0 Bright A_ZoomFactor(1.4)
+	 TNT1 A 0 A_SetSpeed (0.35)
+     TNT1 A 0 A_SetCrosshair(8)
+     TNT1 A 0 A_JumpIfInventory("PistolRapidAlt", 1, "SightReady2")
+     PISI A 1 Bright A_WeaponReady(WRF_ALLOWRELOAD)
+     Goto Ready
+  SightReady2:
+     PISI E 1 Bright A_WeaponReady(WRF_ALLOWRELOAD)
+     Goto Ready
+	 */
+  Deselect:
+    //TNT1 A 0 Bright A_ZoomFactor(1.0)
+	MM91 A 0 A_SetSpeed (0.7)
+	//TNT1 A 0 A_SetCrosshair(0)
+	//MM91 A 0 A_TakeInventory("NormalStance", 1)
+    //TNT1 A 0 A_TakeInventory("IsSight", 1)
+    MM91 A 1 A_Lower(12)
+    Loop
+  Select:
+    //MM91 A 0 A_GiveInventory("NormalStance", 1)
+	//TNT1 A 0 A_TakeInventory("IsSight", 1)
+    MM91 A 1 A_Raise(12)
+    Loop
+	EmptyReady:
+	MM91 A 1 A_WeaponReady(WRF_ALLOWRELOAD)
+	Loop
+	Dryfire:
+    //TNT1 A 0 A_JumpifInventory("IsSight", 1, "IronSightDryFire")
+	MM91 A 2 A_PlaySound ("DRYFIRE")
+	Goto Reload
+	/*
+  IronSightDryFire:
+     PISI A 15 Bright A_PlaySound("DRYFIRE", 1)
+     Goto Reload
+	 */
+  Fire:
+	/*
+	TNT1 A 0 A_JumpIfnoAmmo("Dryfire")
+	TNT1 A 0 A_JumpifInventory("IsSight", 1, "SightFire")
+    TNT1 A 0 A_JumpIfInventory("PistolRapidAlt", 1, "Fire2")
+	TNT1 A 0 A_PlaySound ("COLTFIRE", 1, 0.45)
+    TNT1 A 0 A_AlertMonsters
+    TNT1 A 0 A_FireCustomMissile("DummyProjectile4", 0, 0, 0, 0, 0, 0)
+	MM91 B 1 Bright A_FireProjectile ("SynPistol",0, -1, 0, 8, 0, 0) 
+	MM91 C 1 Bright A_FireProjectile ("SynPistol",random(-4, 4), -1, 0, 8, 0, random(-4, 4)) 
+	TNT1 A 0 A_Gunflash
+	MM91 D 1 A_ReFire
+	*/
+    MM91 A 0 A_JumpIfnoAmmo("Dryfire")
+    MM91 A 0 A_JumpIfInventory("PistolRapidAlt", 1, "Fire2")
+	MM91 A 0 A_Gunflash
+	MM91 A 0 A_PlaySound ("COLTFIRE", 1, 0.45)
+    MM91 A 0 A_AlertMonsters
+    MM91 A 0 A_FireCustomMissile("DummyProjectile4", 0, 0, 0, 0, 0, 0)
+    MM91 B 1 Bright A_FireProjectile ("SynPistol",0, -1, 0, 8, 0, 0)
+	MM91 C 1 Bright A_FireProjectile ("SynPistol",random(-4, 4), -1, 0, 8, 0, random(-4, 4))
+    MM91 D 1 A_ReFire
+	"####" # 0 A_JumpIf(GetCVAR("avw_weapons")==0, "Ready")
+	"####" # 0 A_FireProjectile("GunBarrelSmoke",0,0,0,0,FPF_NOAUTOAIM,0)
+    Goto Ready
+  Fire2:
+	/*
+    TNT1 A 0 A_JumpIfnoAmmo("Dryfire")
+	TNT1 A 0 A_JumpifInventory("IsSight", 1, "SightFire")
+	TNT1 A 0 A_PlaySound ("COLTFIRE", 1, 0.4)
+    TNT1 A 0 A_AlertMonsters
+    TNT1 A 0 A_FireCustomMissile("DummyProjectile1", 0, 0, 0, 0, 0, 0)
+	MM91 B 4 Bright A_FireProjectile ("SynPistol", random(-1, 1), -1, 0, 8, 0, random(-1, 1))
+    MM91 C 4 Bright A_Light(3)
+	MM91 D 1 A_Gunflash
+	MM91 A 1 A_WeaponReady
+	*/
+    MM91 A 0 A_JumpIfnoAmmo("Dryfire")
+	MM91 A 0 A_Gunflash
+	MM91 A 0 A_PlaySound ("COLTFIRE", 1, 0.4)
+    MM91 A 0 A_AlertMonsters
+    MM91 A 0 A_FireCustomMissile("DummyProjectile1", 0, 0, 0, 0, 0, 0)
+    MM91 B 2 A_Light(3)
+	MM91 C 2 Bright A_FireProjectile ("SynPistol", random(-1, 1), -1, 0, 8, 0, random(-1, 1))
+    MM91 DE 2
+    MM91 F 2 A_WeaponReady
+	"####" # 0 A_JumpIf(GetCVAR("avw_weapons")==0, "Ready")
+	"####" # 0 A_FireProjectile("GunBarrelSmoke",0,0,0,0,FPF_NOAUTOAIM,0)
+    Goto Ready
+	/*
+  SightFire:
+     TNT1 A 0 A_JumpIfnoAmmo("Dryfire")
+     TNT1 A 0 A_JumpIfInventory("PistolRapidAlt", 1, "SightFire2")
+	 TNT1 A 0 A_PlaySound ("COLTFIRE", 1, 0.5)
+     TNT1 A 0 A_AlertMonsters
+     TNT1 A 0 A_FireCustomMissile("DummyProjectile1", 0, 0, 0, 0, 0, 0)
+	 PISI B 1 Bright A_FireProjectile ("SynPistol", 0, -1, 0, 8, 0, 3)
+	 PISI C 1 Bright A_FireProjectile ("SynPistol",random(-2, 2), -1, 0, 8, 0, 3)
+	 TNT1 A 0 A_SetAngle(frandom(0, -0.2) + angle)
+     TNT1 A 0 A_SetPitch(-0.25 + pitch)
+	 TNT1 A 0 A_Gunflash
+	 PISI D 1 Bright A_ReFire
+     Goto Ready
+  SightFire2:
+     TNT1 A 0 A_JumpIfnoAmmo("Dryfire")
+	 TNT1 A 0 A_PlaySound ("COLTFIRE", 1, 0.45)
+     TNT1 A 0 A_AlertMonsters
+     TNT1 A 0 A_FireCustomMissile("DummyProjectile1", 0, 0, 0, 0, 0, 0)
+	 PISI B 2 Bright A_FireProjectile ("SynPistol", 0, -1, 0, 8, 0, 3)
+	 TNT1 A 0 A_SetAngle(frandom(0, -0.2) + angle)
+     TNT1 A 0 A_SetPitch(-0.25 + pitch)
+	 PISI C 1 Bright A_Light(3)
+	 PISI F 5 Bright A_Gunflash
+	 PISI E 2 Bright A_WeaponReady
+     Goto Ready
+	 */
+  AltFire:
+	MM91 A 0
+	MM91 A 0 A_JumpIfInventory("PistolRapidAlt", 1, "AltFire2")
+	MM91 A 0 A_GiveInventory("PistolRapidAlt", 1)
+	/*
+	MM91 D 2 A_PlaySound("FLAMPICK")
+	MM91 C 6
+	*/
+	MM91 C 2 A_PlaySound("FLAMPICK")
+	MM91 DEF 2
+	Goto Ready 
+  AltFire2:
+    MM91 A 0
+	MM91 A 0 A_TakeInventory("PistolRapidAlt", 1)
+	/*
+	MM91 D 2 A_PlaySound("FLAMPICK")
+	MM91 C 6
+	*/
+	MM91 C 2 A_PlaySound("FLAMPICK")
+	MM91 DEF 2
+	Goto Ready
+	Reload:
+  MM91 A 0 A_JumpIfInventory("AE_SynthPistolMagOff", 30, 2)
+  MM91 A 0 A_JumpIfInventory("PistolClip", 1, "ReloadWork")
+  MM91 A 0
+  Goto Ready
+  ReloadWork:
+  	MM91 A 0 A_GiveInventory("RSR_Go", 1)
+  	Goto RSR_Start
+  ReloadWork_Stock:
+	//TNT1 A 0 A_PlaySound("PTCLIPOU")
+	//TNT1 A 0 Bright A_ZoomFactor(1.0)
+	MM91 A 0 A_SetSpeed (0.7)
+    //TNT1 A 0 A_SetCrosshair(0)
+	//MM91 A 0 A_GiveInventory("NormalStance", 1)
+	//TNT1 A 0 A_TakeInventory("IsSight", 1)
+	//MM91 E 12
+	MM91 GHI 3
+	ReloadLoop:
+    MM91 A 0 A_TakeInventory("PistolClip", 1)
+    MM91 A 0 A_GiveInventory("AE_SynthPistolMagOff", 1)
+    MM91 A 0 A_JumpIfInventory("AE_SynthPistolMagOff", 30, "ReloadFinish")
+    MM91 A 0 A_JumpIfInventory("PistolClip", 1, "ReloadLoop")
+	ReloadFinish:
+	/*
+	TNT1 A 0 A_PlaySound("PTCLIPIN")
+    TNT1 A 0 
+	MM91 F 13
+	MM91 G 12
+	MM91 A 10
+	*/
+	MM91 J 3 A_PlaySound("PTCLIPOU")
+    MM91 K 3 
+    MM91 L 6
+	MM91 M 5
+	MM91 N 3
+	MM91 O 3 A_PlaySound("PTCLIPIN")
+	MM91 PQRST 3
+	Goto Ready
+  Flash:
+	TNT1 A 0 A_JumpIf(GetCVAR("avw_tracers")==false, 2)
+	TNT1 A 0 A_FireProjectile("BulletTracer",random(-1,1),0,0,0,FPF_NOAUTOAIM,random(-1,1))
+	TNT1 A 0 A_JumpIf(GetCVAR("avw_weapons_mf")==1, "MuzzleFlash")
+    TNT1 A 0 Bright A_Light1
+    Goto LightDone
+  MuzzleFlash:
+    PSMF AB 1 Bright A_Light1
+    TNT1 A 0 A_Light0
+	Stop
+  Spawn:
+	M4A3 A 0 A_JumpIf(GetCVAR("avw_pickupmodel")==1, "Spawn3D")
+    M4A3 A 1
+    Loop
+  Spawn3D:
+	M4A3 A 0 A_JumpIf(GetCVAR("avw_pickupmodel")==0, "Spawn")
+    M4A3 P 1 Bright
+    Loop
+  
+	// RSR: real VR reload (zscript/rsr/vreload.zs, tools/rsr_patch_ae.py AE_GUNS).
+	// Not in VR, or with real reload off, RSR_Start falls through to the
+	// set's own canned reload and nothing below runs.
+	RSR_Start:
+		MM91 A 0 A_TakeInventory("RSR_Go", 1)
+		MM91 A 0 A_GiveInventory("RSR_Start", 1)
+		MM91 A 0 A_JumpIfInventory("RSR_Go", 1, "RSR_Out")
+		Goto ReloadWork_Stock
+	RSR_Out:
+		MM91 A 0 A_TakeInventory("RSR_Go", 1)
+		MM91 A 0 A_JumpIfInventory("RSR_NoMag_SynthPistol", 1, "RSR_Wait")	// no magazine in the gun
+		MM91 A 0 A_JumpIfInventory("RSR_Charge", 1, "RSR_Filled")	// magazine in, handle still due
+		MM91 A 0 A_GiveInventory("RSR_MagOut", 1)	// the magazine drops out (its own sound)
+	RSR_Unload:	// the rounds are held aside and come back when a magazine is home, so
+				// the count ends where the gun's own reload would have ended it
+		MM91 A 0 A_JumpIfInventory("AE_SynthPistolMagOff", 1, "RSR_Unload1")
+		MM91 A 0 A_GiveInventory("RSR_NoMag_SynthPistol", 1)
+		Goto RSR_Wait
+	RSR_Unload1:
+		MM91 A 0 A_TakeInventory("AE_SynthPistolMagOff", 1)
+		MM91 A 0 A_GiveInventory("RSR_Held_SynthPistol_3D", 1)
+		Goto RSR_Unload
+	RSR_Wait:		// the gun as the script shows it ("####" "#"); the script runs every tic
+		"####" "#" 1 A_WeaponReady(WRF_NOBOB|WRF_NOFIRE)
+		"####" "#" 0 A_GiveInventory("RSR_Tick", 1)
+		"####" "#" 0 A_JumpIfInventory("RSR_Seated", 1, "RSR_Fill")
+		"####" "#" 0 A_JumpIfInventory("RSR_Done", 1, "RSR_Done")
+		Goto RSR_Wait
+	RSR_Fill:	// the magazine is home: the gun's own fill loop, its own items
+		MM91 A 0 A_TakeInventory("RSR_Seated", 1)
+		MM91 A 0 A_TakeInventory("RSR_NoMag_SynthPistol", 1)
+	RSR_Return:	// the held rounds first
+		MM91 A 0 A_JumpIfInventory("RSR_Held_SynthPistol_3D", 1, "RSR_Return1")
+		Goto RSR_FillGo
+	RSR_Return1:
+		MM91 A 0 A_TakeInventory("RSR_Held_SynthPistol_3D", 1)
+		MM91 A 0 A_GiveInventory("AE_SynthPistolMagOff", 1)
+		Goto RSR_Return
+	RSR_FillGo:
+		MM91 A 0 A_GiveInventory("RSR_Charge", 1)	// the handle is due (vreload.zs: ChargeToken)
+		Goto RSR_FillA
+	RSR_FillA:
+		MM91 A 0 A_JumpIfInventory("AE_SynthPistolMagOff", 30, "RSR_Filled")
+		MM91 A 0 A_JumpIfInventory("PistolClip", 1, "RSR_FillAa")
+		Goto RSR_Filled
+	RSR_FillAa:
+		MM91 A 0 A_GiveInventory("AE_SynthPistolMagOff", 1)
+		MM91 A 0 A_TakeInventory("PistolClip", 1, TIF_NOTAKEINFINITE)
+		Goto RSR_FillA
+	RSR_Filled:
+		MM91 A 0 A_GiveInventory("RSR_Filled", 1)	// the script: the handle if due, else done
+		Goto RSR_Wait
+	RSR_Done:
+		MM91 A 0 A_TakeInventory("RSR_Done", 1)
+		MM91 A 0 A_TakeInventory("RSR_Charge", 1)
+		Goto Ready
+	}
 }
 
 ACTOR AE_YutaniPistolMagOff : Ammo
@@ -94,6 +764,271 @@ ACTOR AE_Off_YutaniPistol : YutaniPistol_3D
 	+WEAPON.CHEATNOTWEAPON
 	Weapon.AmmoType1 "AE_YutaniPistolMagOff"		// its own magazine
 	Weapon.AmmoType2 "PistolClip"		// the shared reserve
+
+	// GENERATED from YutaniPistol_3D: its whole state machine with YPistolLoaded -> AE_YutaniPistolMagOff (8 swapped).
+	// Inheriting the parent's states instead would load the PARENT's magazine.
+	States
+	{
+  Ready:
+    YM91 A 0 ACS_NamedExecuteAlways("LOADDOWN", 0, 20, 56)
+    //YM91 A 0 A_JumpifInventory("NormalStance", 1, "RealReady")
+	//TNT1 A 0 A_JumpifInventory("IsSight", 1, "SightReady")	 
+    //Loop
+  RealReady:
+    //TNT1 A 0 Bright A_ZoomFactor(1.0)
+	YM91 A 0 A_SetSpeed (0.7)
+    //TNT1 A 0 A_SetCrosshair(0)
+    YM91 A 1 A_WeaponReady(WRF_ALLOWRELOAD)
+     Goto Ready
+	 /*
+  SightReady:
+     TNT1 A 0 Bright A_ZoomFactor(1.4)
+	 TNT1 A 0 A_SetSpeed (0.35)
+     TNT1 A 0 A_SetCrosshair(8)
+     TNT1 A 0 A_JumpIfInventory("PistolRapidAlt", 1, "SightReady2")
+     YISI A 1 Bright A_WeaponReady(WRF_ALLOWRELOAD)
+     Goto Ready
+  SightReady2:
+     YISI E 1 Bright A_WeaponReady(WRF_ALLOWRELOAD)
+     Goto Ready
+	 */
+  Deselect:
+    //TNT1 A 0 Bright A_ZoomFactor(1.0)
+	YM91 A 0 A_SetSpeed (0.7)
+	//TNT1 A 0 A_SetCrosshair(0)
+	//YM91 A 0 A_TakeInventory("NormalStance", 1)
+    //TNT1 A 0 A_TakeInventory("IsSight", 1)
+    YM91 A 1 A_Lower(12)
+    Loop
+  Select:
+    //YM91 A 0 A_GiveInventory("NormalStance", 1)
+	//TNT1 A 0 A_TakeInventory("IsSight", 1)
+    YM91 A 1 A_Raise(12)
+    Loop
+	EmptyReady:
+	YM91 A 1 A_WeaponReady(WRF_ALLOWRELOAD)
+	Loop
+	Dryfire:
+    //TNT1 A 0 A_JumpifInventory("IsSight", 1, "IronSightDryFire")
+	YM91 A 2 A_PlaySound ("DRYFIRE")
+	Goto Reload
+	/*
+  IronSightDryFire:
+     YISI A 15 Bright A_PlaySound("DRYFIRE", 1)
+     Goto Reload
+	 */
+  Fire:
+	/*
+	TNT1 A 0 A_JumpIfnoAmmo("Dryfire")
+	TNT1 A 0 A_JumpifInventory("IsSight", 1, "SightFire")
+    TNT1 A 0 A_JumpIfInventory("PistolRapidAlt", 1, "Fire2")
+	TNT1 A 0 A_PlaySound ("COLTFIRE", 1, 0.45)
+    TNT1 A 0 A_AlertMonsters
+    TNT1 A 0 A_FireCustomMissile("DummyProjectile4", 0, 0, 0, 0, 0, 0)
+	YM91 B 1 Bright A_FireProjectile ("YutPistol", 0, -1, 0, 8, 0, 0)
+	YM91 C 1 Bright A_FireProjectile ("YutPistol", random(-3, 3), -1, 0, 8, 0, random(-3, 3))
+	YM91 D 1
+	TNT1 A 0 A_Gunflash
+	YM91 A 1 A_ReFire
+	*/
+    YM91 A 0 A_JumpIfnoAmmo("Dryfire")
+    YM91 A 0 A_JumpIfInventory("PistolRapidAlt", 1, "Fire2")
+	YM91 A 0 A_Gunflash
+	YM91 A 0 A_PlaySound ("COLTFIRE", 1, 0.45)
+    YM91 A 0 A_AlertMonsters
+    YM91 A 0 A_FireCustomMissile("DummyProjectile4", 0, 0, 0, 0, 0, 0)
+    YM91 B 1 Bright A_FireProjectile ("YutPistol", 0, -1, 0, 8, 0, 0)
+	YM91 C 1 Bright A_FireProjectile ("YutPistol", random(-3, 3), -1, 0, 8, 0, random(-3, 3))
+    YM91 D 1
+    YM91 E 1 A_ReFire
+	"####" # 0 A_JumpIf(GetCVAR("avw_weapons")==0, "Ready")
+	"####" # 0 A_FireProjectile("GunBarrelSmoke",0,0,0,0,FPF_NOAUTOAIM,0)
+    Goto Ready
+  Fire2:
+	/*
+    TNT1 A 0 A_JumpIfnoAmmo("Dryfire")
+	TNT1 A 0 A_JumpifInventory("IsSight", 1, "SightFire")
+	TNT1 A 0 A_PlaySound ("COLTFIRE", 1, 0.4)
+    TNT1 A 0 A_AlertMonsters
+    TNT1 A 0 A_FireCustomMissile("DummyProjectile1", 0, 0, 0, 0, 0, 0)
+	YM91 B 4 Bright A_FireProjectile ("YutPistol", random(-1, 1), -1, 0, 8, 0, random(-1, 1))
+    YM91 C 4 Bright A_Light(3)
+	YM91 D 1 A_Gunflash
+	YM91 A 1 A_WeaponReady
+	*/
+    YM91 A 0 A_JumpIfnoAmmo("Dryfire")
+	YM91 A 0 A_Gunflash
+	YM91 A 0 A_PlaySound ("COLTFIRE", 1, 0.4)
+    YM91 A 0 A_AlertMonsters
+    YM91 A 0 A_FireCustomMissile("DummyProjectile1", 0, 0, 0, 0, 0, 0)
+    YM91 B 2 A_Light(3)
+	YM91 C 2 Bright A_FireProjectile ("YutPistol", random(-1, 1), -1, 0, 8, 0, random(-1, 1))
+    YM91 DE 2
+    YM91 F 2 A_WeaponReady
+	"####" # 0 A_JumpIf(GetCVAR("avw_weapons")==0, "Ready")
+	"####" # 0 A_FireProjectile("GunBarrelSmoke",0,0,0,0,FPF_NOAUTOAIM,0)
+    Goto Ready
+	/*
+  SightFire:
+     TNT1 A 0 A_JumpIfnoAmmo("Dryfire")
+     TNT1 A 0 A_JumpIfInventory("PistolRapidAlt", 1, "SightFire2")
+	 TNT1 A 0 A_PlaySound ("COLTFIRE", 1, 0.5)
+     TNT1 A 0 A_AlertMonsters
+     TNT1 A 0 A_FireCustomMissile("DummyProjectile1", 0, 0, 0, 0, 0, 0)
+	 YISI B 1 Bright A_FireProjectile ("YutPistol", 0, -1, 0, 8, 0, 3)
+	 YISI C 1 Bright A_FireProjectile ("YutPistol", random(-1, 1), -1, 0, 8, 0, 3)
+	 TNT1 A 0 A_SetAngle(frandom(0, -0.2) + angle)
+     TNT1 A 0 A_SetPitch(-0.25 + pitch)
+	 YISI D 1 Bright A_Gunflash
+	 YISI A 1 Bright A_ReFire
+     Goto Ready
+  SightFire2:
+     TNT1 A 0 A_JumpIfnoAmmo("Dryfire")
+	 TNT1 A 0 A_PlaySound ("COLTFIRE", 1, 0.45)
+     TNT1 A 0 A_AlertMonsters
+     TNT1 A 0 A_FireCustomMissile("DummyProjectile1", 0, 0, 0, 0, 0, 0)
+	 YISI B 2 Bright A_FireProjectile ("YutPistol", 0, -1, 0, 8, 0, 3)
+	 TNT1 A 0 A_SetAngle(frandom(0, -0.2) + angle)
+     TNT1 A 0 A_SetPitch(-0.25 + pitch)
+	 YISI C 1 Bright A_Light(3)
+	 YISI F 5 Bright A_Gunflash
+	 YISI E 2 Bright A_WeaponReady
+     Goto Ready
+	*/
+  AltFire:
+	YM91 A 0
+	YM91 A 0 A_JumpIfInventory("PistolRapidAlt", 1, "AltFire2")
+	YM91 A 0 A_GiveInventory("PistolRapidAlt", 1)
+	/*
+	YM91 D 2 A_PlaySound("FLAMPICK")
+	YM91 C 6
+	*/
+	YM91 C 2 A_PlaySound("FLAMPICK")
+	YM91 DEF 2
+	Goto Ready 
+  AltFire2:
+    YM91 A 0
+	YM91 A 0 A_TakeInventory("PistolRapidAlt", 1)
+	/*
+	YM91 D 2 A_PlaySound("FLAMPICK")
+	YM91 C 6
+	*/
+	YM91 C 2 A_PlaySound("FLAMPICK")
+	YM91 DEF 2
+	Goto Ready
+	Reload:
+  YM91 A 0 A_JumpIfInventory("AE_YutaniPistolMagOff", 18, 2)
+  YM91 A 0 A_JumpIfInventory("PistolClip", 1, "ReloadWork")
+  YM91 A 0
+  Goto Ready
+  ReloadWork:
+  	YM91 A 0 A_GiveInventory("RSR_Go", 1)
+  	Goto RSR_Start
+  ReloadWork_Stock:
+	//YM91 A 0 A_PlaySound("PTCLIPOU")
+	//TNT1 A 0 Bright A_ZoomFactor(1.0)
+	YM91 A 0 A_SetSpeed (0.7)
+    //TNT1 A 0 A_SetCrosshair(0)
+	//YM91 A 0 A_GiveInventory("NormalStance", 1)
+	//TNT1 A 0 A_TakeInventory("IsSight", 1)
+	//YM91 E 10
+	YM91 GHI 2
+	ReloadLoop:
+    YM91 A 0 A_TakeInventory("PistolClip", 1)
+    YM91 A 0 A_GiveInventory("AE_YutaniPistolMagOff", 1)
+    YM91 A 0 A_JumpIfInventory("AE_YutaniPistolMagOff", 18, "ReloadFinish")
+    YM91 A 0 A_JumpIfInventory("PistolClip", 1, "ReloadLoop")
+	ReloadFinish:
+	/*
+	TNT1 A 0 A_PlaySound("PTCLIPIN")
+    TNT1 A 0 
+	YM91 F 11
+	YM91 G 10
+	YM91 A 9
+	*/
+	YM91 J 2 A_PlaySound("PTCLIPOU")
+    YM91 K 2 
+    YM91 L 4
+	YM91 MN 2
+	YM91 O 2 A_PlaySound("PTCLIPIN")
+	YM91 PQRST 2
+	Goto Ready
+  Flash:
+	TNT1 A 0 A_JumpIf(GetCVAR("avw_tracers")==false, 2)
+	TNT1 A 0 A_FireProjectile("BulletTracer",random(-1,1),0,0,0,FPF_NOAUTOAIM,random(-1,1))
+	TNT1 A 0 A_JumpIf(GetCVAR("avw_weapons_mf")==1, "MuzzleFlash")
+    TNT1 A 0 Bright A_Light1
+    Goto LightDone
+  MuzzleFlash:
+    PSMF AB 2 Bright A_Light1
+    TNT1 A 0 A_Light0
+	Stop
+  Spawn:
+	M4A3 A 0 A_JumpIf(GetCVAR("avw_pickupmodel")==1, "Spawn3D")
+    M4A3 A 1
+    Loop
+  Spawn3D:
+	M4A3 A 0 A_JumpIf(GetCVAR("avw_pickupmodel")==0, "Spawn")
+    M4A3 P 1 Bright
+    Loop
+  
+	// RSR: real VR reload (zscript/rsr/vreload.zs, tools/rsr_patch_ae.py AE_GUNS).
+	// Not in VR, or with real reload off, RSR_Start falls through to the
+	// set's own canned reload and nothing below runs.
+	RSR_Start:
+		YM91 A 0 A_TakeInventory("RSR_Go", 1)
+		YM91 A 0 A_GiveInventory("RSR_Start", 1)
+		YM91 A 0 A_JumpIfInventory("RSR_Go", 1, "RSR_Out")
+		Goto ReloadWork_Stock
+	RSR_Out:
+		YM91 A 0 A_TakeInventory("RSR_Go", 1)
+		YM91 A 0 A_JumpIfInventory("RSR_NoMag_YutaniPistol", 1, "RSR_Wait")	// no magazine in the gun
+		YM91 A 0 A_JumpIfInventory("RSR_Charge", 1, "RSR_Filled")	// magazine in, handle still due
+		YM91 A 0 A_GiveInventory("RSR_MagOut", 1)	// the magazine drops out (its own sound)
+	RSR_Unload:	// the rounds are held aside and come back when a magazine is home, so
+				// the count ends where the gun's own reload would have ended it
+		YM91 A 0 A_JumpIfInventory("AE_YutaniPistolMagOff", 1, "RSR_Unload1")
+		YM91 A 0 A_GiveInventory("RSR_NoMag_YutaniPistol", 1)
+		Goto RSR_Wait
+	RSR_Unload1:
+		YM91 A 0 A_TakeInventory("AE_YutaniPistolMagOff", 1)
+		YM91 A 0 A_GiveInventory("RSR_Held_YutaniPistol_3D", 1)
+		Goto RSR_Unload
+	RSR_Wait:		// the gun as the script shows it ("####" "#"); the script runs every tic
+		"####" "#" 1 A_WeaponReady(WRF_NOBOB|WRF_NOFIRE)
+		"####" "#" 0 A_GiveInventory("RSR_Tick", 1)
+		"####" "#" 0 A_JumpIfInventory("RSR_Seated", 1, "RSR_Fill")
+		"####" "#" 0 A_JumpIfInventory("RSR_Done", 1, "RSR_Done")
+		Goto RSR_Wait
+	RSR_Fill:	// the magazine is home: the gun's own fill loop, its own items
+		YM91 A 0 A_TakeInventory("RSR_Seated", 1)
+		YM91 A 0 A_TakeInventory("RSR_NoMag_YutaniPistol", 1)
+	RSR_Return:	// the held rounds first
+		YM91 A 0 A_JumpIfInventory("RSR_Held_YutaniPistol_3D", 1, "RSR_Return1")
+		Goto RSR_FillGo
+	RSR_Return1:
+		YM91 A 0 A_TakeInventory("RSR_Held_YutaniPistol_3D", 1)
+		YM91 A 0 A_GiveInventory("AE_YutaniPistolMagOff", 1)
+		Goto RSR_Return
+	RSR_FillGo:
+		YM91 A 0 A_GiveInventory("RSR_Charge", 1)	// the handle is due (vreload.zs: ChargeToken)
+		Goto RSR_FillA
+	RSR_FillA:
+		YM91 A 0 A_JumpIfInventory("AE_YutaniPistolMagOff", 18, "RSR_Filled")
+		YM91 A 0 A_JumpIfInventory("PistolClip", 1, "RSR_FillAa")
+		Goto RSR_Filled
+	RSR_FillAa:
+		YM91 A 0 A_GiveInventory("AE_YutaniPistolMagOff", 1)
+		YM91 A 0 A_TakeInventory("PistolClip", 1, TIF_NOTAKEINFINITE)
+		Goto RSR_FillA
+	RSR_Filled:
+		YM91 A 0 A_GiveInventory("RSR_Filled", 1)	// the script: the handle if due, else done
+		Goto RSR_Wait
+	RSR_Done:
+		YM91 A 0 A_TakeInventory("RSR_Done", 1)
+		YM91 A 0 A_TakeInventory("RSR_Charge", 1)
+		Goto Ready
+	}
 }
 
 ACTOR AE_NewShotgunMagOff : Ammo
@@ -116,6 +1051,433 @@ ACTOR AE_Off_NewShotgun : NewShotgun_3D
 	+WEAPON.CHEATNOTWEAPON
 	Weapon.AmmoType1 "AE_NewShotgunMagOff"		// its own magazine
 	Weapon.AmmoType2 "AliensShell"		// the shared reserve
+
+	// GENERATED from NewShotgun_3D: its whole state machine with ShotgunLoaded -> AE_NewShotgunMagOff (24 swapped).
+	// Inheriting the parent's states instead would load the PARENT's magazine.
+	States
+	{
+  Ready:
+    ATSG A 0 ACS_NamedExecuteAlways("LOADDOWN", 0, 20, 56)
+	ATSG A 0 A_JumpIfInventory("RSP_ShellIn", 1, "RSP_Feed")	// RSR-PUMP 1.92: a shell pushed home with the gun simply up
+	ATSG A 0 A_JumpIfInventory("RSP_Insert", 1, "RSP_VRIns")	// RSR-PUMP 1.92: reload pressed: the hand insert
+	//ATSG A 0 A_JumpifInventory("NormalStance", 1, "RealReady")
+	//TNT1 A 0 A_JumpifInventory("IsSight", 1, "SightReady")	 
+    ATSG A 1
+    //goto RealReady
+  RealReady:
+	//TNT1 A 0 Bright A_ZoomFactor(1.0)
+	ATSG A 0 A_SetSpeed (0.7)
+	ATSG A 1 A_WeaponReady(WRF_ALLOWRELOAD)
+	TNT1 A 0	
+     Goto Ready
+	 /*
+  SightReady:
+     TNT1 A 0 Bright A_ZoomFactor(1.4)
+	 TNT1 A 0 A_SetSpeed (0.5)
+     TNT1 A 0 A_JumpIfInventory("ShotgunBurstAlt", 1, "SightReady2")
+     SHSI A 1 A_WeaponReady(WRF_ALLOWRELOAD)
+     Goto Ready
+  SightReady2:
+     SHSI A 1 A_WeaponReady(WRF_ALLOWRELOAD)
+     Goto Ready
+	 */
+  Deselect:
+    //TNT1 A 0 Bright A_ZoomFactor(1.0)
+	ATSG A 0 A_SetSpeed (0.7)
+	//ATSG A 0 A_TakeInventory("NormalStance", 1)
+    //TNT1 A 0 A_TakeInventory("IsSight", 1)
+    ATSG A 1 A_Lower(12)
+    Loop
+  Select:
+    //ATSG A 0 A_GiveInventory("NormalStance", 1)
+	//TNT1 A 0 A_TakeInventory("IsSight", 1)
+    ATSG A 1 A_Raise(12)
+    Loop
+  Dryfire:
+    //TNT1 A 0 A_JumpifInventory("IsSight", 1, "IronSightDryFire")
+	ATSG A 2 A_PlaySound("DRYFIRE")
+	Goto Reload
+	/*
+  IronSightDryFire:
+     SHSI A 15 A_PlaySound("DRYFIRE", 1)
+     Goto Reload
+	 */
+  Fire:
+	/*
+    TNT1 A 0 A_JumpIfNoAmmo("Dryfire")
+	TNT1 A 0 A_JumpifInventory("IsSight", 1, "SightFire")
+    TNT1 A 0 A_JumpIfInventory("ShotgunBurstAlt", 1, "Fire2")
+	TNT1 A 0 A_PlaySound ("ASLTSHOT", 1, 0.80)
+    TNT1 A 0 A_AlertMonsters
+	TNT1 A 0 A_TakeInventory("AE_NewShotgunMagOff", 1)
+	TNT1 A 0 Radius_Quake (1, 2, 0, 1, 0)
+	ATSG A 1
+    TNT1 A 0 A_FireCustomMissile("DummyProjectile1", 0, 0, 0, 0, 0, 0)
+    TNT1 AAAAAAA 0 BRIGHT A_FireProjectile("ShotgunTracer", random(-4, 4), 0, 3, -2, 0, random(-5, 2))
+	ATSG B 1 Bright A_Light(5)
+	TNT1 A 0 Bright A_GunFlash
+	ATSG BC 2 Bright
+	ATSG A 1
+	ATSG A 1 A_PlaySound("STGNPUMP")
+	ATSG DDEEFFEEDD 1
+	ATSG A 2
+	*/
+    ATSG A 0 A_JumpIfNoAmmo("Dryfire")
+ATSG A 0 A_JumpIf(GetCVar("ae_shotgun_slug") && CountInv("ShotgunBurstAlt"), "FireSlug")
+	    ATSG A 0 A_JumpIfInventory("ShotgunBurstAlt", 1, "Fire2")
+	ATSG A 0 A_GunFlash
+	ATSG A 0 A_PlaySound ("ASLTSHOT", 1, 0.80)
+    ATSG A 0 A_AlertMonsters
+	ATSG A 0 A_TakeInventory("AE_NewShotgunMagOff", 1)
+	ATSG A 0 Radius_Quake (1, 2, 0, 1, 0)
+	ATSG B 1 A_FireCustomMissile("DummyProjectile1", 0, 0, 0, 0, 0, 0)
+	ATSG BBBBBBB 0 BRIGHT A_FireProjectile("ShotgunTracer", random(-4, 4), 0, 3, -2, 0, random(-5, 2))
+	ATSG B 1 Bright A_Light(5)
+	ATSG CD 2 Bright
+	Goto RSP_P1	// RSR-PUMP 1.92: the hand works the pump (states below); stock frames there when not in VR
+  Fire2:
+	/*
+    TNT1 A 0 A_JumpIfNoAmmo("Dryfire")
+	TNT1 A 0 A_JumpifInventory("IsSight", 1, "SightFire")
+	TNT1 A 0 A_PlaySound ("ASLTSHOT", 1, 0.60)
+    TNT1 A 0 A_AlertMonsters
+	TNT1 A 0 A_TakeInventory("AE_NewShotgunMagOff", 1)
+	TNT1 A 0 Radius_Quake (1, 2, 0, 1, 0)
+	ATSG A 1
+    TNT1 A 0 A_FireCustomMissile("DummyProjectile1", 0, 0, 0, 0, 0, 0)
+    TNT1 AAAAAAA 0 BRIGHT A_FireProjectile("ShotgunTracer", random(-4, 4), 0, 3, -2, 0, random(-4, 2))
+	ATSG B 1 Bright A_Light(5)
+	TNT1 A 0 Bright A_GunFlash
+	ATSG BC 2 Bright
+	ATSG A 1 
+    TNT1 A 0 A_JumpIfNoAmmo("Dryfire")
+	TNT1 A 0 A_PlaySound ("ASLTSHOT", 1, 0.70)
+	TNT1 A 0 A_TakeInventory("AE_NewShotgunMagOff", 1)
+    TNT1 A 0 A_FireCustomMissile("DummyProjectile1", 0, 0, 0, 0, 0, 0)
+    TNT1 AAAAAAA 0 BRIGHT A_FireProjectile("ShotgunTracer", random(-4, 4), 0, 3, -2, 0, random(-4, 2))
+	ATSG B 1 Bright A_Light(5)
+	TNT1 A 0 Bright A_GunFlash
+	ATSG BC 2 Bright
+	ATSG A 1 
+    TNT1 A 0 A_JumpIfNoAmmo("Dryfire")
+	TNT1 A 0 A_PlaySound ("ASLTSHOT", 1, 0.75)
+	TNT1 A 0 A_TakeInventory("AE_NewShotgunMagOff", 1)
+    TNT1 A 0 A_FireCustomMissile("DummyProjectile1", 0, 0, 0, 0, 0, 0)
+    TNT1 AAAAAAA 0 BRIGHT A_FireProjectile("ShotgunTracer", random(-4, 4), 0, 3, -2, 0, random(-4, 2))
+	ATSG B 1 Bright A_Light(5)
+	TNT1 A 0 Bright A_GunFlash
+	ATSG BC 2 Bright
+	ATSG A 1 
+	ATSG A 1 A_PlaySound("STGNPUMP")
+	ATSG DDEEFFEEDD 1
+	ATSG A 2 A_JumpIfNoAmmo("Dryfire")
+	*/
+    ATSG A 0 A_JumpIfNoAmmo("Dryfire")
+	ATSG A 0 A_GunFlash
+	ATSG A 0 A_PlaySound ("ASLTSHOT", 1, 0.60)
+    ATSG A 0 A_AlertMonsters
+	ATSG A 0 A_TakeInventory("AE_NewShotgunMagOff", 1)
+	ATSG A 0 Radius_Quake (1, 2, 0, 1, 0)
+	ATSG B 1 A_FireCustomMissile("DummyProjectile1", 0, 0, 0, 0, 0, 0)
+	ATSG BBBBBBB 0 BRIGHT A_FireProjectile("ShotgunTracer", random(-4, 4), 0, 3, -2, 0, random(-4, 2))
+	ATSG B 1 Bright A_Light(5)
+	ATSG CD 2 Bright
+    ATSG A 0 A_JumpIfNoAmmo("Dryfire")
+	ATSG A 0 A_GunFlash
+	ATSG A 0 A_PlaySound ("ASLTSHOT", 1, 0.60)
+	ATSG A 0 A_TakeInventory("AE_NewShotgunMagOff", 1)
+	ATSG B 1 A_FireCustomMissile("DummyProjectile1", 0, 0, 0, 0, 0, 0)
+	ATSG BBBBBBB 0 BRIGHT A_FireProjectile("ShotgunTracer", random(-4, 4), 0, 3, -2, 0, random(-4, 2))
+	ATSG B 1 Bright A_Light(5)
+	ATSG CD 2 Bright
+    ATSG A 0 A_JumpIfNoAmmo("Dryfire")
+	ATSG A 0 A_GunFlash
+	ATSG A 0 A_PlaySound ("ASLTSHOT", 1, 0.60)
+	ATSG A 0 A_TakeInventory("AE_NewShotgunMagOff", 1)
+	ATSG B 1 A_FireCustomMissile("DummyProjectile1", 0, 0, 0, 0, 0, 0)
+	ATSG BBBBBBB 0 BRIGHT A_FireProjectile("ShotgunTracer", random(-4, 4), 0, 3, -2, 0, random(-4, 2))
+	ATSG B 1 Bright A_Light(5)
+	ATSG CD 2 Bright
+	Goto RSP_P1B	// RSR-PUMP 1.92: the hand works the pump (states below); stock frames there when not in VR
+	/*
+  SightFire:
+    TNT1 A 0 A_JumpIfNoAmmo("Dryfire")
+    TNT1 A 0 A_JumpIfInventory("ShotgunBurstAlt", 1, "SightFire2")
+	TNT1 A 0 A_PlaySound ("ASLTSHOT", 1, 0.80)
+    TNT1 A 0 A_AlertMonsters
+	TNT1 A 0 A_TakeInventory("AE_NewShotgunMagOff", 1)
+	TNT1 A 0 Radius_Quake (1, 2, 0, 1, 0)
+	SHSI A 1
+    TNT1 A 0 A_FireCustomMissile("DummyProjectile1", 0, 0, 0, 0, 0, 0)
+    TNT1 AAAAAAA 0 BRIGHT A_FireProjectile("ShotgunTracer", random(-3, 3), 0, 8, 0, 0, random(-3, 1))
+	SHSI B 1 Bright A_Light(5)
+	TNT1 A 0 Bright A_GunFlash
+	SHSI BC 2 Bright
+	SHSI A 1
+	SHSI A 1 A_PlaySound("STGNPUMP")
+	ATSG DDEEFFEEDD 1
+	ATSG A 2
+	Goto Ready 
+  SightFire2:	
+    TNT1 A 0 A_JumpIfNoAmmo("Dryfire")
+	TNT1 A 0 A_PlaySound ("ASLTSHOT", 1, 0.60)
+    TNT1 A 0 A_AlertMonsters
+	TNT1 A 0 A_TakeInventory("AE_NewShotgunMagOff", 1)
+	TNT1 A 0 Radius_Quake (1, 2, 0, 1, 0)
+	SHSI A 1
+    TNT1 A 0 A_FireCustomMissile("DummyProjectile1", 0, 0, 0, 0, 0, 0)
+    TNT1 AAAAAAA 0 BRIGHT A_FireProjectile("ShotgunTracer", random(-3, 3), 0, 8, 0, 0, random(-3, 1))
+	SHSI B 1 Bright A_Light(5)
+	TNT1 A 0 Bright A_GunFlash
+	SHSI BC 2 Bright
+	SHSI A 1 
+    TNT1 A 0 A_JumpIfNoAmmo("Dryfire")
+	TNT1 A 0 A_PlaySound ("ASLTSHOT", 1, 0.70)
+	TNT1 A 0 A_TakeInventory("AE_NewShotgunMagOff", 1)
+    TNT1 A 0 A_FireCustomMissile("DummyProjectile1", 0, 0, 0, 0, 0, 0)
+    TNT1 AAAAAAA 0 BRIGHT A_FireProjectile("ShotgunTracer", random(-3, 3), 0, 8, 0, 0, random(-3, 1))
+	SHSI B 1 Bright A_Light(5)
+	TNT1 A 0 Bright A_GunFlash
+	SHSI BC 2 Bright
+	SHSI A 1 
+    TNT1 A 0 A_JumpIfNoAmmo("Dryfire")
+	TNT1 A 0 A_PlaySound ("ASLTSHOT", 1, 0.75)
+	TNT1 A 0 A_TakeInventory("AE_NewShotgunMagOff", 1)
+    TNT1 A 0 A_FireCustomMissile("DummyProjectile1", 0, 0, 0, 0, 0, 0)
+    TNT1 AAAAAAA 0 BRIGHT A_FireProjectile("ShotgunTracer", random(-3, 3), 0, 8, 0, 0, random(-3, 1))
+	SHSI B 1 Bright A_Light(5)
+	TNT1 A 0 Bright A_GunFlash
+	SHSI BC 2 Bright
+	SHSI A 1 
+	SHSI A 1 A_PlaySound("STGNPUMP")
+	ATSG DDEEFFEEDD 1
+	ATSG A 2 A_JumpIfNoAmmo("Dryfire")
+	Goto Ready
+	*/
+  AltFire:
+    ATSG A 0 A_JumpIfInventory("ShotgunBurstAlt", 0, "AltFire2")
+	ATSG A 0 A_GiveInventory("ShotgunBurstAlt", 1) 
+	ATSG A 0
+	/*
+	ATSG DE 4 A_PlaySound("FLAMPICK")
+	ATSG F 2
+	*/
+	ATSG E 1 A_PlaySound("FLAMPICK")
+	ATSG FGH 1
+	ATSG I 1 A_PlaySound("STGNPUMP")
+	ATSG JKLMN 1
+	Goto Ready 
+  AltFire2:
+	ATSG A 0
+	ATSG A 0 A_TakeInventory("ShotgunBurstAlt", 1)
+	/*
+	ATSG DE 4 A_PlaySound("FLAMPICK")
+	ATSG F 2
+	*/
+	ATSG E 1 A_PlaySound("FLAMPICK")
+	ATSG FGH 1
+	ATSG I 1 A_PlaySound("STGNPUMP")
+	ATSG JKLMN 1
+	Goto Ready 
+		Reload:
+  ATSG A 0 A_JumpIfInventory("AE_NewShotgunMagOff", 8, 2)
+  ATSG A 0 A_JumpIfInventory("AliensShell", 1, "ReloadWork")
+  ATSG A 0 
+  Goto Ready
+  ReloadWork:
+  	ATSG A 0 A_GiveInventory("RSP_Go", 1)
+  	Goto RSP_Load
+  ReloadWork_Stock:
+		//TNT1 A 0 Bright A_ZoomFactor(1.0)
+		ATSG A 0 A_SetSpeed (0.7)
+		//TNT1 A 0 A_SetCrosshair(0)
+		//ATSG A 0 A_GiveInventory("NormalStance", 1)
+		//TNT1 A 0 A_TakeInventory("IsSight", 1)
+		/*
+	   ATSG DDDEEEFFFFF 1
+	   ATSG D 1 Offset(0,45)
+	   */
+	   ATSR ABCD 3
+  ReloadLoop:
+	/*
+	ATSG E 2 Offset(0,45)
+	TNT1 A 0 A_TakeInventory("AliensShell", 1)
+    ATSG F 2 Offset(0,47)
+    ATSG F 2 Offset(2,50) A_PlaySound("SHELLIN")
+    TNT1 A 0 A_GiveInventory("AE_NewShotgunMagOff", 1)
+	ATSG F 2 Offset(4,52) A_WeaponReady
+	ATSG F 2 Offset(6,45) A_WeaponReady
+    ATSG F 2 Offset(2,40) A_WeaponReady
+    ATSG F 2 Offset(0,45) A_WeaponReady
+	TNT1 A 0 A_JumpIfInventory("AE_NewShotgunMagOff", 8, "ReloadFinish")
+    TNT1 A 0 A_JumpIfInventory("AliensShell", 1, "ReloadLoop")
+    Goto ReloadFinish
+	ReloadFinish:
+	ATSG FEDA 2 A_WeaponReady
+	*/
+	ATSR D 0 A_TakeInventory("AliensShell", 1)
+    ATSR D 0 A_GiveInventory("AE_NewShotgunMagOff", 1)
+	ATSR EFGHI 2
+	ATSR J 2 A_PlaySound("SHELLIN")
+	ATSR K 2
+	ATSR D 0 A_JumpIfInventory("AE_NewShotgunMagOff", 8, "ReloadFinish")
+    ATSR D 0 A_JumpIfInventory("AliensShell", 1, "ReloadLoop")
+    Goto ReloadFinish
+	ReloadFinish:	// FIXED 2026-10-23: the only live copy of this label was inside the
+				// /* */ block above, so every jump to it failed. RSP_LoadEnd is nothing but
+				// "Goto ReloadFinish", so it went invalid too and the VR hand-load had no exit.
+				// The Yutani shotgun already had this; the Colonial one was missed.
+	//ATSG FEDA 2 A_WeaponReady
+	Goto Ready
+  Flash:
+	TNT1 A 0 A_JumpIf(GetCVAR("avw_weapons_mf")==1, "MuzzleFlash")
+    TNT1 A 0 Bright A_Light1
+    TNT1 B 0 Bright A_Light2
+    Goto LightDone
+  MuzzleFlash:
+    SGMF A 2 Bright
+    SGMF B 2 Bright A_Light2
+    TNT1 A 1 Bright A_Light1
+    TNT1 A 1 Bright A_Light0
+	stop
+  Spawn:
+	SHOT A 0 A_JumpIf(GetCVAR("avw_pickupmodel")==1, "Spawn3D")
+    SHOT A 1
+    Stop
+  Spawn3D:
+	SHOT A 0 A_JumpIf(GetCVAR("avw_pickupmodel")==0, "Spawn")
+    SHOT P 1 Bright
+    Stop
+  
+	// RSR-PUMP 1.92 (zscript/rsr/rsr_pump.zs, ported 2026-10-22): the hand-worked pump after a
+	// shot, a shell into the port at any time, the reload button as the hand insert's entry.
+	// Not in VR, or with the VR reload off, RSP_P1 / RSP_P1B play the set's own pump frames.
+	RSP_P1:		// after Fire / FireSlug (A_Refire tail)
+		ATSG A 0 A_TakeInventory("RSP_Go", 1)
+		ATSG A 0 A_GiveInventory("RSP_PumpStart", 10)	// 10: the set's own tics E..N to its refire
+		ATSG A 0 A_JumpIfInventory("RSP_Go", 1, "RSP_P1Go")
+	RSP_P1Stock:
+		ATSG EFGH 1
+		ATSG I 1 A_PlaySound("STGNPUMP")
+		ATSG JKLM 1
+		ATSG N 1 A_Refire
+		"####" # 0 A_JumpIf(GetCVAR("avw_weapons")==0, "Ready")
+		"####" # 0 A_FireProjectile("ShotgunBarrelSmoke",0,0,0,0,FPF_NOAUTOAIM,0)
+		Goto Ready
+	RSP_P1B:	// after the burst (Fire2)
+		ATSG A 0 A_TakeInventory("RSP_Go", 1)
+		ATSG A 0 A_GiveInventory("RSP_PumpStart", 14)	// 14: E..N + A 4
+		ATSG A 0 A_JumpIfInventory("RSP_Go", 1, "RSP_P1Go")
+	RSP_P1BStock:
+		ATSG EFGH 1
+		ATSG I 1 A_PlaySound("STGNPUMP")
+		ATSG JKLMN 1
+		ATSG A 4
+		"####" # 0 A_JumpIf(GetCVAR("avw_weapons")==0, "Ready")
+		"####" # 0 A_FireProjectile("ShotgunBarrelSmoke",0,0,0,0,FPF_NOAUTOAIM,0)
+		Goto Ready
+	RSP_P1Go:
+		ATSG A 0 A_TakeInventory("RSP_Go", 1)
+	RSP_P1Wait:	// the hand works the pump (rsr_pump.zs moves the pump part); switching allowed
+		ATSG A 1 A_WeaponReady(WRF_NOFIRE|WRF_NOBOB|WRF_NOSECONDARY|WRF_ALLOWRELOAD)
+		ATSG A 0 A_GiveInventory("RSP_PTick", 1)
+		ATSG A 0 A_JumpIfInventory("RSP_Back", 1, "RSP_P1Back")
+		ATSG A 0 A_JumpIfInventory("RSP_Fwd", 1, "RSP_P1Fwd")
+		ATSG A 0 A_JumpIfInventory("RSP_ShellIn", 1, "RSP_P1Feed")	// a shell topped off mid pump wait
+		ATSG A 0 A_JumpIfInventory("RSP_Insert", 1, "RSP_VRIns")	// reload pressed mid pump wait
+		ATSG A 0 A_JumpIfInventory("RSP_Auto", 1, "RSP_P1Auto")
+		ATSG A 0 A_JumpIfInventory("RSP_Ready", 1, "RSP_P1Ready")
+		Goto RSP_P1Wait
+	RSP_P1Feed:	// the set's own per-shell step while the gun waits for the pump
+		ATSG A 0 A_TakeInventory("RSP_ShellIn", 1)
+		ATSG A 0 A_JumpIfInventory("AE_NewShotgunMagOff", 8, "RSP_P1FeedE")
+		ATSG A 0 A_JumpIfInventory("AliensShell", 1, 1)
+		Goto RSP_P1FeedE
+		ATSG A 0 A_GiveInventory("AE_NewShotgunMagOff", 1)
+		ATSG A 0 A_TakeInventory("AliensShell", 1, TIF_NOTAKEINFINITE)
+	RSP_P1FeedE:
+		ATSG A 0 A_JumpIfInventory("RSP_ShellIn", 1, "RSP_P1Feed")
+		Goto RSP_P1Wait
+	RSP_P1Back:	// all the way back: the spent case out of the port (rsr_pump.zs CaseOut)
+		ATSG A 0 A_TakeInventory("RSP_Back", 1)
+		ATSG A 0 A_GiveInventory("RSP_CaseOut", 1)
+		Goto RSP_P1Wait
+	RSP_P1Fwd:	// forward again: chambered; ready once the set's own refire time is up (RSP_Ready)
+		ATSG A 0 A_TakeInventory("RSP_Fwd", 1)
+		ATSG A 0 A_JumpIfInventory("RSP_Ready", 1, "RSP_P1Ready")
+		Goto RSP_P1Wait
+	RSP_P1Ready:
+		ATSG A 0 A_TakeInventory("RSP_Ready", 1)
+		"####" # 0 A_JumpIf(GetCVAR("avw_weapons")==0, "Ready")
+		"####" # 0 A_FireProjectile("ShotgunBarrelSmoke",0,0,0,0,FPF_NOAUTOAIM,0)
+		Goto Ready
+	RSP_P1Auto:	// the hand left the pump before working it: the set's own pump
+		ATSG A 0 A_TakeInventory("RSP_Auto", 1)
+		Goto RSP_P1Stock
+	RSP_Feed:	// a shell the hand pushed home with the gun simply up (rsr_pump.zs FreeFeed)
+		ATSG A 0 A_TakeInventory("RSP_ShellIn", 1)
+		ATSG A 0 A_JumpIfInventory("AE_NewShotgunMagOff", 8, "RSP_FeedEnd")
+		ATSG A 0 A_JumpIfInventory("AliensShell", 1, 1)
+		Goto RSP_FeedEnd
+		ATSG A 0 A_GiveInventory("AE_NewShotgunMagOff", 1)
+		ATSG A 0 A_TakeInventory("AliensShell", 1, TIF_NOTAKEINFINITE)
+	RSP_FeedEnd:
+		ATSG A 0 A_JumpIfInventory("RSP_ShellIn", 1, "RSP_Feed")
+		Goto Ready
+	RSP_VRIns:	// the reload button, read by rsr_pump.zs (InsertWanted): the hand insert's own entry
+		ATSG A 0 A_TakeInventory("RSP_Insert", 1)
+		ATSG A 0 A_TakeInventory("RSP_Go", 1)
+		ATSG A 0 A_GiveInventory("RSP_LoadStart", 1)
+		ATSG A 0 A_JumpIfInventory("RSP_Go", 1, "RSP_LoadGo")
+		Goto Ready
+
+	// RSR-PUMP: hand-loaded shells (zscript/rsr/rsr_pump.zs, tools/rsp_patch_ae.py).
+	// Not in VR, or with real reload off, RSP_Load falls straight through to the
+	// set's own loading loop. The pump stroke and the shot are never touched.
+	RSP_Load:
+		ATSG A 0 A_TakeInventory("RSP_Go", 1)
+		ATSG A 0 A_GiveInventory("RSP_LoadStart", 1)
+		ATSG A 0 A_JumpIfInventory("RSP_Go", 1, "RSP_LoadGo")
+		Goto ReloadWork_Stock
+	RSP_LoadGo:
+		ATSG A 0 A_TakeInventory("RSP_Go", 1)
+	RSP_Next:	// the set's own question: is there a shell to load, and room for it?
+		ATSG A 0 A_JumpIfInventory("AliensShell", 1, "RSP_Next1")
+		Goto RSP_LoadEnd		// out of shells
+	RSP_Next1:
+		ATSG A 0 A_JumpIfInventory("AE_NewShotgunMagOff", 8, "RSP_LoadEnd")	// full
+		Goto RSP_LoadWait
+	RSP_LoadWait:	// the hand feeds shells; the script runs every tic
+		ATSG A 1 A_WeaponReady(WRF_NOBOB)
+		ATSG A 0 A_GiveInventory("RSP_LTick", 1)
+		ATSG A 0 A_JumpIfInventory("RSP_ShellIn", 1, "RSP_Shell")
+		ATSG A 0 A_TakeInventory("RSP_Back", 1)
+		ATSG A 0 A_TakeInventory("RSP_Fwd", 1)
+		Goto RSP_LoadWait
+	RSP_Shell:	// a shell pushed home: the set's own per-shell step, its own items
+		ATSG A 0 A_TakeInventory("RSP_ShellIn", 1)
+		ATSG A 0 A_GiveInventory("AE_NewShotgunMagOff", 1)
+		ATSG A 0 A_TakeInventory("AliensShell", 1, TIF_NOTAKEINFINITE)
+		Goto RSP_Next
+	RSP_LoadEnd:
+		Goto ReloadFinish
+	
+	// A slug: the gun's own seven rounds, fired on ONE line instead of
+	// scattered. Same projectile, same count, same total damage -- only
+	// random(-4,4) / random(-5,2) of spread is gone.
+	FireSlug:
+		ATSG A 0 A_JumpIfNoAmmo("Dryfire")
+		ATSG A 0 A_GunFlash
+		ATSG A 0 A_PlaySound ("ASLTSHOT", 1, 0.90)
+		ATSG A 0 A_AlertMonsters
+		ATSG A 0 A_TakeInventory("AE_NewShotgunMagOff", 1)
+		ATSG A 0 Radius_Quake (2, 3, 0, 1, 0)	// a slug kicks harder
+		ATSG B 1 A_FireCustomMissile("DummyProjectile1", 0, 0, 0, 0, 0, 0)
+		ATSG BBBBBBB 0 BRIGHT A_FireProjectile("ShotgunTracer", 0, 0, 3, -2, 0, 0)
+		ATSG B 1 Bright A_Light(5)
+		ATSG CD 2 Bright
+		Goto RSP_P1	// RSR-PUMP 1.92: the hand works the pump (states below); stock frames there when not in VR
+	}
 }
 
 ACTOR AE_YutaniShotgunMagOff : Ammo
@@ -138,6 +1500,428 @@ ACTOR AE_Off_YutaniShotgun : YutaniShotgun_3D
 	+WEAPON.CHEATNOTWEAPON
 	Weapon.AmmoType1 "AE_YutaniShotgunMagOff"		// its own magazine
 	Weapon.AmmoType2 "AliensShell"		// the shared reserve
+
+	// GENERATED from YutaniShotgun_3D: its whole state machine with YShotgunLoaded -> AE_YutaniShotgunMagOff (24 swapped).
+	// Inheriting the parent's states instead would load the PARENT's magazine.
+	States
+	{
+  Ready:
+    YTSG A 0 ACS_NamedExecuteAlways("LOADDOWN", 0, 20, 56)
+	YTSG A 0 A_JumpIfInventory("RSP_ShellIn", 1, "RSP_Feed")	// RSR-PUMP 1.92: a shell pushed home with the gun simply up
+	YTSG A 0 A_JumpIfInventory("RSP_Insert", 1, "RSP_VRIns")	// RSR-PUMP 1.92: reload pressed: the hand insert
+	//YTSG A 0 A_JumpifInventory("NormalStance", 1, "RealReady")
+	//TNT1 A 0 A_JumpifInventory("IsSight", 1, "SightReady")
+    YTSG A 1
+    //goto RealReady
+  RealReady:
+    //TNT1 A 0 Bright A_ZoomFactor(1.0)
+	YTSG A 0 A_SetSpeed (0.7)
+	YTSG A 1 A_WeaponReady(WRF_ALLOWRELOAD)
+	YTSG A 0 	
+     Goto Ready
+	/*
+  SightReady:
+     TNT1 A 0 Bright A_ZoomFactor(1.4)
+	 TNT1 A 0 A_SetSpeed (0.5)
+     TNT1 A 0 A_JumpIfInventory("ShotgunBurstAlt", 1, "SightReady2")
+     YTIS A 1 A_WeaponReady(WRF_ALLOWRELOAD)
+     Goto Ready
+  SightReady2:
+     YTIS A 1 A_WeaponReady(WRF_ALLOWRELOAD)
+     Goto Ready
+	*/
+  Deselect:
+    //TNT1 A 0 Bright A_ZoomFactor(1.0)
+	YTSG A 0 A_SetSpeed (0.7)
+	//YTSG A 0 A_TakeInventory("NormalStance", 1)
+    //TNT1 A 0 A_TakeInventory("IsSight", 1)
+    YTSG A 1 A_Lower(12)
+    Loop
+  Select:
+    //YTSG A 0 A_GiveInventory("NormalStance", 1)
+	//TNT1 A 0 A_TakeInventory("IsSight", 1)
+    YTSG A 1 A_Raise(12)
+    Loop
+  Dryfire:
+    //TNT1 A 0 A_JumpifInventory("IsSight", 1, "IronSightDryFire")
+	YTSG A 2 A_PlaySound("DRYFIRE")
+	Goto Reload
+  IronSightDryFire:
+     YTIS A 15 A_PlaySound("DRYFIRE", 1)
+     Goto Reload
+  Fire:
+	/*
+    TNT1 A 0 A_JumpIfNoAmmo("Dryfire")
+	TNT1 A 0 A_JumpifInventory("IsSight", 1, "SightFire")
+    TNT1 A 0 A_JumpIfInventory("ShotgunBurstAlt", 1, "Fire2")
+	TNT1 A 0 A_JumpIfInventory("ShotgunBurstAlt", 1, "Fire2")
+    TNT1 A 0 A_JumpIfNoAmmo("Dryfire")
+	TNT1 A 0 A_PlaySound ("ASLTSHOT", 1, 0.80)
+    TNT1 A 0 A_AlertMonsters
+	TNT1 A 0 A_TakeInventory("AE_YutaniShotgunMagOff", 1)
+	TNT1 A 0 Radius_Quake (1, 2, 0, 1, 0)
+	YTSG A 1
+    TNT1 A 0 A_FireCustomMissile("DummyProjectile1", 0, 0, 0, 0, 0, 0)
+    TNT1 AAAAAAA 0 BRIGHT A_FireProjectile("ShotgunTracer", random(-4, 4), 0, 3, -2, 0, random(-5, 2))
+	YTSG B 1 Bright A_Light(5)
+	TNT1 A 0 Bright A_GunFlash
+	YTSG BC 2 Bright
+	YTSG A 1
+	YTSG A 1 A_PlaySound("STGNPUMP")
+	YTSG DDEEFFEEDD 1
+	YTSG A 2
+	*/
+    YTSG A 0 A_JumpIfNoAmmo("Dryfire")
+YTSG A 0 A_JumpIf(GetCVar("ae_shotgun_slug") && CountInv("ShotgunBurstAlt"), "FireSlug")
+	    YTSG A 0 A_JumpIfInventory("ShotgunBurstAlt", 1, "Fire2")
+	YTSG A 0 A_GunFlash
+	YTSG A 0 A_PlaySound ("ASLTSHOT", 1, 0.80)
+    YTSG A 0 A_AlertMonsters
+	YTSG A 0 A_TakeInventory("AE_YutaniShotgunMagOff", 1)	// FIXED 2026-10-23: its own tube counter
+	YTSG A 0 Radius_Quake (1, 2, 0, 1, 0)
+	YTSG B 1 A_FireCustomMissile("DummyProjectile1", 0, 0, 0, 0, 0, 0)
+	YTSG BBBBBBB 0 BRIGHT A_FireProjectile("ShotgunTracer", random(-4, 4), 0, 3, -2, 0, random(-5, 2))
+	YTSG B 1 Bright A_Light(5)
+	YTSG CD 2 Bright
+	Goto RSP_P1	// RSR-PUMP 1.92: the hand works the pump (states below); stock frames there when not in VR
+  Fire2:
+	/*
+    TNT1 A 0 A_JumpIfNoAmmo("Dryfire")
+	TNT1 A 0 A_JumpifInventory("IsSight", 1, "SightFire")
+	TNT1 A 0 A_PlaySound ("ASLTSHOT", 1, 0.60)
+    TNT1 A 0 A_AlertMonsters
+	TNT1 A 0 A_TakeInventory("AE_YutaniShotgunMagOff", 1)
+	TNT1 A 0 Radius_Quake (1, 2, 0, 1, 0)
+	YTSG A 1
+    TNT1 A 0 A_FireCustomMissile("DummyProjectile1", 0, 0, 0, 0, 0, 0)
+    TNT1 AAAAAAA 0 BRIGHT A_FireProjectile("ShotgunTracer", random(-4, 4), 0, 3, -2, 0, random(-4, 2))
+	YTSG B 1 Bright A_Light(5)
+	TNT1 A 0 Bright A_GunFlash
+	YTSG BC 2 Bright
+	YTSG A 1 
+    TNT1 A 0 A_JumpIfNoAmmo("Dryfire")
+	TNT1 A 0 A_PlaySound ("ASLTSHOT", 1, 0.70)
+	TNT1 A 0 A_TakeInventory("AE_YutaniShotgunMagOff", 1)
+    TNT1 A 0 A_FireCustomMissile("DummyProjectile1", 0, 0, 0, 0, 0, 0)
+    TNT1 AAAAAAA 0 BRIGHT A_FireProjectile("ShotgunTracer", random(-4, 4), 0, 3, -2, 0, random(-4, 2))
+	YTSG B 1 Bright A_Light(5)
+	TNT1 A 0 Bright A_GunFlash
+	YTSG BC 2 Bright
+	YTSG A 1 
+    TNT1 A 0 A_JumpIfNoAmmo("Dryfire")
+	TNT1 A 0 A_PlaySound ("ASLTSHOT", 1, 0.75)
+	TNT1 A 0 A_TakeInventory("AE_YutaniShotgunMagOff", 1)
+    TNT1 A 0 A_FireCustomMissile("DummyProjectile1", 0, 0, 0, 0, 0, 0)
+    TNT1 AAAAAAA 0 BRIGHT A_FireProjectile("ShotgunTracer", random(-4, 4), 0, 3, -2, 0, random(-4, 2))
+	YTSG B 1 Bright A_Light(5)
+	TNT1 A 0 Bright A_GunFlash
+	YTSG BC 2 Bright
+	YTSG A 1 
+	YTSG A 1 A_PlaySound("STGNPUMP")
+	YTSG DDEEFFEEDD 1
+	YTSG A 2 A_JumpIfNoAmmo("Dryfire")
+	*/
+    YTSG A 0 A_JumpIfNoAmmo("Dryfire")
+	YTSG A 0 A_GunFlash
+	YTSG A 0 A_PlaySound ("ASLTSHOT", 1, 0.60)
+    YTSG A 0 A_AlertMonsters
+	YTSG A 0 A_TakeInventory("AE_YutaniShotgunMagOff", 1)	// FIXED 2026-10-23: its own tube counter
+	YTSG A 0 Radius_Quake (1, 2, 0, 1, 0)
+	YTSG B 1 A_FireCustomMissile("DummyProjectile1", 0, 0, 0, 0, 0, 0)
+	YTSG BBBBBBB 0 BRIGHT A_FireProjectile("ShotgunTracer", random(-4, 4), 0, 3, -2, 0, random(-4, 2))
+	YTSG B 1 Bright A_Light(5)
+	YTSG CD 2 Bright
+    YTSG A 0 A_JumpIfNoAmmo("Dryfire")
+	YTSG A 0 A_GunFlash
+	YTSG A 0 A_PlaySound ("ASLTSHOT", 1, 0.60)
+	YTSG A 0 A_TakeInventory("AE_YutaniShotgunMagOff", 1)	// FIXED 2026-10-23: its own tube counter
+	YTSG B 1 A_FireCustomMissile("DummyProjectile1", 0, 0, 0, 0, 0, 0)
+	YTSG BBBBBBB 0 BRIGHT A_FireProjectile("ShotgunTracer", random(-4, 4), 0, 3, -2, 0, random(-4, 2))
+	YTSG B 1 Bright A_Light(5)
+	YTSG CD 2 Bright
+    YTSG A 0 A_JumpIfNoAmmo("Dryfire")
+	YTSG A 0 A_GunFlash
+	YTSG A 0 A_PlaySound ("ASLTSHOT", 1, 0.60)
+	YTSG A 0 A_TakeInventory("AE_YutaniShotgunMagOff", 1)	// FIXED 2026-10-23: its own tube counter
+	YTSG B 1 A_FireCustomMissile("DummyProjectile1", 0, 0, 0, 0, 0, 0)
+	YTSG BBBBBBB 0 BRIGHT A_FireProjectile("ShotgunTracer", random(-4, 4), 0, 3, -2, 0, random(-4, 2))
+	YTSG B 1 Bright A_Light(5)
+	YTSG CD 2 Bright
+	Goto RSP_P1B	// RSR-PUMP 1.92: the hand works the pump (states below); stock frames there when not in VR
+	/*
+  SightFire:
+    TNT1 A 0 A_JumpIfNoAmmo("Dryfire")
+    TNT1 A 0 A_JumpIfInventory("ShotgunBurstAlt", 1, "SightFire2")
+	TNT1 A 0 A_PlaySound ("ASLTSHOT", 1, 0.80)
+    TNT1 A 0 A_AlertMonsters
+	TNT1 A 0 A_TakeInventory("AE_YutaniShotgunMagOff", 1)
+	TNT1 A 0 Radius_Quake (1, 2, 0, 1, 0)
+	YTIS A 1
+    TNT1 A 0 A_FireCustomMissile("DummyProjectile1", 0, 0, 0, 0, 0, 0)
+    TNT1 AAAAAAA 0 BRIGHT A_FireProjectile("ShotgunTracer", random(-3, 3), 0, 8, 0, 0, random(-3, 1))
+	YTIS B 1 Bright A_Light(5)
+	TNT1 A 0 Bright A_GunFlash
+	YTIS BC 2 Bright
+	YTIS A 1
+	YTIS A 1 A_PlaySound("STGNPUMP")
+	YTSG DDEEFFEEDD 1
+	YTSG A 2
+	Goto Ready 
+  SightFire2:	
+    TNT1 A 0 A_JumpIfNoAmmo("Dryfire")
+	TNT1 A 0 A_PlaySound ("ASLTSHOT", 1, 0.60)
+    TNT1 A 0 A_AlertMonsters
+	TNT1 A 0 A_TakeInventory("AE_YutaniShotgunMagOff", 1)
+	TNT1 A 0 Radius_Quake (1, 2, 0, 1, 0)
+	YTIS A 1
+    TNT1 A 0 A_FireCustomMissile("DummyProjectile1", 0, 0, 0, 0, 0, 0)
+    TNT1 AAAAAAA 0 BRIGHT A_FireProjectile("ShotgunTracer", random(-3, 3), 0, 8, 0, 0, random(-3, 1))
+	YTIS B 1 Bright A_Light(5)
+	TNT1 A 0 Bright A_GunFlash
+	YTIS BC 2 Bright
+	YTIS A 1 
+    TNT1 A 0 A_JumpIfNoAmmo("Dryfire")
+	TNT1 A 0 A_PlaySound ("ASLTSHOT", 1, 0.70)
+	TNT1 A 0 A_TakeInventory("AE_YutaniShotgunMagOff", 1)
+    TNT1 A 0 A_FireCustomMissile("DummyProjectile1", 0, 0, 0, 0, 0, 0)
+    TNT1 AAAAAAA 0 BRIGHT A_FireProjectile("ShotgunTracer", random(-3, 3), 0, 8, 0, 0, random(-3, 1))
+	YTIS B 1 Bright A_Light(5)
+	TNT1 A 0 Bright A_GunFlash
+	YTIS BC 2 Bright
+	YTIS A 1 
+    TNT1 A 0 A_JumpIfNoAmmo("Dryfire")
+	TNT1 A 0 A_PlaySound ("ASLTSHOT", 1, 0.75)
+	TNT1 A 0 A_TakeInventory("AE_YutaniShotgunMagOff", 1)
+    TNT1 A 0 A_FireCustomMissile("DummyProjectile1", 0, 0, 0, 0, 0, 0)
+    TNT1 AAAAAAA 0 BRIGHT A_FireProjectile("ShotgunTracer", random(-3, 3), 0, 8, 0, 0, random(-3, 1))
+	YTIS B 1 Bright A_Light(5)
+	TNT1 A 0 Bright A_GunFlash
+	YTIS BC 2 Bright
+	YTIS A 1 
+	YTIS A 1 A_PlaySound("STGNPUMP")
+	YTSG DDEEFFEEDD 1
+	YTSG A 2 A_JumpIfNoAmmo("Dryfire")
+	Goto Ready 
+	*/
+  AltFire:
+    YTSG A 0 A_JumpIfInventory("ShotgunBurstAlt", 0, "AltFire2")
+	YTSG A 0 A_GiveInventory("ShotgunBurstAlt", 1) 
+	YTSG A 0
+	/*	
+	YTSG DE 4 A_PlaySound("FLAMPICK")
+	YTSG F 2
+	*/
+	YTSG E 1 A_PlaySound("FLAMPICK")
+	YTSG FGH 1
+	YTSG I 1 A_PlaySound("STGNPUMP")
+	YTSG JKLMN 1
+	Goto Ready 
+  AltFire2:
+	YTSG A 0
+	YTSG A 0 A_TakeInventory("ShotgunBurstAlt", 1)
+	/*
+	YTSG DE 4 A_PlaySound("FLAMPICK")
+	YTSG F 2
+	*/
+	YTSG E 1 A_PlaySound("FLAMPICK")
+	YTSG FGH 1
+	YTSG I 1 A_PlaySound("STGNPUMP")
+	YTSG JKLMN 1
+	Goto Ready 
+		Reload:
+  YTSG A 0 A_JumpIfInventory("AE_YutaniShotgunMagOff", 8, 2)
+  YTSG A 0 A_JumpIfInventory("AliensShell", 1, "ReloadWork")
+  YTSG A 0 
+  Goto Ready
+  ReloadWork:
+  	YTSG A 0 A_GiveInventory("RSP_Go", 1)
+  	Goto RSP_Load
+  ReloadWork_Stock:
+		//TNT1 A 0 Bright A_ZoomFactor(1.0)
+		YTSG A 0 A_SetSpeed (0.7)
+		//TNT1 A 0 A_SetCrosshair(0)
+		//YTSG A 0 A_GiveInventory("NormalStance", 1)
+		//TNT1 A 0 A_TakeInventory("IsSight", 1)
+		/*
+	   YTSG DDDEEEFFFFF 1
+	   YTSG D 1 Offset(0,45)
+	   */
+	   YTSR ABCD 3
+  ReloadLoop:
+	/*
+	YTSG E 2 Offset(0,45)
+	TNT1 A 0 A_TakeInventory("AliensShell", 1)
+    YTSG F 2 Offset(0,47)
+    YTSG F 2 Offset(2,50) A_PlaySound("SHELLIN")
+    TNT1 A 0 A_GiveInventory("AE_YutaniShotgunMagOff", 1)
+	YTSG F 2 Offset(4,52) A_WeaponReady
+	YTSG F 2 Offset(6,45) A_WeaponReady
+    YTSG F 2 Offset(2,40) A_WeaponReady
+    YTSG F 2 Offset(0,45) A_WeaponReady
+	TNT1 A 0 A_JumpIfInventory("AE_YutaniShotgunMagOff", 8, "ReloadFinish")
+    TNT1 A 0 A_JumpIfInventory("AliensShell", 1, "ReloadLoop")
+	*/
+	YTSR D 0 A_TakeInventory("AliensShell", 1)
+    YTSR D 0 A_GiveInventory("AE_YutaniShotgunMagOff", 1)	// FIXED 2026-10-23: its own tube counter
+	YTSR EFGHI 2
+	YTSR J 2 A_PlaySound("SHELLIN")	// FIXED 2026-10-23: this run was one unbroken EFGHIJK
+	YTSR K 2						// with no sound, so the Yutani shotgun fed its shells
+									// silently where the Colonial twin's ATSR J plays SHELLIN
+	YTSR D 0 A_JumpIfInventory("AE_YutaniShotgunMagOff", 8, "ReloadFinish")	// FIXED 2026-10-23: its own tube counter
+    YTSR D 0 A_JumpIfInventory("AliensShell", 1, "ReloadLoop")
+    Goto ReloadFinish
+	ReloadFinish:
+	//YTSG FEDA 2 A_WeaponReady
+	Goto Ready
+  Flash:
+	TNT1 A 0 A_JumpIf(GetCVAR("avw_weapons_mf")==1, "MuzzleFlash")
+    TNT1 A 0 Bright A_Light1
+    TNT1 B 0 Bright A_Light2
+    Goto LightDone
+  MuzzleFlash:
+    SGMF A 2 Bright
+    SGMF B 2 Bright A_Light2
+    TNT1 A 1 Bright A_Light1
+    TNT1 A 1 Bright A_Light0
+	stop
+  Spawn:
+	SHOT A 0 A_JumpIf(GetCVAR("avw_pickupmodel")==1, "Spawn3D")
+    SHOT A 1
+    Stop
+  Spawn3D:
+	SHOT A 0 A_JumpIf(GetCVAR("avw_pickupmodel")==0, "Spawn")
+    SHOT P 1 Bright
+    Stop
+  
+	// RSR-PUMP 1.92 (zscript/rsr/rsr_pump.zs, ported 2026-10-22): the hand-worked pump after a
+	// shot, a shell into the port at any time, the reload button as the hand insert's entry.
+	// Not in VR, or with the VR reload off, RSP_P1 / RSP_P1B play the set's own pump frames.
+	RSP_P1:		// after Fire / FireSlug (A_Refire tail)
+		YTSG A 0 A_TakeInventory("RSP_Go", 1)
+		YTSG A 0 A_GiveInventory("RSP_PumpStart", 10)	// 10: the set's own tics E..N to its refire
+		YTSG A 0 A_JumpIfInventory("RSP_Go", 1, "RSP_P1Go")
+	RSP_P1Stock:
+		YTSG EFGH 1
+		YTSG I 1 A_PlaySound("STGNPUMP")
+		YTSG JKLM 1
+		YTSG N 1 A_Refire
+		"####" # 0 A_JumpIf(GetCVAR("avw_weapons")==0, "Ready")
+		"####" # 0 A_FireProjectile("ShotgunBarrelSmoke",0,0,0,0,FPF_NOAUTOAIM,0)
+		Goto Ready
+	RSP_P1B:	// after the burst (Fire2)
+		YTSG A 0 A_TakeInventory("RSP_Go", 1)
+		YTSG A 0 A_GiveInventory("RSP_PumpStart", 14)	// 14: E..N + A 4
+		YTSG A 0 A_JumpIfInventory("RSP_Go", 1, "RSP_P1Go")
+	RSP_P1BStock:
+		YTSG EFGH 1
+		YTSG I 1 A_PlaySound("STGNPUMP")
+		YTSG JKLMN 1
+		YTSG A 4
+		"####" # 0 A_JumpIf(GetCVAR("avw_weapons")==0, "Ready")
+		"####" # 0 A_FireProjectile("ShotgunBarrelSmoke",0,0,0,0,FPF_NOAUTOAIM,0)
+		Goto Ready
+	RSP_P1Go:
+		YTSG A 0 A_TakeInventory("RSP_Go", 1)
+	RSP_P1Wait:	// the hand works the pump (rsr_pump.zs moves the pump part); switching allowed
+		YTSG A 1 A_WeaponReady(WRF_NOFIRE|WRF_NOBOB|WRF_NOSECONDARY|WRF_ALLOWRELOAD)
+		YTSG A 0 A_GiveInventory("RSP_PTick", 1)
+		YTSG A 0 A_JumpIfInventory("RSP_Back", 1, "RSP_P1Back")
+		YTSG A 0 A_JumpIfInventory("RSP_Fwd", 1, "RSP_P1Fwd")
+		YTSG A 0 A_JumpIfInventory("RSP_ShellIn", 1, "RSP_P1Feed")	// a shell topped off mid pump wait
+		YTSG A 0 A_JumpIfInventory("RSP_Insert", 1, "RSP_VRIns")	// reload pressed mid pump wait
+		YTSG A 0 A_JumpIfInventory("RSP_Auto", 1, "RSP_P1Auto")
+		YTSG A 0 A_JumpIfInventory("RSP_Ready", 1, "RSP_P1Ready")
+		Goto RSP_P1Wait
+	RSP_P1Feed:	// the set's own per-shell step while the gun waits for the pump
+		YTSG A 0 A_TakeInventory("RSP_ShellIn", 1)
+		YTSG A 0 A_JumpIfInventory("AE_YutaniShotgunMagOff", 8, "RSP_P1FeedE")	// FIXED 2026-10-23: its own tube counter
+		YTSG A 0 A_JumpIfInventory("AliensShell", 1, 1)
+		Goto RSP_P1FeedE
+		YTSG A 0 A_GiveInventory("AE_YutaniShotgunMagOff", 1)	// FIXED 2026-10-23: its own tube counter
+		YTSG A 0 A_TakeInventory("AliensShell", 1, TIF_NOTAKEINFINITE)
+	RSP_P1FeedE:
+		YTSG A 0 A_JumpIfInventory("RSP_ShellIn", 1, "RSP_P1Feed")
+		Goto RSP_P1Wait
+	RSP_P1Back:	// all the way back: the spent case out of the port (rsr_pump.zs CaseOut)
+		YTSG A 0 A_TakeInventory("RSP_Back", 1)
+		YTSG A 0 A_GiveInventory("RSP_CaseOut", 1)
+		Goto RSP_P1Wait
+	RSP_P1Fwd:	// forward again: chambered; ready once the set's own refire time is up (RSP_Ready)
+		YTSG A 0 A_TakeInventory("RSP_Fwd", 1)
+		YTSG A 0 A_JumpIfInventory("RSP_Ready", 1, "RSP_P1Ready")
+		Goto RSP_P1Wait
+	RSP_P1Ready:
+		YTSG A 0 A_TakeInventory("RSP_Ready", 1)
+		"####" # 0 A_JumpIf(GetCVAR("avw_weapons")==0, "Ready")
+		"####" # 0 A_FireProjectile("ShotgunBarrelSmoke",0,0,0,0,FPF_NOAUTOAIM,0)
+		Goto Ready
+	RSP_P1Auto:	// the hand left the pump before working it: the set's own pump
+		YTSG A 0 A_TakeInventory("RSP_Auto", 1)
+		Goto RSP_P1Stock
+	RSP_Feed:	// a shell the hand pushed home with the gun simply up (rsr_pump.zs FreeFeed)
+		YTSG A 0 A_TakeInventory("RSP_ShellIn", 1)
+		YTSG A 0 A_JumpIfInventory("AE_YutaniShotgunMagOff", 8, "RSP_FeedEnd")	// FIXED 2026-10-23: its own tube counter
+		YTSG A 0 A_JumpIfInventory("AliensShell", 1, 1)
+		Goto RSP_FeedEnd
+		YTSG A 0 A_GiveInventory("AE_YutaniShotgunMagOff", 1)	// FIXED 2026-10-23: its own tube counter
+		YTSG A 0 A_TakeInventory("AliensShell", 1, TIF_NOTAKEINFINITE)
+	RSP_FeedEnd:
+		YTSG A 0 A_JumpIfInventory("RSP_ShellIn", 1, "RSP_Feed")
+		Goto Ready
+	RSP_VRIns:	// the reload button, read by rsr_pump.zs (InsertWanted): the hand insert's own entry
+		YTSG A 0 A_TakeInventory("RSP_Insert", 1)
+		YTSG A 0 A_TakeInventory("RSP_Go", 1)
+		YTSG A 0 A_GiveInventory("RSP_LoadStart", 1)
+		YTSG A 0 A_JumpIfInventory("RSP_Go", 1, "RSP_LoadGo")
+		Goto Ready
+
+	// RSR-PUMP: hand-loaded shells (zscript/rsr/rsr_pump.zs, tools/rsp_patch_ae.py).
+	// Not in VR, or with real reload off, RSP_Load falls straight through to the
+	// set's own loading loop. The pump stroke and the shot are never touched.
+	RSP_Load:
+		YTSG A 0 A_TakeInventory("RSP_Go", 1)
+		YTSG A 0 A_GiveInventory("RSP_LoadStart", 1)
+		YTSG A 0 A_JumpIfInventory("RSP_Go", 1, "RSP_LoadGo")
+		Goto ReloadWork_Stock
+	RSP_LoadGo:
+		YTSG A 0 A_TakeInventory("RSP_Go", 1)
+	RSP_Next:	// the set's own question: is there a shell to load, and room for it?
+		YTSG A 0 A_JumpIfInventory("AliensShell", 1, "RSP_Next1")
+		Goto RSP_LoadEnd		// out of shells
+	RSP_Next1:
+		YTSG A 0 A_JumpIfInventory("AE_YutaniShotgunMagOff", 8, "RSP_LoadEnd")	// full
+		Goto RSP_LoadWait
+	RSP_LoadWait:	// the hand feeds shells; the script runs every tic
+		YTSG A 1 A_WeaponReady(WRF_NOBOB)
+		YTSG A 0 A_GiveInventory("RSP_LTick", 1)
+		YTSG A 0 A_JumpIfInventory("RSP_ShellIn", 1, "RSP_Shell")
+		YTSG A 0 A_TakeInventory("RSP_Back", 1)
+		YTSG A 0 A_TakeInventory("RSP_Fwd", 1)
+		Goto RSP_LoadWait
+	RSP_Shell:	// a shell pushed home: the set's own per-shell step, its own items
+		YTSG A 0 A_TakeInventory("RSP_ShellIn", 1)
+		YTSG A 0 A_GiveInventory("AE_YutaniShotgunMagOff", 1)
+		YTSG A 0 A_TakeInventory("AliensShell", 1, TIF_NOTAKEINFINITE)
+		Goto RSP_Next
+	RSP_LoadEnd:
+		Goto ReloadFinish
+	
+	// A slug: the gun's own seven rounds, fired on ONE line instead of
+	// scattered. Same projectile, same count, same total damage -- only
+	// random(-4,4) / random(-5,2) of spread is gone.
+	FireSlug:
+		YTSG A 0 A_JumpIfNoAmmo("Dryfire")
+		YTSG A 0 A_GunFlash
+		YTSG A 0 A_PlaySound ("ASLTSHOT", 1, 0.90)
+		YTSG A 0 A_AlertMonsters
+		YTSG A 0 A_TakeInventory("AE_YutaniShotgunMagOff", 1)	// FIXED 2026-10-23: its own tube counter
+		YTSG A 0 Radius_Quake (2, 3, 0, 1, 0)	// a slug kicks harder
+		YTSG B 1 A_FireCustomMissile("DummyProjectile1", 0, 0, 0, 0, 0, 0)
+		YTSG BBBBBBB 0 BRIGHT A_FireProjectile("ShotgunTracer", 0, 0, 3, -2, 0, 0)
+		YTSG B 1 Bright A_Light(5)
+		YTSG CD 2 Bright
+		Goto RSP_P1	// RSR-PUMP 1.92: the hand works the pump (states below); stock frames there when not in VR
+	}
 }
 
 ACTOR AE_PulseRifleMagOff : Ammo
@@ -160,6 +1944,290 @@ ACTOR AE_Off_PulseRifle : PulseRifle_3D
 	+WEAPON.CHEATNOTWEAPON
 	Weapon.AmmoType1 "AE_PulseRifleMagOff"		// its own magazine
 	Weapon.AmmoType2 "PulseRifleClip"		// the shared reserve
+
+	// GENERATED from PulseRifle_3D: its whole state machine with PulseLoaded -> AE_PulseRifleMagOff (8 swapped).
+	// Inheriting the parent's states instead would load the PARENT's magazine.
+	States
+	{
+   Ready:
+    PULS A 0 ACS_NamedExecuteAlways("LOADDOWN", 0, 20, 56)
+     //PULS A 0 A_JumpifInventory("NormalStance", 1, "RealReady")
+	 //TNT1 A 0 A_JumpifInventory("IsSight", 1, "SightReady")	 
+     //Loop
+   RealReady:
+     //TNT1 A 0 Bright A_ZoomFactor(1.0)
+	 PULS A 0 A_SetSpeed (0.7)
+	 //TNT1 A 0 A_SetCrosshair(0)
+     PULS A 1 A_WeaponReady(WRF_ALLOWRELOAD)	 
+     Goto Ready
+	 /*
+   SightReady:
+     TNT1 A 0 Bright A_ZoomFactor(1.4)
+	 TNT1 A 0 A_SetSpeed (0.35)
+     TNT1 A 0 A_SetCrosshair(8)
+     PRIS A 1 A_WeaponReady(WRF_ALLOWRELOAD)
+     Goto Ready
+	 */
+   Deselect:
+     //TNT1 A 0 Bright A_ZoomFactor(1.0)
+	 PULS A 0 A_SetSpeed (0.7)
+	 //TNT1 A 0 A_SetCrosshair(0)
+	 //PULS A 0 A_TakeInventory("NormalStance", 1)
+	 //TNT1 A 0 A_TakeInventory("IsSight", 1)
+     PULS A 1 A_Lower(12)
+	 PULS A 0 A_StopSound(1)
+     Loop
+   Select:
+     //PULS A 0 A_GiveInventory("NormalStance", 1)
+	 //TNT1 A 0 A_TakeInventory("IsSight", 1)
+     PULS A 1 A_Raise(12)
+     Loop
+   Dryfire:
+     //TNT1 A 0 A_JumpifInventory("IsSight", 1, "IronSightDryFire")
+	 PULS A 15 A_PlaySound("DRYFIRE", 1)
+	 Goto Reload
+	 /*
+   IronSightDryFire:
+     PRIS A 15 A_PlaySound("DRYFIRE", 1)
+     Goto Reload
+	 */
+   Fire:
+	/*
+     TNT1 A 0 A_JumpIfnoAmmo("Dryfire")
+	 TNT1 A 0 A_JumpifInventory("IsSight", 1, "SightFire")
+     TNT1 A 0 A_PlaySound("PULSELOOP", 1, 1, 1)
+     TNT1 A 0 A_AlertMonsters
+     TNT1 A 0 A_FireCustomMissile("DummyProjectile4", 0, 0, 0, 0, 0, 0)
+	 PULS B 1 Bright A_FireProjectile ("HeavyTracer", random(-1, 1), 1, 5, -5, 0, random(-1, -2))
+	 PULS C 1 Bright A_FireProjectile ("HeavyTracer", random(-1, 1), 1, 5, -5, 0, random(-1, -2))
+     TNT1 A 0 A_SetAngle(frandom(0, -0.25) + angle)
+     TNT1 A 0 A_SetPitch(-0.25 + pitch)
+	 //PRBF A 1 Bright A_Light2
+	 PULS C 1 Bright A_Light(3)
+	 PULS D 0 Bright A_GunFlash
+     TNT1 B 0 A_ReFire
+	 TNT1 B 0 A_StopSound(1)
+	 */
+     PULS A 0 A_JumpIfnoAmmo("Dryfire")
+	 PULS A 0 A_GunFlash
+     PULS A 0 A_PlaySound("PULSELOOP", 1, 1, 1)
+     PULS A 0 A_AlertMonsters
+     PULS A 0 A_FireCustomMissile("DummyProjectile4", 0, 0, 0, 0, 0, 0)
+	 PULS B 1 Bright A_FireProjectile ("HeavyTracer", random(-1, 1), 1, 5, -5, 0, random(-1, -2))
+	 PULS C 1 Bright A_FireProjectile ("HeavyTracer", random(-1, 1), 1, 5, -5, 0, random(-1, -2))
+	 PULS D 1 Bright A_Light(3)
+     PULS A 0 A_ReFire
+	 PULS A 0 A_StopSound(1)
+	"####" # 0 A_JumpIf(GetCVAR("avw_weapons")==0, "Ready")
+	"####" # 0 A_FireProjectile("RifleBarrelSmoke",0,0,0,0,FPF_NOAUTOAIM,0)
+     Goto Ready
+	 /*
+	SightFire:
+     TNT1 A 0 A_JumpIfnoAmmo("Dryfire")
+     TNT1 A 0 A_PlaySound("PULSELOOP", 1, 1, 1)
+     TNT1 A 0 A_AlertMonsters
+     TNT1 A 0 A_FireCustomMissile("DummyProjectile4", 0, 0, 0, 0, 0, 0)
+	 PRIS B 1 Bright A_FireProjectile("HeavyTracer", 0, 1, 0, -4, 0, 1)
+     PRIS C 1 Bright A_FireProjectile("HeavyTracer", 0, 1, 0, -4, 0, 1)
+	 TNT1 A 0 A_SetAngle(frandom(0, -0.2) + angle)
+     TNT1 A 0 A_SetPitch(-0.2 + pitch)
+	 //PRIS A 1 Bright A_Light2
+	 PRIS A 1 Bright A_Light(3)
+	 TNT1 A 0 A_GunFlash
+     TNT1 A 0 A_ReFire
+	 TNT1 A 0 A_StopSound(1)
+     Goto Ready
+	 */
+	 Reload:
+     PULS A 0 A_JumpIfInventory("AE_PulseRifleMagOff", 95, 2)
+     PULS A 0 A_JumpIfInventory("PulseRifleClip", 1, "ReloadWork")
+     PULS A 0
+     Goto Ready
+	 ReloadWork:
+	 	PULS A 0 A_GiveInventory("RSR_Go", 1)
+	 	Goto RSR_Start
+	 ReloadWork_Stock:
+	 //TNT1 A 0 Bright A_ZoomFactor(1.0)
+	 PULS A 0 A_SetSpeed (0.7)
+	 //TNT1 A 0 A_SetCrosshair(0)
+	 //PULS A 0 A_GiveInventory("NormalStance", 1)
+	 //TNT1 A 0 A_TakeInventory("IsSight", 1)
+	 /*
+	 PULS F 8 A_PlaySound("PULSREL1", 1)
+	 PULS G 6
+     PULS H 6
+	 */
+	 PLSR AB 2
+	 PLSR C 2 A_PlaySound("PULSREL1", 1)
+	 PLSR DEFGH 2
+	  ReloadLoop:
+     PLSR I 0 A_TakeInventory("PulseRifleClip", 1)
+     PLSR I 0 A_GiveInventory("AE_PulseRifleMagOff", 1)
+     PLSR I 0 A_JumpIfInventory("AE_PulseRifleMagOff", 95, "ReloadFinish")
+     PLSR I 0 A_JumpIfInventory("PulseRifleClip", 1, "ReloadLoop")
+     Goto ReloadFinish
+     ReloadFinish:
+	 /*
+	 PULS H 8 A_PlaySound("PULSREL2")
+     TNT1 A 0 
+	 PULS H 2
+	 PULS G 3
+	 PULS F 2
+     PULS A 10
+	 */
+	 PLSR I 9
+	 PLSR JKL 2
+	 PLSR M 2 A_PlaySound("PULSREL2")
+	 PLSR NO 2
+	 PLSR PQRSTUVW 1
+     Goto Ready 
+    // 2026-10-22 (owner): the launcher is loaded by working the pump by hand (zscript/rsq/pumpgl.zs):
+  // the gun's own pump frames while 20 rounds become one grenade
+  AE_GLPump:
+	 // FIXED 2026-10-23: PULSREL3 was played here AND by zscript/rsq/pumpgl.zs when the hand
+	 // reaches the back of its stroke, so one pump made the same noise twice. The script's is
+	 // the one that lands on your own motion, so it keeps the sound and this frame drops it.
+	 // The other PULSREL3 calls in this file are the non-VR alt-fire paths and are untouched.
+	 PULS J 2
+	 PULS KLMN 2
+	 Goto Ready
+  AltFire:
+	 PULS A 0 A_JumpIfInventory("GrenadeAmmo", 1, "GrenadeFire")
+     //TNT1 A 0 A_JumpifInventory("IsSight", 1, "IronSightDryFire")
+	 PULS A 15 A_PlaySound("DRYFIRE")
+	 Goto Ready
+	GrenadeFire:
+	/*
+	 TNT1 A 0 A_JumpifInventory("IsSight", 1, "SightGrenade")
+	 TNT1 A 0 A_TakeInventory("GrenadeAmmo", 1)
+     PULS A 1 A_PlaySound("weapons/pulsegren",CHAN_AUTO)
+     TNT1 A 0 
+	 PULS A 1 A_FireCustomMissile ("PulseGrenade", 0, 0, 0, 0) 
+	 PULS A 1 Offset(-1,38)
+ 	 PULS A 1 Offset(-1,42)
+     PULS F 2 
+	 PULS F 1 Offset(-1,34) A_PlaySound("PULSREL3",CHAN_AUTO)
+     PULS I 8 Offset(-1,34)
+	 PULS I 3 Offset(-3,48)
+	 PULS F 2
+	 */
+	 PULS A 0 A_TakeInventory("GrenadeAmmo", 1)
+	 YULS E 0 A_GunFlash
+	 PULS E 0 A_PlaySound("weapons/pulsegren",CHAN_AUTO)
+	 PULS E 0 A_FireCustomMissile ("PulseGrenade", 0, 0, 0, 0)
+	 PULS EFGHI 2
+	 PULS J 2 A_PlaySound("PULSREL3",CHAN_AUTO)
+	 PULS KLMN 2
+	 PULS A 10
+     Goto Ready
+	 /*
+	SightGrenade:
+	 TNT1 A 0 A_TakeInventory("GrenadeAmmo", 1)
+     PRIS A 4 A_PlaySound("weapons/pulsegren",CHAN_AUTO)
+     TNT1 A 0 
+	 PRIS A 1 Offset(0,38) A_FireCustomMissile ("PulseGrenade", 0, 0, 0, 0) 
+	 PRIS A 1 Offset(0,44)
+     PRIS A 1 Offset(0,48)
+     PRIS A 1 Offset(0,40)
+	 PRIS A 6 Offset(0,32)
+	 TNT1 A 0 A_PlaySound("PULSREL3",CHAN_AUTO)
+	 PRIS A 1 Offset(0,35)
+     PRIS A 1 Offset(0,38)
+     PRIS A 1 Offset(0,44)
+	 PRIS A 1 Offset(0,48)
+     PRIS A 1 Offset(0,48)
+     PRIS A 1 Offset(0,44)
+     PRIS A 1 Offset(0,38)
+     PRIS A 1 Offset(0,35)
+	 PRIS A 1 Offset(0,32)
+	 PRIS A 14
+     Goto Ready
+	 */
+   Flash:
+	 TNT1 A 0 A_JumpIf(GetCVAR("avw_weapons_mf")==1, "MuzzleFlash")
+     TNT1 A 0 Bright A_Light1
+     TNT1 B 0 Bright A_Light2
+     Goto LightDone
+   MuzzleFlash:
+     PLMF A 1 Bright A_Light1
+     PLMF B 1 Bright A_Light2
+     PLMF C 1 Bright
+     TNT1 A 1 A_Light1
+     TNT1 A 1 A_Light0
+	 Stop
+   AltFlash:
+	 TNT1 A 0 A_JumpIf(GetCVAR("avw_weapons_mf")==1, "AltMuzzleFlash")
+	 Stop
+   AltMuzzleFlash:
+     PLMF DE 1 Bright A_Light1
+     TNT1 A 1 A_Light0
+	 Stop
+   Spawn:
+	 PLSP A 0 A_JumpIf(GetCVAR("avw_pickupmodel")==1, "Spawn3D")
+     PLSP A 1
+     Stop
+   Spawn3D:
+	 PLSP A 0 A_JumpIf(GetCVAR("avw_pickupmodel")==0, "Spawn")
+     PLSP P 1 Bright
+     Stop
+   
+	// RSR: real VR reload (zscript/rsr/vreload.zs, tools/rsr_patch_ae.py AE_GUNS).
+	// Not in VR, or with real reload off, RSR_Start falls through to the
+	// set's own canned reload and nothing below runs.
+	RSR_Start:
+		PULS A 0 A_TakeInventory("RSR_Go", 1)
+		PULS A 0 A_GiveInventory("RSR_Start", 1)
+		PULS A 0 A_JumpIfInventory("RSR_Go", 1, "RSR_Out")
+		Goto ReloadWork_Stock
+	RSR_Out:
+		PULS A 0 A_TakeInventory("RSR_Go", 1)
+		PULS A 0 A_JumpIfInventory("RSR_NoMag_PulseRifle", 1, "RSR_Wait")	// no magazine in the gun
+		PULS A 0 A_JumpIfInventory("RSR_Charge", 1, "RSR_Filled")	// magazine in, handle still due
+		PULS A 0 A_GiveInventory("RSR_MagOut", 1)	// the magazine drops out (its own sound)
+	RSR_Unload:	// the rounds are held aside and come back when a magazine is home, so
+				// the count ends where the gun's own reload would have ended it
+		PULS A 0 A_JumpIfInventory("AE_PulseRifleMagOff", 1, "RSR_Unload1")
+		PULS A 0 A_GiveInventory("RSR_NoMag_PulseRifle", 1)
+		Goto RSR_Wait
+	RSR_Unload1:
+		PULS A 0 A_TakeInventory("AE_PulseRifleMagOff", 1)
+		PULS A 0 A_GiveInventory("RSR_Held_PulseRifle_3D", 1)
+		Goto RSR_Unload
+	RSR_Wait:		// the gun as the script shows it ("####" "#"); the script runs every tic
+		"####" "#" 1 A_WeaponReady(WRF_NOBOB|WRF_NOFIRE)
+		"####" "#" 0 A_GiveInventory("RSR_Tick", 1)
+		"####" "#" 0 A_JumpIfInventory("RSR_Seated", 1, "RSR_Fill")
+		"####" "#" 0 A_JumpIfInventory("RSR_Done", 1, "RSR_Done")
+		Goto RSR_Wait
+	RSR_Fill:	// the magazine is home: the gun's own fill loop, its own items
+		PULS A 0 A_TakeInventory("RSR_Seated", 1)
+		PULS A 0 A_TakeInventory("RSR_NoMag_PulseRifle", 1)
+	RSR_Return:	// the held rounds first
+		PULS A 0 A_JumpIfInventory("RSR_Held_PulseRifle_3D", 1, "RSR_Return1")
+		Goto RSR_FillGo
+	RSR_Return1:
+		PULS A 0 A_TakeInventory("RSR_Held_PulseRifle_3D", 1)
+		PULS A 0 A_GiveInventory("AE_PulseRifleMagOff", 1)
+		Goto RSR_Return
+	RSR_FillGo:
+		PULS A 0 A_GiveInventory("RSR_Charge", 1)	// the handle is due (vreload.zs: ChargeToken)
+		Goto RSR_FillA
+	RSR_FillA:
+		PULS A 0 A_JumpIfInventory("AE_PulseRifleMagOff", 95, "RSR_Filled")
+		PULS A 0 A_JumpIfInventory("PulseRifleClip", 1, "RSR_FillAa")
+		Goto RSR_Filled
+	RSR_FillAa:
+		PULS A 0 A_GiveInventory("AE_PulseRifleMagOff", 1)
+		PULS A 0 A_TakeInventory("PulseRifleClip", 1, TIF_NOTAKEINFINITE)
+		Goto RSR_FillA
+	RSR_Filled:
+		PULS A 0 A_GiveInventory("RSR_Filled", 1)	// the script: the handle if due, else done
+		Goto RSR_Wait
+	RSR_Done:
+		PULS A 0 A_TakeInventory("RSR_Done", 1)
+		PULS A 0 A_TakeInventory("RSR_Charge", 1)
+		Goto Ready
+	}
 }
 
 ACTOR AE_YutaniRifleMagOff : Ammo
@@ -182,6 +2250,291 @@ ACTOR AE_Off_YutaniRifle : YutaniRifle_3D
 	+WEAPON.CHEATNOTWEAPON
 	Weapon.AmmoType1 "AE_YutaniRifleMagOff"		// its own magazine
 	Weapon.AmmoType2 "PulseRifleClip"		// the shared reserve
+
+	// GENERATED from YutaniRifle_3D: its whole state machine with YPulseLoaded -> AE_YutaniRifleMagOff (8 swapped).
+	// Inheriting the parent's states instead would load the PARENT's magazine.
+	States
+	{
+   Ready:
+    YULS A 0 ACS_NamedExecuteAlways("LOADDOWN", 0, 20, 56)
+     //YULS A 0 A_JumpifInventory("NormalStance", 1, "RealReady")
+	 //TNT1 A 0 A_JumpifInventory("IsSight", 1, "SightReady")	 
+     //Loop
+   RealReady:
+     //TNT1 A 0 Bright A_ZoomFactor(1.0)
+	 YULS A 0 A_SetSpeed (0.7)
+	 //TNT1 A 0 A_SetCrosshair(0)
+     YULS A 1 A_WeaponReady(WRF_ALLOWRELOAD)	 
+     Goto Ready
+	 /*
+   SightReady:
+     TNT1 A 0 Bright A_ZoomFactor(1.4)
+	 TNT1 A 0 A_SetSpeed (0.35)
+     TNT1 A 0 A_SetCrosshair(8)
+     PRIS A 1 A_WeaponReady(WRF_ALLOWRELOAD)
+     Goto Ready
+	 */
+   Deselect:
+     //TNT1 A 0 Bright A_ZoomFactor(1.0)
+	 YULS A 0 A_SetSpeed (0.7)
+	 //TNT1 A 0 A_SetCrosshair(0)
+	 //YULS A 0 A_TakeInventory("NormalStance", 1)
+	 //TNT1 A 0 A_TakeInventory("IsSight", 1)
+     YULS A 1 A_Lower(12)
+	 YULS A 0 A_StopSound(1)
+     Loop
+   Select:
+     //YULS A 0 A_GiveInventory("NormalStance", 1)
+     YULS A 1 A_Raise(12)
+     Loop
+   Dryfire:
+     //TNT1 A 0 A_JumpifInventory("IsSight", 1, "IronSightDryFire")
+	 YULS A 15 A_PlaySound("DRYFIRE", 1)
+	 Goto Reload
+	 /*
+   IronSightDryFire:
+     PRIS A 15 A_PlaySound("DRYFIRE", 1)
+     Goto Reload
+	 */
+   Fire:
+	/*
+     TNT1 A 0 A_JumpIfnoAmmo("Dryfire")
+     TNT1 A 0 A_JumpifInventory("NormalStance", 1, 2)
+	 //TNT1 A 0 A_JumpifInventory("IsSight", 1, "SightFire")
+     TNT1 A 0 A_PlaySound("PULSELOOP", 1, 1, 1)
+     TNT1 A 0 A_AlertMonsters
+     TNT1 A 0 A_FireCustomMissile("DummyProjectile4", 0, 0, 0, 0, 0, 0)
+	 YULS B 1 Bright A_FireProjectile ("HeavyTracer", random(-1, 1), 1, 5, -5, 0, random(-1, -2))
+	 YULS C 1 Bright A_FireProjectile ("HeavyTracer", random(-1, 1), 1, 5, -5, 0, random(-1, -2))
+     TNT1 A 0 A_SetAngle(frandom(0, -0.25) + angle)
+     TNT1 A 0 A_SetPitch(-0.25 + pitch)
+	 PRBF A 1 Bright A_Light2
+	 YULS C 1 Bright A_Light(3)
+	 YULS D 0 Bright A_GunFlash
+     TNT1 A 0 A_ReFire
+	 TNT1 A 0 A_StopSound(1)
+	 */
+     YULS A 0 A_JumpIfnoAmmo("Dryfire")
+	 YULS A 0 A_GunFlash
+     YULS A 0 A_PlaySound("PULSELOOP", 1, 1, 1)
+     YULS A 0 A_AlertMonsters
+     YULS A 0 A_FireCustomMissile("DummyProjectile4", 0, 0, 0, 0, 0, 0)
+	 YULS B 1 Bright A_FireProjectile ("HeavyTracer", random(-1, 1), 1, 5, -5, 0, random(-1, -2))
+	 YULS B 1 Bright A_FireProjectile ("HeavyTracer", random(-1, 1), 1, 5, -5, 0, random(-1, -2))
+	 YULS C 1 Bright A_Light2
+	 YULS D 1 Bright A_Light(3)
+     YULS A 0 A_ReFire
+	 YULS A 0 A_StopSound(1)
+	"####" # 0 A_JumpIf(GetCVAR("avw_weapons")==0, "Ready")
+	"####" # 0 A_FireProjectile("RifleBarrelSmoke",0,0,0,0,FPF_NOAUTOAIM,0)
+     Goto Ready
+	 /*
+	SightFire:
+     TNT1 A 0 A_JumpIfnoAmmo("Dryfire")
+     TNT1 A 0 A_PlaySound("PULSELOOP", 1, 1, 1)
+     TNT1 A 0 A_AlertMonsters
+     TNT1 A 0 A_FireCustomMissile("DummyProjectile4", 0, 0, 0, 0, 0, 0)
+	 PRIS B 1 Bright A_FireProjectile("HeavyTracer", 0, 1, 0, -4, 0, 1)
+     PRIS C 1 Bright A_FireProjectile("HeavyTracer", 0, 1, 0, -4, 0, 1)
+	 TNT1 A 0 A_SetAngle(frandom(0, -0.2) + angle)
+     TNT1 A 0 A_SetPitch(-0.2 + pitch)
+	 PRIS A 1 Bright A_Light2
+	 PRIS A 1 Bright A_Light(3)
+	 TNT1 A 0 A_GunFlash
+     TNT1 A 0 A_ReFire
+	 TNT1 A 0 A_StopSound(1)
+     Goto Ready
+	 */
+	 Reload:
+     TNT1 A 0 A_JumpIfInventory("AE_YutaniRifleMagOff", 95, 2)
+     TNT1 A 0 A_JumpIfInventory("PulseRifleClip", 1, "ReloadWork")
+     TNT1 A 0
+     Goto Ready
+	 ReloadWork:
+	 	YULS A 0 A_GiveInventory("RSR_Go", 1)
+	 	Goto RSR_Start
+	 ReloadWork_Stock:
+	 //TNT1 A 0 Bright A_ZoomFactor(1.0)
+	 TNT1 A 0 A_SetSpeed (0.7)
+	 //TNT1 A 0 A_SetCrosshair(0)
+	 //TNT1 A 0 A_GiveInventory("NormalStance", 1)
+	 //TNT1 A 0 A_TakeInventory("IsSight", 1)
+	 /*
+	 YULS F 8 A_PlaySound("PULSREL1", 1)
+	 YULS G 6
+     YULS H 6
+	 */
+	 PLSR AB 2
+	 PLSR C 2 A_PlaySound("PULSREL1", 1)
+	 PLSR DEFGH 2
+	  ReloadLoop:
+     PLSR I 0 A_TakeInventory("PulseRifleClip", 1)
+     PLSR I 0 A_GiveInventory("AE_YutaniRifleMagOff", 1)
+     PLSR I 0 A_JumpIfInventory("AE_YutaniRifleMagOff", 95, "ReloadFinish")
+     PLSR I 0 A_JumpIfInventory("PulseRifleClip", 1, "ReloadLoop")
+     Goto ReloadFinish
+     ReloadFinish:
+	 /*
+	 YULS H 8 A_PlaySound("PULSREL2")
+     TNT1 A 0 
+	 YULS H 2
+	 YULS G 3
+	 YULS F 2
+     YULS A 10
+	 */
+	 PLSR I 9
+	 PLSR JKL 2
+	 PLSR M 2 A_PlaySound("PULSREL2")
+	 PLSR NO 2
+	 PLSR PQRSTUVW 1
+     Goto Ready 
+    // 2026-10-22 (owner): the launcher is loaded by working the pump by hand (zscript/rsq/pumpgl.zs):
+  // the gun's own pump frames while 20 rounds become one grenade
+  AE_GLPump:
+	 // FIXED 2026-10-23: PULSREL3 was played here AND by zscript/rsq/pumpgl.zs when the hand
+	 // reaches the back of its stroke, so one pump made the same noise twice. The script's is
+	 // the one that lands on your own motion, so it keeps the sound and this frame drops it.
+	 // The other PULSREL3 calls in this file are the non-VR alt-fire paths and are untouched.
+	 YULS J 2
+	 YULS KLMN 2
+	 Goto Ready
+  AltFire:
+	 YULS A 0 A_JumpIfInventory("GrenadeAmmo", 1, "GrenadeFire")
+     //TNT1 A 0 A_JumpifInventory("IsSight", 1, "IronSightDryFire")
+	 YULS A 15 A_PlaySound("DRYFIRE")
+	 Goto Ready
+	GrenadeFire:
+	/*
+	 TNT1 A 0 A_JumpifInventory("IsSight", 1, "SightGrenade")
+	 TNT1 A 0 A_TakeInventory("GrenadeAmmo", 1)
+     YULS A 1 A_PlaySound("weapons/pulsegren",CHAN_AUTO)
+     TNT1 A 0 
+	 YULS A 1 A_FireCustomMissile ("PulseGrenade", 0, 0, 0, 0) 
+	 YULS A 1 Offset(-1,38)
+ 	 YULS A 1 Offset(-1,42)
+     YULS F 2 
+	 YULS F 1 Offset(-1,34) A_PlaySound("PULSREL3",CHAN_AUTO)
+     YULS I 8 Offset(-1,34)
+	 YULS I 3 Offset(-3,48)
+	 YULS F 2
+	 */
+	 YULS A 0 A_TakeInventory("GrenadeAmmo", 1)
+	 YULS E 0 A_GunFlash
+	 YULS E 0 A_PlaySound("weapons/pulsegren",CHAN_AUTO)
+	 YULS E 0 A_FireCustomMissile ("PulseGrenade", 0, 0, 0, 0)
+	 YULS EFGHI 2
+	 YULS J 2 A_PlaySound("PULSREL3",CHAN_AUTO)
+	 YULS KLMN 2
+	 YULS A 10
+     Goto Ready
+	 /*
+	SightGrenade:
+	 TNT1 A 0 A_TakeInventory("GrenadeAmmo", 1)
+     PRIS A 4 A_PlaySound("weapons/pulsegren",CHAN_AUTO)
+     TNT1 A 0 
+	 PRIS A 1 Offset(0,38) A_FireCustomMissile ("PulseGrenade", 0, 0, 0, 0) 
+	 PRIS A 1 Offset(0,44)
+     PRIS A 1 Offset(0,48)
+     PRIS A 1 Offset(0,40)
+	 PRIS A 6 Offset(0,32)
+	 TNT1 A 0 A_PlaySound("PULSREL3",CHAN_AUTO)
+	 PRIS A 1 Offset(0,35)
+     PRIS A 1 Offset(0,38)
+     PRIS A 1 Offset(0,44)
+	 PRIS A 1 Offset(0,48)
+     PRIS A 1 Offset(0,48)
+     PRIS A 1 Offset(0,44)
+     PRIS A 1 Offset(0,38)
+     PRIS A 1 Offset(0,35)
+	 PRIS A 1 Offset(0,32)
+	 PRIS A 14
+	 */
+     Goto Ready
+   Flash:
+	 TNT1 A 0 A_JumpIf(GetCVAR("avw_weapons_mf")==1, "MuzzleFlash")
+     TNT1 A 0 Bright A_Light1
+     TNT1 B 0 Bright A_Light2
+     Goto LightDone
+   MuzzleFlash:
+     PLMF A 1 Bright A_Light1
+     PLMF B 1 Bright A_Light2
+     PLMF C 1 Bright
+     TNT1 A 1 A_Light1
+     TNT1 A 1 A_Light0
+	 Stop
+   AltFlash:
+	 TNT1 A 0 A_JumpIf(GetCVAR("avw_weapons_mf")==1, "AltMuzzleFlash")
+	 Stop
+   AltMuzzleFlash:
+     PLMF DE 1 Bright A_Light1
+     TNT1 A 1 A_Light0
+	 Stop
+   Spawn:
+	 PLSP A 0 A_JumpIf(GetCVAR("avw_pickupmodel")==1, "Spawn3D")
+     PLSP A 1
+     Stop
+   Spawn3D:
+	 PLSP A 0 A_JumpIf(GetCVAR("avw_pickupmodel")==0, "Spawn")
+     PLSP P 1 Bright
+     Stop
+   
+	// RSR: real VR reload (zscript/rsr/vreload.zs, tools/rsr_patch_ae.py AE_GUNS).
+	// Not in VR, or with real reload off, RSR_Start falls through to the
+	// set's own canned reload and nothing below runs.
+	RSR_Start:
+		YULS A 0 A_TakeInventory("RSR_Go", 1)
+		YULS A 0 A_GiveInventory("RSR_Start", 1)
+		YULS A 0 A_JumpIfInventory("RSR_Go", 1, "RSR_Out")
+		Goto ReloadWork_Stock
+	RSR_Out:
+		YULS A 0 A_TakeInventory("RSR_Go", 1)
+		YULS A 0 A_JumpIfInventory("RSR_NoMag_YutaniRifle", 1, "RSR_Wait")	// no magazine in the gun
+		YULS A 0 A_JumpIfInventory("RSR_Charge", 1, "RSR_Filled")	// magazine in, handle still due
+		YULS A 0 A_GiveInventory("RSR_MagOut", 1)	// the magazine drops out (its own sound)
+	RSR_Unload:	// the rounds are held aside and come back when a magazine is home, so
+				// the count ends where the gun's own reload would have ended it
+		YULS A 0 A_JumpIfInventory("AE_YutaniRifleMagOff", 1, "RSR_Unload1")
+		YULS A 0 A_GiveInventory("RSR_NoMag_YutaniRifle", 1)
+		Goto RSR_Wait
+	RSR_Unload1:
+		YULS A 0 A_TakeInventory("AE_YutaniRifleMagOff", 1)
+		YULS A 0 A_GiveInventory("RSR_Held_YutaniRifle_3D", 1)
+		Goto RSR_Unload
+	RSR_Wait:		// the gun as the script shows it ("####" "#"); the script runs every tic
+		"####" "#" 1 A_WeaponReady(WRF_NOBOB|WRF_NOFIRE)
+		"####" "#" 0 A_GiveInventory("RSR_Tick", 1)
+		"####" "#" 0 A_JumpIfInventory("RSR_Seated", 1, "RSR_Fill")
+		"####" "#" 0 A_JumpIfInventory("RSR_Done", 1, "RSR_Done")
+		Goto RSR_Wait
+	RSR_Fill:	// the magazine is home: the gun's own fill loop, its own items
+		YULS A 0 A_TakeInventory("RSR_Seated", 1)
+		YULS A 0 A_TakeInventory("RSR_NoMag_YutaniRifle", 1)
+	RSR_Return:	// the held rounds first
+		YULS A 0 A_JumpIfInventory("RSR_Held_YutaniRifle_3D", 1, "RSR_Return1")
+		Goto RSR_FillGo
+	RSR_Return1:
+		YULS A 0 A_TakeInventory("RSR_Held_YutaniRifle_3D", 1)
+		YULS A 0 A_GiveInventory("AE_YutaniRifleMagOff", 1)
+		Goto RSR_Return
+	RSR_FillGo:
+		YULS A 0 A_GiveInventory("RSR_Charge", 1)	// the handle is due (vreload.zs: ChargeToken)
+		Goto RSR_FillA
+	RSR_FillA:
+		YULS A 0 A_JumpIfInventory("AE_YutaniRifleMagOff", 95, "RSR_Filled")
+		YULS A 0 A_JumpIfInventory("PulseRifleClip", 1, "RSR_FillAa")
+		Goto RSR_Filled
+	RSR_FillAa:
+		YULS A 0 A_GiveInventory("AE_YutaniRifleMagOff", 1)
+		YULS A 0 A_TakeInventory("PulseRifleClip", 1, TIF_NOTAKEINFINITE)
+		Goto RSR_FillA
+	RSR_Filled:
+		YULS A 0 A_GiveInventory("RSR_Filled", 1)	// the script: the handle if due, else done
+		Goto RSR_Wait
+	RSR_Done:
+		YULS A 0 A_TakeInventory("RSR_Done", 1)
+		YULS A 0 A_TakeInventory("RSR_Charge", 1)
+		Goto Ready
+	}
 }
 
 ACTOR AE_FlamerMagOff : Ammo
@@ -204,6 +2557,209 @@ ACTOR AE_Off_Flamer : M240Flamethrower_3D
 	+WEAPON.CHEATNOTWEAPON
 	Weapon.AmmoType1 "AE_FlamerMagOff"		// its own magazine
 	Weapon.AmmoType2 "Gas"		// the shared reserve
+
+	// GENERATED from M240Flamethrower_3D: its whole state machine with FlamethrowerLoaded -> AE_FlamerMagOff (9 swapped).
+	// Inheriting the parent's states instead would load the PARENT's magazine.
+	States
+	{
+  Spawn:
+	WFLM A 0 A_JumpIf(GetCVAR("avw_pickupmodel")==1, "Spawn3D")
+    WFLM A 1
+    Loop
+  Spawn3D:
+	WFLM A 0 A_JumpIf(GetCVAR("avw_pickupmodel")==0, "Spawn")
+    WFLM P 1 Bright
+    Loop
+  Ready:
+    FLBF A 0 ACS_NamedExecuteAlways("LOADDOWN", 0, 20, 56)
+	FLBF A 0 A_JumpifNoAmmo("LowFuelReady")
+	FLBF A 0 A_PlaySound("FLAMETHR")
+	FLBF A 0 A_Jumpifinventory("AE_FlamerMagOff", 40, "RealReady")
+	Goto LowFuelReady
+	RealReady:
+	FLBF A 0 A_SetSpeed (0.7)
+	FLBF A 1 A_WeaponReady(WRF_ALLOWRELOAD)
+	TNT1 A 0 	
+	Loop
+  LowFuelReady:
+    FLBF A 0 A_JumpifNoAmmo("DryFuel")
+    FLBF A 1 A_WeaponReady(WRF_ALLOWRELOAD)
+	FLBF A 0 	
+    Loop
+	Dryfuel:
+	FLBF A 1 A_WeaponReady(WRF_ALLOWRELOAD)
+	FLBF A 0 	
+	Loop
+	Dryfire:
+	FLBF A 1 A_PlaySound("DRYFIRE")
+	Goto Reload
+  Deselect:
+    FLMT A 1 A_Lower(12)
+    Loop
+  Select:
+    FLBF A 1 A_Raise(12)
+    Loop
+  Fire:	
+	FLMT A 0 A_JumpIfNoAmmo("Dryfire")
+	FLMT A 0 A_JumpIf(waterlevel >= 3, "Dryfire")
+    FLMT A 0 A_AlertMonsters
+    FLMT A 0 A_Overlay(1001, "BarrelSmoke")
+    FLMT A 0 bright A_GunFlash
+    FLMT A 0 A_FireCustomMissile("DummyProjectile3", 0, 0, 0, 0, 0, 0)
+    FLMT A 2 bright A_FireCustomMissile("FTFire", 0, 1, Random(0, 2),2)
+    FLMT B 2 bright A_FireCustomMissile("FTFire", 0, 0, Random(0, 2),2)
+    FLMT B 2 bright A_FireCustomMissile("FTFire", 0, 1, Random(0, 2),2)
+    FLMT C 0 bright A_GunFlash
+    FLMT A 0 A_FireCustomMissile("DummyProjectile3", 0, 0, 0, 0, 0, 0)
+    FLMT C 2 bright A_FireCustomMissile("FTFire", 0, 1, Random(0, 2),2)
+    FLMT D 2 bright A_FireCustomMissile("FTFire", 0, 0, Random(0, 2),2)
+    FLMT A 2 bright A_FireCustomMissile("FTFire", 0, 1, Random(0, 2),2)
+    FLMT A 0 bright A_GunFlash
+    FLMT A 0 A_FireCustomMissile("DummyProjectile3", 0, 0, 0, 0, 0, 0)
+    FLMT B 2 bright A_FireCustomMissile("FTFire", 0, 1, Random(0, 2),2)
+    FLMT B 2 bright A_FireCustomMissile("FTFire", 0, 0, Random(0, 2),2)
+    FLMT B 1 bright A_FireCustomMissile("FTFire", 0, 1, Random(0, 2),2)
+    FLMT A 1 bright A_ReFire
+    Goto Ready
+  AltFire:
+	FLMT A 0 A_PlaySound("ALIECLW1")
+	FLMT A 0 A_JumpIfNoAmmo("Dryfire")
+	FLMT A 0 A_FireCustomMissile("TankThrow",0,1,0,12)
+	FLMT A 1 Offset(0,35) 
+    FLMT A 1 Offset(0,38)
+    FLMT A 1 Offset(0,44)
+    FLMT A 1 Offset(0,52)
+    FLMT A 1 Offset(0,52)
+    FLMT A 1 Offset(0,44)
+    FLMT A 1 Offset(0,38)
+    FLMT A 15 Offset(0,35)
+    FLMT A 0 A_ReFire
+	Goto RealReady 
+	 Reload:
+  FLMT A 0 A_JumpIfInventory("AE_FlamerMagOff", 150, 2)
+  FLMT A 0 A_JumpIfInventory("GAS", 1, "ReloadWork")
+  FLMT A 0
+  Goto RealReady
+ ReloadWork:
+ 	FLMT A 0 A_GiveInventory("RSR_Go", 1)
+ 	Goto RSR_Start
+ ReloadWork_Stock:
+	/*
+  FLMT A 1 Offset(0,35) A_PlaySound("MISREL")
+  FLMT A 1 Offset(0,38)
+  FLMT A 1 Offset(0,44)
+  FLMT A 1 Offset(0,52)
+  FLMT A 1 Offset(0,52)
+  FLMT A 1 Offset(0,44)
+  FLMT A 1 Offset(0,38)
+  FLMT A 15 Offset(0,35)
+  FLMT A 1 Offset(0,38) A_PlaySound("FLAMERE2")
+  FLMT A 1 Offset(0,44)
+  FLMT A 1 Offset(0,52)
+  FLMT A 1 Offset(0,56)
+  FLMT A 1 Offset(0,60)
+  FLMT A 5 Offset(0,68)
+  */
+  FLMT E 0 A_PlaySound("MISREL")
+  FLMT EFGHI 1
+  FLMT J 5
+ ReloadLoop:
+  FLMT K 0 A_TakeInventory("GAS", 1)
+  FLMT K 0 A_GiveInventory("AE_FlamerMagOff", 1)
+  FLMT K 0 A_JumpIfInventory("AE_FlamerMagOff", 150, "ReloadFinish")
+  FLMT K 0 A_JumpIfInventory("GAS", 1, "ReloadLoop")
+  Goto ReloadFinish 
+ ReloadFinish:
+ /*
+  TNT1 A 0 
+  FLMT A 40 Offset(0,68) A_PlaySound("FLAMERE3")
+  FLMT A 1 Offset(0,60)
+  FLMT A 1 Offset(0,56)
+  FLMT A 1 Offset(0,52)
+  FLMT A 1 Offset(0,44)
+  FLMT A 1 Offset(0,38)
+  FLMT A 1 Offset(0,35)
+  FLMT A 1 Offset(0,32)
+  */
+  FLMT K 24
+  FLMT L 3
+  FLMT MN 3
+  FLMT O 3 A_PlaySound("FLAMERE2")
+  FLMT PQRS 3
+  FLMT T 3
+  FLMT A 21 A_PlaySound("FLAMERE3")
+  Goto Ready
+   Flash:
+    TNT1 A 2 A_Light1
+    TNT1 A 2 A_Light2
+    TNT1 A 1 A_Light1
+    TNT1 A 1 A_Light0
+    Stop
+  BarrelSmoke:
+	TNT1 A 0 A_JumpIf(GetCVAR("avw_weapons")==0, 7)
+	TNT1 A 5
+	TNT1 A 0 A_FireProjectile("FlameBarrelSmoke",0,0,0,0,FPF_NOAUTOAIM,0)
+	TNT1 A 6
+	TNT1 A 0 A_FireProjectile("FlameBarrelSmoke",0,0,0,0,FPF_NOAUTOAIM,0)
+	TNT1 A 6
+	TNT1 A 0 A_FireProjectile("FlameBarrelSmoke",0,0,0,0,FPF_NOAUTOAIM,0)
+	TNT1 A 0
+	Stop
+  
+	// RSR: real VR reload (zscript/rsr/vreload.zs, tools/rsr_patch_ae.py AE_GUNS).
+	// Not in VR, or with real reload off, RSR_Start falls through to the
+	// set's own canned reload and nothing below runs.
+	RSR_Start:
+		FLMT A 0 A_TakeInventory("RSR_Go", 1)
+		FLMT A 0 A_GiveInventory("RSR_Start", 1)
+		FLMT A 0 A_JumpIfInventory("RSR_Go", 1, "RSR_Out")
+		Goto ReloadWork_Stock
+	RSR_Out:
+		FLMT A 0 A_TakeInventory("RSR_Go", 1)
+		FLMT A 0 A_JumpIfInventory("RSR_NoMag_M240Flamethrower", 1, "RSR_Wait")	// no magazine in the gun
+		FLMT A 0 A_GiveInventory("RSR_MagOut", 1)	// the magazine drops out (its own sound)
+	RSR_Unload:	// the rounds are held aside and come back when a magazine is home, so
+				// the count ends where the gun's own reload would have ended it
+		FLMT A 0 A_JumpIfInventory("AE_FlamerMagOff", 1, "RSR_Unload1")
+		FLMT A 0 A_GiveInventory("RSR_NoMag_M240Flamethrower", 1)
+		Goto RSR_Wait
+	RSR_Unload1:
+		FLMT A 0 A_TakeInventory("AE_FlamerMagOff", 1)
+		FLMT A 0 A_GiveInventory("RSR_Held_M240Flamethrower_3D", 1)
+		Goto RSR_Unload
+	RSR_Wait:		// the gun as the script shows it ("####" "#"); the script runs every tic
+		"####" "#" 1 A_WeaponReady(WRF_NOBOB|WRF_NOFIRE)
+		"####" "#" 0 A_GiveInventory("RSR_Tick", 1)
+		"####" "#" 0 A_JumpIfInventory("RSR_Seated", 1, "RSR_Fill")
+		"####" "#" 0 A_JumpIfInventory("RSR_Done", 1, "RSR_Done")
+		Goto RSR_Wait
+	RSR_Fill:	// the magazine is home: the gun's own fill loop, its own items
+		FLMT A 0 A_TakeInventory("RSR_Seated", 1)
+		FLMT A 0 A_TakeInventory("RSR_NoMag_M240Flamethrower", 1)
+	RSR_Return:	// the held rounds first
+		FLMT A 0 A_JumpIfInventory("RSR_Held_M240Flamethrower_3D", 1, "RSR_Return1")
+		Goto RSR_FillGo
+	RSR_Return1:
+		FLMT A 0 A_TakeInventory("RSR_Held_M240Flamethrower_3D", 1)
+		FLMT A 0 A_GiveInventory("AE_FlamerMagOff", 1)
+		Goto RSR_Return
+	RSR_FillGo:
+		Goto RSR_FillA
+	RSR_FillA:
+		FLMT A 0 A_JumpIfInventory("AE_FlamerMagOff", 150, "RSR_Filled")
+		FLMT A 0 A_JumpIfInventory("GAS", 1, "RSR_FillAa")
+		Goto RSR_Filled
+	RSR_FillAa:
+		FLMT A 0 A_GiveInventory("AE_FlamerMagOff", 1)
+		FLMT A 0 A_TakeInventory("GAS", 1, TIF_NOTAKEINFINITE)
+		Goto RSR_FillA
+	RSR_Filled:
+		FLMT A 0 A_GiveInventory("RSR_Filled", 1)	// the script: the handle if due, else done
+		Goto RSR_Wait
+	RSR_Done:
+		FLMT A 0 A_TakeInventory("RSR_Done", 1)
+		Goto Ready
+	}
 }
 
 ACTOR AE_YutaniFlamerMagOff : Ammo
@@ -226,5 +2782,208 @@ ACTOR AE_Off_YutaniFlamer : YutaniFlamer_3D
 	+WEAPON.CHEATNOTWEAPON
 	Weapon.AmmoType1 "AE_YutaniFlamerMagOff"		// its own magazine
 	Weapon.AmmoType2 "Gas"		// the shared reserve
+
+	// GENERATED from YutaniFlamer_3D: its whole state machine with YutanithrowerLoaded -> AE_YutaniFlamerMagOff (9 swapped).
+	// Inheriting the parent's states instead would load the PARENT's magazine.
+	States
+	{
+  Spawn:
+	WFLM A 0 A_JumpIf(GetCVAR("avw_pickupmodel")==1, "Spawn3D")
+    WFLM A 1
+    Loop
+  Spawn3D:
+	WFLM A 0 A_JumpIf(GetCVAR("avw_pickupmodel")==0, "Spawn")
+    WFLM P 1 Bright
+    Loop
+  Ready:
+    YLAM A 0 ACS_NamedExecuteAlways("LOADDOWN", 0, 20, 56)
+	YLAM A 0 A_JumpifNoAmmo("LowFuelReady")
+	YLAM A 0 A_PlaySound("FLAMETHR")
+	YLAM A 0 A_Jumpifinventory("AE_YutaniFlamerMagOff", 40, "RealReady")
+	Goto LowFuelReady
+	RealReady:
+	YLAM A 0 A_SetSpeed (0.7)
+	YLAM A 1 A_WeaponReady(WRF_ALLOWRELOAD)
+	YLAM A 0 	
+	Loop
+  LowFuelReady:
+    YLAM A 0 A_JumpifNoAmmo("DryFuel")
+    YLAM A 1 A_WeaponReady(WRF_ALLOWRELOAD)
+	YLAM A 0 	
+    Loop
+	Dryfuel:
+	YLAM E 1 A_WeaponReady(WRF_ALLOWRELOAD)
+	YLAM A 0 	
+	Loop
+	Dryfire:
+	YLAM E 1 A_PlaySound("DRYFIRE")
+	Goto Reload
+  Deselect:
+    YLAM E 1 A_Lower(12)
+    Loop
+  Select:
+    YLAM E 1 A_Raise(12)
+    Loop
+  Fire:	
+	YLAM A 0 A_JumpIfNoAmmo("Dryfire")
+	YLAM A 0 A_JumpIf(waterlevel >= 3, "Dryfire")
+    YLAM A 0 A_AlertMonsters
+    FLMT A 0 A_Overlay(1001, "BarrelSmoke")
+    YLAM E 0 bright A_GunFlash
+    YLAM A 0 A_FireCustomMissile("DummyProjectile3", 0, 0, 0, 0, 0, 0)
+    YLAM E 2 bright A_FireCustomMissile("FTFire", 0, 1, Random(0, 2),2)
+    YLAM F 2 bright A_FireCustomMissile("FTFire", 0, 0, Random(0, 2),2)
+    YLAM F 2 bright A_FireCustomMissile("FTFire", 0, 1, Random(0, 2),2)
+    YLAM E 0 bright A_GunFlash
+    YLAM A 0 A_FireCustomMissile("DummyProjectile3", 0, 0, 0, 0, 0, 0)
+    YLAM G 2 bright A_FireCustomMissile("FTFire", 0, 1, Random(0, 2),2)
+    YLAM H 2 bright A_FireCustomMissile("FTFire", 0, 0, Random(0, 2),2)
+    YLAM E 2 bright A_FireCustomMissile("FTFire", 0, 1, Random(0, 2),2)
+    YLAM E 0 bright A_GunFlash
+    YLAM A 0 A_FireCustomMissile("DummyProjectile3", 0, 0, 0, 0, 0, 0)
+    YLAM F 2 bright A_FireCustomMissile("FTFire", 0, 1, Random(0, 2),2)
+    YLAM F 2 bright A_FireCustomMissile("FTFire", 0, 0, Random(0, 2),2)
+    YLAM F 1 bright A_FireCustomMissile("FTFire", 0, 1, Random(0, 2),2)
+    YLAM E 1 bright A_ReFire
+    Goto Ready
+  AltFire:
+	YLAM A 0 A_PlaySound("ALIECLW1")
+	YLAM A 0 A_JumpIfNoAmmo("Dryfire")
+	YLAM A 0 A_FireCustomMissile("TankThrow",0,1,0,12)
+	YLAM E 1 Offset(0,35)
+    YLAM E 1 Offset(0,38)
+    YLAM E 1 Offset(0,44)
+    YLAM E 1 Offset(0,52)
+    YLAM E 1 Offset(0,52)
+    YLAM E 1 Offset(0,44)
+    YLAM E 1 Offset(0,38)
+    YLAM E 15 Offset(0,35)
+    YLAM A 0 A_ReFire
+	Goto RealReady 
+	 Reload:
+  YLAM A 0 A_JumpIfInventory("AE_YutaniFlamerMagOff", 150, 2)
+  YLAM A 0 A_JumpIfInventory("GAS", 1, "ReloadWork")
+  YLAM A 0
+  Goto RealReady
+ ReloadWork:
+ 	YLAM A 0 A_GiveInventory("RSR_Go", 1)
+ 	Goto RSR_Start
+ ReloadWork_Stock:
+ /*
+  YLAM E 1 Offset(0,35) A_PlaySound("MISREL")
+  YLAM E 1 Offset(0,38)
+  YLAM E 1 Offset(0,44)
+  YLAM E 1 Offset(0,52)
+  YLAM E 1 Offset(0,52)
+  YLAM E 1 Offset(0,44)
+  YLAM E 1 Offset(0,38)
+  YLAM E 15 Offset(0,35)
+  YLAM E 1 Offset(0,38) A_PlaySound("FLAMERE2")
+  YLAM E 1 Offset(0,44)
+  YLAM E 1 Offset(0,52)
+  YLAM E 1 Offset(0,56)
+  YLAM E 1 Offset(0,60)
+  YLAM E 5 Offset(0,68)
+  */
+  FLMT E 0 A_PlaySound("MISREL")
+  FLMT EFGHI 1
+  FLMT J 5
+ ReloadLoop:
+  FLMT K 0 A_TakeInventory("GAS", 1)
+  FLMT K 0 A_GiveInventory("AE_YutaniFlamerMagOff", 1)
+  FLMT K 0 A_JumpIfInventory("AE_YutaniFlamerMagOff", 150, "ReloadFinish")
+  FLMT K 0 A_JumpIfInventory("GAS", 1, "ReloadLoop")
+  Goto ReloadFinish 
+ ReloadFinish: 
+ /*
+  TNT1 A 0 
+  YLAM E 40 Offset(0,68) A_PlaySound("FLAMERE3")
+  YLAM E 1 Offset(0,60)
+  YLAM E 1 Offset(0,56)
+  YLAM E 1 Offset(0,52)
+  YLAM E 1 Offset(0,44)
+  YLAM E 1 Offset(0,38)
+  YLAM E 1 Offset(0,35)
+  YLAM E 1 Offset(0,32)
+  */
+  FLMT K 24
+  FLMT L 3
+  FLMT MN 3
+  FLMT O 3 A_PlaySound("FLAMERE2")
+  FLMT PQRS 3
+  FLMT T 3
+  YLAM A 21 A_PlaySound("FLAMERE3")
+  Goto Ready
+   Flash:
+    TNT1 A 2 A_Light1
+    TNT1 A 2 A_Light2
+    TNT1 A 1 A_Light1
+    TNT1 A 1 A_Light0
+    Stop
+  BarrelSmoke:
+	TNT1 A 0 A_JumpIf(GetCVAR("avw_weapons")==0, 7)
+	TNT1 A 5
+	TNT1 A 0 A_FireProjectile("FlameBarrelSmoke",0,0,0,0,FPF_NOAUTOAIM,0)
+	TNT1 A 6
+	TNT1 A 0 A_FireProjectile("FlameBarrelSmoke",0,0,0,0,FPF_NOAUTOAIM,0)
+	TNT1 A 6
+	TNT1 A 0 A_FireProjectile("FlameBarrelSmoke",0,0,0,0,FPF_NOAUTOAIM,0)
+	TNT1 A 0
+	Stop
+  
+	// RSR: real VR reload (zscript/rsr/vreload.zs, tools/rsr_patch_ae.py AE_GUNS).
+	// Not in VR, or with real reload off, RSR_Start falls through to the
+	// set's own canned reload and nothing below runs.
+	RSR_Start:
+		YLAM A 0 A_TakeInventory("RSR_Go", 1)
+		YLAM A 0 A_GiveInventory("RSR_Start", 1)
+		YLAM A 0 A_JumpIfInventory("RSR_Go", 1, "RSR_Out")
+		Goto ReloadWork_Stock
+	RSR_Out:
+		YLAM A 0 A_TakeInventory("RSR_Go", 1)
+		YLAM A 0 A_JumpIfInventory("RSR_NoMag_YutaniFlamer", 1, "RSR_Wait")	// no magazine in the gun
+		YLAM A 0 A_GiveInventory("RSR_MagOut", 1)	// the magazine drops out (its own sound)
+	RSR_Unload:	// the rounds are held aside and come back when a magazine is home, so
+				// the count ends where the gun's own reload would have ended it
+		YLAM A 0 A_JumpIfInventory("AE_YutaniFlamerMagOff", 1, "RSR_Unload1")
+		YLAM A 0 A_GiveInventory("RSR_NoMag_YutaniFlamer", 1)
+		Goto RSR_Wait
+	RSR_Unload1:
+		YLAM A 0 A_TakeInventory("AE_YutaniFlamerMagOff", 1)
+		YLAM A 0 A_GiveInventory("RSR_Held_YutaniFlamer_3D", 1)
+		Goto RSR_Unload
+	RSR_Wait:		// the gun as the script shows it ("####" "#"); the script runs every tic
+		"####" "#" 1 A_WeaponReady(WRF_NOBOB|WRF_NOFIRE)
+		"####" "#" 0 A_GiveInventory("RSR_Tick", 1)
+		"####" "#" 0 A_JumpIfInventory("RSR_Seated", 1, "RSR_Fill")
+		"####" "#" 0 A_JumpIfInventory("RSR_Done", 1, "RSR_Done")
+		Goto RSR_Wait
+	RSR_Fill:	// the magazine is home: the gun's own fill loop, its own items
+		YLAM A 0 A_TakeInventory("RSR_Seated", 1)
+		YLAM A 0 A_TakeInventory("RSR_NoMag_YutaniFlamer", 1)
+	RSR_Return:	// the held rounds first
+		YLAM A 0 A_JumpIfInventory("RSR_Held_YutaniFlamer_3D", 1, "RSR_Return1")
+		Goto RSR_FillGo
+	RSR_Return1:
+		YLAM A 0 A_TakeInventory("RSR_Held_YutaniFlamer_3D", 1)
+		YLAM A 0 A_GiveInventory("AE_YutaniFlamerMagOff", 1)
+		Goto RSR_Return
+	RSR_FillGo:
+		Goto RSR_FillA
+	RSR_FillA:
+		YLAM A 0 A_JumpIfInventory("AE_YutaniFlamerMagOff", 150, "RSR_Filled")
+		YLAM A 0 A_JumpIfInventory("GAS", 1, "RSR_FillAa")
+		Goto RSR_Filled
+	RSR_FillAa:
+		YLAM A 0 A_GiveInventory("AE_YutaniFlamerMagOff", 1)
+		YLAM A 0 A_TakeInventory("GAS", 1, TIF_NOTAKEINFINITE)
+		Goto RSR_FillA
+	RSR_Filled:
+		YLAM A 0 A_GiveInventory("RSR_Filled", 1)	// the script: the handle if due, else done
+		Goto RSR_Wait
+	RSR_Done:
+		YLAM A 0 A_TakeInventory("RSR_Done", 1)
+		Goto Ready
+	}
 }
 

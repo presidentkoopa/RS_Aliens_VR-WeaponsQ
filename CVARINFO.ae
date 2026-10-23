@@ -63,6 +63,14 @@ server int ae_start_dual = 0;
 // Aliens VR > Ballistics still puts it back to Stock.
 server bool rsq_ballistics = true;
 
+// 2026-10-23 spent casings. ON, as our effect switches are; the meshes are RS_Ballistics'.
+server bool ae_casings = true;
+
+// 2026-10-23 move a round to its gun's measured bore. The engine discards every gun's
+// spawnheight in VR (use_action_spawn_yzoffset defaults false), so without this the pulse
+// rifle's 10 mm leaves 4.3 cm above its barrel and the shotgun 3.4 cm below its own.
+server bool ae_muzzle_bore = true;
+
 // 2026-10-22 rest-pose tuning for the gun hand, centimetres (Options > Aliens VR). Bake into
 // RSQ_HandTable.GunHook when settled: fwd subtracts from z, up adds to y, side adds to x.
 user float ae_pistolhand_fwd = 0.0;
@@ -149,6 +157,19 @@ user float ae_loader_clunk = 18.0;			// arm speed above which a hard stop clunks
 user float ae_loader_haptic = 1.0;			// kick that controller on a hard stop, 0 = off
 user float ae_loader_beacon = 1.0;			// the rotating orange beacon, 0 = off
 user float ae_loader_beacon_rpm = 90.0;		// how fast it sweeps
+// 2026-10-23 the cab cage over the operator's head, and the share of a hit it eats. SERVER,
+// because the absorb changes how much damage lands and every machine must agree. The code
+// caps it at 0.9 so a blow is never reduced to nothing.
+// 2026-10-23 THE RAM: the arms' alt fire, a straight hydraulic shove. SERVER, because it
+// deals damage and moves bodies, so every machine must agree.
+server float ae_loader_ram = 1.0;			// 0 = off
+server float ae_loader_ram_gap = 20.0;		// tics before that arm can ram again
+server float ae_loader_ram_radius = 56.0;	// cm around the claw it catches
+server float ae_loader_ram_damage = 60.0;
+server float ae_loader_ram_push = 26.0;		// how hard it throws what it catches
+
+server float ae_loader_cage = 1.0;			// the cage over your head, 0 = off
+server float ae_loader_cage_absorb = 0.35;	// fraction of a hit the cage takes
 user float ae_loader_beacon_radius = 96.0;	// its light radius, 0 = no light
 user float ae_loader_debug = 0.0;			// print what the loader handler sees, once a second
 user float ae_loader_arms = 1.0;			// an arm on each controller, 0 = the old single model

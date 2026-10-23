@@ -11,10 +11,24 @@ DrawKeyBar 6, vertical, auto, 298, 35, 0, 3, 8;
 drawbar "TBAR06", "TBAR05", Health, horizontal, interpolate(2), 222, 7;
 drawimage "TBAR02", 222, 7;
 drawnumber 3, Smallfont, green, Health/*, whennotzero*/, 256, 10, 0, red, 0;
-drawimage "TBAR24", 219, 182;
-drawimage "TBAR22", 240, 182;
-drawnumber 3, Smallfont, darkgray, ammo2/*, whennotzero*/, 310, 183;
-drawnumber 3, Smallfont, darkgray, ammo1/*, whennotzero*/, 283, 183;
+// 2026-10-23 STEP 9, DIEGETIC: the weapon readouts go away while the power loader is worn.
+// You are not carrying a gun, you are driving a machine, and a magazine count for a pair of
+// hydraulic claws is a frame around something that should feel like it has none. Health and
+// armour stay: you still need to know how you are doing.
+//
+// The crosshair half of this step needs nothing. shared_sbar.cpp DrawCrosshair opens with
+//   if (!crosshairon || vrmode->IsVR()) return;
+// so the 2D crosshair is never drawn in VR in the first place.
+InInventory AE_LoaderWorn, 1
+{
+}
+else
+{
+	drawimage "TBAR24", 219, 182;
+	drawimage "TBAR22", 240, 182;
+	drawnumber 3, Smallfont, darkgray, ammo2/*, whennotzero*/, 310, 183;
+	drawnumber 3, Smallfont, darkgray, ammo1/*, whennotzero*/, 283, 183;
+}
 drawimage "TBAR07", 219, 25;
 drawimage "TBAR09", 238, 25;
 drawnumber 3, Smallfont, darkgray, armor/*, whennotzero*/, 307, 26;
@@ -24,9 +38,15 @@ drawnumber 1, Smallfont, darkgray, AutoTurret/*, whennotzero*/, 70, 6;
 drawimage "TBAR07", -14, 15;
 drawimage "TBAR31", 9, 15;
 drawnumber 2, Smallfont, darkgray, SatchelAmmo/*, whennotzero*/, 70, 16;
-drawimage "TBAR07", 219, 191;
-drawimage "TBAR10", 241, 191;
-drawnumber 2, Smallfont, darkgray, GrenadeAmmo/*, whennotzero*/, 298, 192;
+InInventory AE_LoaderWorn, 1
+{
+}
+else
+{
+	drawimage "TBAR07", 219, 191;
+	drawimage "TBAR10", 241, 191;
+	drawnumber 2, Smallfont, darkgray, GrenadeAmmo/*, whennotzero*/, 298, 192;
+}
 drawimage "TBAR07", -14, 25;
 drawimage "TBAR23", 11, 25;
 drawnumber 2, Smallfont, darkgray, Flare/*, whennotzero*/, 70, 26;

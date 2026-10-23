@@ -88,10 +88,17 @@ OptionMenu "AE_Options"
 	Option "Knife trigger swing animation", "ae_knife_swing",   "OnOff"
 	Slider "Melee swing speed (m/s)",      "ae_stab_speed",     1.0, 5.0, 0.25, 2
 	Slider "Melee reach (cm)",             "ae_stab_reach",     20.0, 120.0, 2.5, 0
+	Option "Power loader: arm ram (alt fire)", "ae_loader_ram",  "OnOff"
+	Slider "Power loader: ram damage",      "ae_loader_ram_damage", 0, 300, 10, 0
+	Slider "Power loader: ram push",        "ae_loader_ram_push",   0, 60, 2, 0
+	Option "Power loader: cab cage",        "ae_loader_cage",    "OnOff"
+	Slider "Power loader: cage absorbs",    "ae_loader_cage_absorb", 0.0, 0.9, 0.05, 2
 	Slider "Launcher pump: rounds per grenade", "ae_glpump_cost", 1, 40, 1, 0
 	Slider "Launcher pump: grab radius (cm)",   "ae_glpump_grab", 6.0, 30.0, 1.0, 0
 	Option "Body holsters",               "ae_holsters",       "OnOff"
 	Option "Ballistics",                  "rsq_ballistics",    "AE_Ballistics"
+	Option "Spent casings",               "ae_casings",        "OnOff"
+	Option "Rounds leave the barrel",     "ae_muzzle_bore",    "OnOff"
 	StaticText " "
 	Submenu "Dual Options",               "AE_DualOptions"
 	Submenu "Smartgun Options",           "AE_SmartOptions"
