@@ -10,9 +10,12 @@
 //   measured on the rig (side render, fwd sweep 8/11/14 cm): with the hooks live the solver's z left
 //   every long-gun hand a grip or two behind the grip. Owner tunes the rest with the Options sliders.
 // A regenerate from ae_fits.json loses this.
-// RESTORED 2026-10-22 (owner): SMARTGUN (8,16) keeps the solver's fitted numbers (the orange/green
-// render sheets the owner approved): GunHook (-4.85 9.97 7.98) GunRot y -38, SupportHook
-// (82 7.16 48) SupportRot (-15 -90 90).
+// SMARTGUN (8,16) REFITTED 2026-10-23 (owner: bicycle handlebar with a brake lever at the rear,
+// wrist up, fingers round the brake; off hand a handlebar fist on the left handle past the drum,
+// knuckles forward like a punch, as the BD22 minigun side handle). Fitted with the kit's
+// hudrender/gunview on the m56 mesh: gun hand = fist 106 (pose F, no trigger frame) at the rear
+// bar (F -52 L 1 U -2), GunRot (0 90 -90); support = handlebar fist 91 (pose C) at the left
+// handle (F 23 L 13 U -4) with BD22's minigun handlebar turn. Sheet: docs/renders/smartgun_fit.png
 // the hands the owner saw and approved in the headset were drawn
 // with NO hook at all (RSQ_Hands lacked +OFFHANDWEAPON until tonight, so the solver's hooks
 // never applied). Those approved placements are therefore hook = 0 for shotgun, flamer and
@@ -48,7 +51,7 @@ class RSQ_HandTable abstract
 
 	clearscope static String GunPose(int i)
 	{
-		static const String v[] = { "", "D", "F", "C", "C", "E", "F", "A", "D", "C", "F", "D", "C", "F", "A", "E", "D" };
+		static const String v[] = { "", "D", "F", "C", "C", "E", "F", "A", "F", "C", "F", "D", "C", "F", "A", "E", "F" };
 		return i > 0 && i < v.Size() ? v[i] : "";
 	}
 
@@ -60,9 +63,9 @@ class RSQ_HandTable abstract
 
 	clearscope static Vector3 GunHook(int i)
 	{
-		static const double x[] = { 0.000, -9.430, 0.000, 0.000, 0.000, 0.000, 0.000, -7.770, -4.850, 0.000, 0.000, -9.430, 0.000, 0.000, -7.770, 0.000, -4.850 };
-		static const double y[] = { 0.000, 2.710, 0.000, 1.500, 1.500, 0.000, 0.500, 0.060, 9.970, 1.500, 0.000, 2.710, 1.500, 0.500, 0.060, 0.000, 9.970 };
-		static const double z[] = { 0.000, 7.010, 0.000, 2.500, 2.500, 0.000, 0.000, 7.830, 7.980, 2.500, 0.000, 7.010, 2.500, 0.000, 7.830, 0.000, 7.980 };
+		static const double x[] = { 0.000, -9.430, 0.000, 0.000, 0.000, 0.000, 0.000, -7.770, -43.780, 0.000, 0.000, -9.430, 0.000, 0.000, -7.770, 0.000, -43.780 };
+		static const double y[] = { 0.000, 2.710, 0.000, 1.500, 1.500, 0.000, 0.500, 0.060, 1.200, 1.500, 0.000, 2.710, 1.500, 0.500, 0.060, 0.000, 1.200 };
+		static const double z[] = { 0.000, 7.010, 0.000, 2.500, 2.500, 0.000, 0.000, 7.830, -0.960, 2.500, 0.000, 7.010, 2.500, 0.000, 7.830, 0.000, -0.960 };
 		if (i <= 0 || i >= x.Size())
 			return (0, 0, 0);
 		return (x[i], y[i], z[i]);
@@ -71,8 +74,8 @@ class RSQ_HandTable abstract
 	clearscope static Vector3 GunRot(int i)
 	{
 		static const double x[] = { 0.000, -55.450, 0.000, 0.000, 0.000, 0.000, 0.000, 138.210, 0.000, 0.000, 0.000, -55.450, 0.000, 0.000, 138.210, 0.000, 0.000 };
-		static const double y[] = { 0.000, 41.800, 0.000, 0.000, 0.000, 0.000, 0.000, 125.820, -38.000, 0.000, 0.000, 41.800, 0.000, 0.000, 125.820, 0.000, -38.000 };
-		static const double z[] = { 0.000, 45.680, 0.000, 0.000, 0.000, 0.000, 0.000, -48.720, 0.000, 0.000, 0.000, 45.680, 0.000, 0.000, -48.720, 0.000, 0.000 };
+		static const double y[] = { 0.000, 41.800, 0.000, 0.000, 0.000, 0.000, 0.000, 125.820, 90.000, 0.000, 0.000, 41.800, 0.000, 0.000, 125.820, 0.000, 90.000 };
+		static const double z[] = { 0.000, 45.680, 0.000, 0.000, 0.000, 0.000, 0.000, -48.720, -90.000, 0.000, 0.000, 45.680, 0.000, 0.000, -48.720, 0.000, -90.000 };
 		if (i <= 0 || i >= x.Size())
 			return (0, 0, 0);
 		return (x[i], y[i], z[i]);
@@ -80,9 +83,9 @@ class RSQ_HandTable abstract
 
 	clearscope static Vector3 SupportHook(int i)
 	{
-		static const double x[] = { 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 82.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 82.000 };
-		static const double y[] = { 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, -1.500, 0.000, 7.160, 0.000, 0.000, 0.000, 0.000, -1.500, 0.000, 0.000, 7.160 };
-		static const double z[] = { 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 48.010, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 48.010 };
+		static const double x[] = { 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, -9.690, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, -9.690 };
+		static const double y[] = { 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, -1.500, 0.000, -16.750, 0.000, 0.000, 0.000, 0.000, -1.500, 0.000, 0.000, -16.750 };
+		static const double z[] = { 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 2.520, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 2.520 };
 		if (i <= 0 || i >= x.Size())
 			return (0, 0, 0);
 		return (x[i], y[i], z[i]);
@@ -90,9 +93,9 @@ class RSQ_HandTable abstract
 
 	clearscope static Vector3 SupportRot(int i)
 	{
-		static const double x[] = { 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, -15.150, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, -15.150 };
-		static const double y[] = { 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, -90.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, -90.000 };
-		static const double z[] = { 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 90.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 90.000 };
+		static const double x[] = { 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 10.210, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 10.210 };
+		static const double y[] = { 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 16.060, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 16.060 };
+		static const double z[] = { 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 95.160, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 95.160 };
 		if (i <= 0 || i >= x.Size())
 			return (0, 0, 0);
 		return (x[i], y[i], z[i]);
@@ -103,7 +106,7 @@ class RSQ_HandTable abstract
 	// GunHook/GunRot still apply. "" means no trigger was solved for that gun.
 	clearscope static String Trigger(int i)
 	{
-		static const String v[] = { "", "", "A", "B", "B", "C", "D", "", "E", "B", "A", "", "B", "D", "", "C", "E" };
+		static const String v[] = { "", "", "A", "B", "B", "C", "D", "", "", "B", "A", "", "B", "D", "", "C", "" };
 		return i > 0 && i < v.Size() ? v[i] : "";
 	}
 }
