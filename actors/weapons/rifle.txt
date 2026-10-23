@@ -139,7 +139,11 @@ actor PulseRifle_3D : PulseRifle replaces PulseRifle
     // 2026-10-22 (owner): the launcher is loaded by working the pump by hand (zscript/rsq/pumpgl.zs):
   // the gun's own pump frames while 20 rounds become one grenade
   AE_GLPump:
-	 PULS J 2 A_PlaySound("PULSREL3",CHAN_AUTO)
+	 // FIXED 2026-10-23: PULSREL3 was played here AND by zscript/rsq/pumpgl.zs when the hand
+	 // reaches the back of its stroke, so one pump made the same noise twice. The script's is
+	 // the one that lands on your own motion, so it keeps the sound and this frame drops it.
+	 // The other PULSREL3 calls in this file are the non-VR alt-fire paths and are untouched.
+	 PULS J 2
 	 PULS KLMN 2
 	 Goto Ready
   AltFire:
@@ -420,7 +424,11 @@ actor YutaniRifle_3D : YutaniRifle replaces YutaniRifle
     // 2026-10-22 (owner): the launcher is loaded by working the pump by hand (zscript/rsq/pumpgl.zs):
   // the gun's own pump frames while 20 rounds become one grenade
   AE_GLPump:
-	 YULS J 2 A_PlaySound("PULSREL3",CHAN_AUTO)
+	 // FIXED 2026-10-23: PULSREL3 was played here AND by zscript/rsq/pumpgl.zs when the hand
+	 // reaches the back of its stroke, so one pump made the same noise twice. The script's is
+	 // the one that lands on your own motion, so it keeps the sound and this frame drops it.
+	 // The other PULSREL3 calls in this file are the non-VR alt-fire paths and are untouched.
+	 YULS J 2
 	 YULS KLMN 2
 	 Goto Ready
   AltFire:

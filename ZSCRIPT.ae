@@ -1,6 +1,7 @@
 version "4.10"
 #include "zscript/rsvr/common.zs"
 #include "zscript/rsvr/vrhand.zs"
+#include "zscript/rsvr/handmotion.zs"	// 2026-10-23 hand speed, the saber's method
 #include "zscript/rsq/handtable.zs"
 #include "zscript/rsq/gunmoves.zs"
 #include "zscript/rsq/hands.zs"
@@ -22,3 +23,5 @@ version "4.10"
 // hand-loaded shells for the M37A2
 #include "zscript/rsr/rsr_pump.zs"
 #include "zscript/rsr/rsr_pump_guns.zs"
+// 2026-10-23 THE POWER LOADER (docs/DESIGN_2026-10-23_power_loader.md)
+#include "zscript/ae/loader.zs"

@@ -1,0 +1,81 @@
+// 2026-10-23: racking sounds where the Aliens TC has none.
+//
+// Copied verbatim from BD22 VR-Reloaded 1.92's own SNDINFO.rsr, whose header reads
+// "2026-10-16: racking sounds where BD22 has none (from RS_Main rs_weapon)" -- BD22 hit exactly
+// this gap and the owner filled it from RS_Main, whose sounds are cleared for our mods. The two
+// wavs are the same files, carried in so this pack stays standalone on the Quest (no autoloads,
+// no dependency on BD22 being loaded).
+//
+// Used by RSR_Guns.SndBack / SndFwd (zscript/rsr/rsr_guns.zs): the charging handle or slide
+// pulled back, and released forward. Before this every rack in the pack was silent.
+rsr/slideback	sounds/rsr/rsrslide.wav
+rsr/smgback	sounds/rsr/rsrslide.wav
+// 2026-10-23 a REAL slide running forward. rsr/smgfwd below is byte-identical to
+// RS_CombatFX's pistol/unsorted/9mmclip2.wav -- a magazine sound that had been doing every
+// pistol's slide-forward. Source: RS_CombatFX pistol/cycle/DeagleSlideForward.wav, folded
+// to mono because everything else in sounds/rsr is mono and a stereo take cannot be placed.
+rsr/slidefwd		sounds/rsr/rsrslidefw.wav
+
+// 2026-10-23 the pulse rifles' charging handle. They were on rsr/slideback (a 9mm pistol
+// slide) and rsr/smgfwd (a magazine), neither of which is a 10mm rifle's bolt. Sources:
+// RS_CombatFX rifle/unsorted/RIFCL_CK.ogg and smg/lock/RAIFLOCK.ogg, both folded to mono.
+// Checked by md5 against the whole library first: neither is some magazine sound filed
+// twice under a cycle name, which is exactly how rsr/smgfwd came to be a magazine.
+// Picked by archetype, name and length -- I cannot hear them, so this is an ear's call
+// left open: both are in sounds/rsr if you want them swapped.
+rsr/boltback		sounds/rsr/rsrboltbk.ogg
+rsr/boltfwd		sounds/rsr/rsrboltfw.ogg
+
+rsr/smgfwd	sounds/rsr/rsrsmgfw.wav
+
+// 2026-10-23: the dropped MAGAZINE hitting the floor. BD22 uses weapons/largemagdrop and
+// weapons/smallmagdrop, which are Brutal Doom's own and do not exist on the Aliens TC. These are
+// our own RS_Ballistics debris sets (sounds/rsb/debris/metal and metal_big, declared there the
+// same way with $random + $limit), carried in so this pack stays standalone. Owner cleared
+// RS_Ballistics and RS_CombatFX as sources 2026-10-23.
+//
+// Aliased under rsr/ rather than reusing RS_Ballistics' own rsb/debris/* names, so that loading
+// both packs together cannot have one definition win over the other.
+// Used by RSR_Guns.SndLand (zscript/rsr/rsr_guns.zs): small for the pistols, big for the pulse
+// rifles, smartgun drums and flamer tanks -- the same small/large split BD22 makes.
+rsr/magdrop1	sounds/rsr/magdrop/mag1.ogg
+$limit rsr/magdrop1 2
+rsr/magdrop2	sounds/rsr/magdrop/mag2.ogg
+$limit rsr/magdrop2 2
+rsr/magdrop3	sounds/rsr/magdrop/mag3.ogg
+$limit rsr/magdrop3 2
+rsr/magdrop4	sounds/rsr/magdrop/mag4.ogg
+$limit rsr/magdrop4 2
+rsr/magdrop5	sounds/rsr/magdrop/mag5.ogg
+$limit rsr/magdrop5 2
+rsr/magdrop6	sounds/rsr/magdrop/mag6.ogg
+$limit rsr/magdrop6 2
+$random rsr/magdrop { rsr/magdrop1 rsr/magdrop2 rsr/magdrop3 rsr/magdrop4 rsr/magdrop5 rsr/magdrop6 }
+
+rsr/magdropbig1	sounds/rsr/magdrop/magbig1.ogg
+$limit rsr/magdropbig1 2
+rsr/magdropbig2	sounds/rsr/magdrop/magbig2.ogg
+$limit rsr/magdropbig2 2
+rsr/magdropbig3	sounds/rsr/magdrop/magbig3.ogg
+$limit rsr/magdropbig3 2
+rsr/magdropbig4	sounds/rsr/magdrop/magbig4.ogg
+$limit rsr/magdropbig4 2
+rsr/magdropbig5	sounds/rsr/magdrop/magbig5.ogg
+$limit rsr/magdropbig5 2
+rsr/magdropbig6	sounds/rsr/magdrop/magbig6.ogg
+$limit rsr/magdropbig6 2
+$random rsr/magdrop_big { rsr/magdropbig1 rsr/magdropbig2 rsr/magdropbig3 rsr/magdropbig4 rsr/magdropbig5 rsr/magdropbig6 }
+
+// 2026-10-23: the spent SHELL ejected from the shotgun's port, hitting the floor
+// (RSP_Guns.SndLand, read as the dropped shell's BounceSound at rsr_pump.zs:608). From our own
+// RS_Ballistics casing set, same as the magazine drop above. BD22 has no equivalent -- its
+// SndLand rows for both shotguns are empty too.
+rsr/shelldrop1	sounds/rsr/shelldrop/shell1.ogg
+$limit rsr/shelldrop1 2
+rsr/shelldrop2	sounds/rsr/shelldrop/shell2.ogg
+$limit rsr/shelldrop2 2
+rsr/shelldrop3	sounds/rsr/shelldrop/shell3.ogg
+$limit rsr/shelldrop3 2
+rsr/shelldrop4	sounds/rsr/shelldrop/shell4.ogg
+$limit rsr/shelldrop4 2
+$random rsr/shelldrop { rsr/shelldrop1 rsr/shelldrop2 rsr/shelldrop3 rsr/shelldrop4 }

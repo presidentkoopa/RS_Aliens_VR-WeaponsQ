@@ -9,6 +9,11 @@
 // cvar read with a disabling default is left undeclared.
 server int rsq_reload = 1;			// 0 the set's own canned reload, 1 the real VR reload
 user string rsr_grip_keys = "443 436";	// key codes that are the off-hand grip (it grabs only 50 cm or more from the gun hand, or with vr_two_handed_weapons 0): 443 KEY_PAD_RTHUMB, 436 KEY_PAD_DPAD_UP (with the main grip held as a shift)
+// 2026-10-23 ported from BD22 1.92: ONE grab button, chosen here, never a mix.
+// 0 = the off-hand trigger, 1 = the off-hand grip, 2 = the Use key (intercepted during a
+// reload so it does not also open the door). rsr_grab_buttons below is now only consulted
+// when this is 0, and is the trigger's usercmd mask.
+user int rsr_grab_with = 0;
 user int rsr_grab_buttons = 67108864;	// usercmd buttons that grab anywhere: BT_OFFHANDATTACK (off-hand trigger); 0 = none
 user int rsr_magrelease = 268435456;	// usercmd buttons that drop the magazine: BT_OFFHANDRELOAD; the gun's own reload always does
 user int rsr_pouch = 0;				// where a new magazine is taken: 0 anywhere 20 cm from the gun, 1 low (40 cm below the eyes)

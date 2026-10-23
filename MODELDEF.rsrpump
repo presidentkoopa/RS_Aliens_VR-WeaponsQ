@@ -167,6 +167,7 @@ Model RSQ_Hands
 	Model 0 "ammo_hand.md3"
 	Skin 0 "hand.png"
 	Scale -1.0 1.0 1.0
-	Offset 0.0 -24.0 -10.0
+	Offset 0.0000 -30.0000 0.0
+	ZOffset -7.0000
 	FrameIndex RQUN A 0 1
 }

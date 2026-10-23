@@ -3,9 +3,13 @@ Model Loader_3D
 {
 	Path "Models\Weapons\mech"
 	Model 0 "mechloader.md3"
-	SurfaceSkin 0 0 "loader_upper.png"
+	// FIXED 2026-10-23: surfaces 0 and 2 had their skins crossed. mechloader.md3 names
+	// them MechCover / MechArms.001 / MechGuard.001 and its OWN shaders are grate /
+	// upper / upper -- so the cover was being painted with the arm texture and the big
+	// guard with the 256x512 grate. The pickup block below has always had it right.
+	SurfaceSkin 0 0 "loader_grate.png"
 	SurfaceSkin 0 1 "loader_upper.png"
-	SurfaceSkin 0 2 "loader_grate.png"
+	SurfaceSkin 0 2 "loader_upper.png"
 
 	Scale -1.0 1.0 1.0
 	Offset -10.0 40.0 -10.0
@@ -89,9 +93,13 @@ Model AELoader_3D
 {
 	Path "Models\Weapons\mech"
 	Model 0 "mechloader.md3"
-	SurfaceSkin 0 0 "loader_upper.png"
+	// FIXED 2026-10-23: surfaces 0 and 2 had their skins crossed. mechloader.md3 names
+	// them MechCover / MechArms.001 / MechGuard.001 and its OWN shaders are grate /
+	// upper / upper -- so the cover was being painted with the arm texture and the big
+	// guard with the 256x512 grate. The pickup block below has always had it right.
+	SurfaceSkin 0 0 "loader_grate.png"
 	SurfaceSkin 0 1 "loader_upper.png"
-	SurfaceSkin 0 2 "loader_grate.png"
+	SurfaceSkin 0 2 "loader_upper.png"
 
 	Scale -1.0 1.0 1.0
 	Offset -10.0 40.0 -10.0
@@ -203,4 +211,67 @@ Model AEBerserk_3D
 	
 	//Ready
 	FrameIndex CSAW P 0 0
+}
+
+// THE WORN LOADER'S ROTATING BEACON (2026-10-23, step 2 of
+// docs/DESIGN_2026-10-23_power_loader.md).
+//
+// loader_lamp.md3 is one surface named `loader_alarm` and it already ships -- it was only ever
+// drawn on the PICKUP blocks above, so the loader on the floor had a beacon and the one you
+// wear had none. Bound to AE_LoaderWorn rather than to Loader_3D so the layer's caller is an
+// inventory item: that keeps it on the main controller (models.cpp:221 sends a layer to the off
+// controller only when its caller is the OffhandWeapon) and lets ZScript own the state.
+//
+// Reusing the skin NAME loader_lamp.jpg keeps the existing brightmap (gldefs.txt:13) for free,
+// so the lamp glows with no GLDEFS change at all.
+//
+// The third Offset number is the one that moves it UP (models.cpp RenderHUDModel feeds matrix-y
+// from Offset's THIRD value and matrix-z from its SECOND). The lamp mesh is authored at z
+// 251..267 -- it belongs to the full pickup model whose origin is at the feet -- while the held
+// mesh's roof grate sits at z 80..95, so it has to come down about 171 units. -181 is a
+// measured starting value and WANTS THE OWNER'S EYE; it is one number in this block.
+Model AE_LoaderWorn
+{
+	Path "Models\Weapons\mech"
+	Model 0 "loader_lamp.md3"
+	Skin 0 "loader_lamp.jpg"
+
+	Scale -1.0 1.0 1.0
+	Offset -10.0 40.0 -181.0
+
+	FrameIndex AELB A 0 0
+}
+
+
+// THE TWO ARMS (step 3). mechloader.md3's MechArms.001 is BOTH arms in one 3590-vert surface,
+// so one controller could never be one arm. tools/carve_loader.py splits it by the sign of y,
+// keeping all 21 frames and the original coordinates: 1725 triangles right, 1755 left, and not
+// one crossing the centreline.
+//
+// Each block is bound to the class that CALLS its layer, because the caller is what decides
+// which controller it lands on (models.cpp:221):
+//     AE_LoaderArms  an inventory item   -> main controller -> right arm
+//     RSQ_Hands      the off-hand weapon -> off controller  -> left arm
+Model AE_LoaderArms
+{
+	Path "Models\Weapons\mech"
+	Model 0 "loader_arm_r.md3"
+	Skin 0 "loader_upper.png"
+
+	Scale -1.0 1.0 1.0
+	Offset -10.0 40.0 -10.0
+
+	FrameIndex AEAR A 0 0
+}
+
+Model RSQ_Hands
+{
+	Path "Models\Weapons\mech"
+	Model 0 "loader_arm_l.md3"
+	Skin 0 "loader_upper.png"
+
+	Scale -1.0 1.0 1.0
+	Offset -10.0 40.0 -10.0
+
+	FrameIndex AEAL A 0 0
 }

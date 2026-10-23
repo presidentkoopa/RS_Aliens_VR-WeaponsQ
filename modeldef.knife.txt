@@ -1,3 +1,11 @@
+// 2026-10-23 KNIFE OFFSET: third component -12.0 -> -16.0 (owner: "knife ... seated
+// above and outside of hand"). MODELDEF.aemain re-based the ten VR guns onto the hand
+// model's own offset frame (RSQ_Hands is 0 -24 -10 in MODELDEF.ae). The knife has no
+// aemain block, so it still carried the TC's flat-sprite offset and hung about 8 cm
+// above the fist. Measured with tools/hand_survey.py: the palm centre sits at about
+// -9 cm in the front sheet, -12 put the handle at -1 and -20 put it at -20.
+// The knife also now has its own Options sliders (ae_knifehand_*) -- it used to ride
+// the long-gun ones, so there was no way to finish the fit by hand.
 
 Model Knife_3D
 {
@@ -6,7 +14,7 @@ Model Knife_3D
 	Skin 0 "knife.png"
 
 	Scale -0.65 0.65 0.65
-	Offset 0.0 -16.0 -12.0
+	Offset 0.0 -16.0 -16.0
 	
 	NOINTERPOLATION
 
@@ -41,7 +49,7 @@ Model YutaniKnife_3D
 	Skin 0 "knife.png"
 
 	Scale -0.65 0.65 0.65
-	Offset 0.0 -16.0 -12.0
+	Offset 0.0 -16.0 -16.0
 	
 	NOINTERPOLATION
 

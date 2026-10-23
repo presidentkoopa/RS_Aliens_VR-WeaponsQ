@@ -22,6 +22,15 @@
 // pistols = raw + the owner's "back a little, up a
 // little" (y +1.5, z +2.5), rifles = raw + 0.5 cm up, support -1.5 (owner 04:04: both a little lower). The solver's numbers are in the shipped
 // file's history. Fine tuning: Options > Aliens VR Weapons rest-offset sliders.
+// 2026-10-23 SMARTGUN AND SATCHEL SIT OUTSIDE THE aemain OFFSET FRAME ON PURPOSE.
+// MODELDEF.aemain re-based the ten other VR guns onto the hand model's own offset
+// (RSQ_Hands is 0 -24 -10 in MODELDEF.ae). The smartgun and the satchel have no aemain
+// block, so they still draw at the TC offset 0 -30 -7 -- and the GunHook values below
+// were fitted by eye against THAT. Moving their MODELDEF Offset onto the hand frame
+// without moving these hooks by the matching amount pulls the gun out from under the
+// hands. Checked by render on 2026-10-23: both are seated correctly as they are.
+// Only their magazine-in-hand blocks in MODELDEF.rsr were re-based, because those draw
+// on the off controller beside the hand mesh and have to share its frame.
 // Per gun: which hand frame, and the ModifyBobLayer3D hook and rotation that put it
 // on the weapon. Units are centimetres in the weapon controller frame.
 class RSQ_HandTable abstract

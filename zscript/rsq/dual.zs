@@ -114,19 +114,31 @@ class AE_DualHandler : EventHandler
 		}
 	}
 
-	// the Dual key's latch (netevent "ae_dual"), default on
-	bool off[MAXPLAYERS];
+	// The Dual key's latch (netevent "ae_dual").
+	//
+	// FIXED 2026-10-23: this used to default ON, so simply owning a gun whose ae_dual_* switch
+	// was set put you in dual wield permanently -- and the loop above hands out the copy on the
+	// SECOND TIC of owning one gun (had[] starts false, so tic 1 sets it and tic 2 grants),
+	// despite its comment saying "picking up a SECOND of a gun". Two consequences the owner hit:
+	// he was dual wielding without ever asking for it, and while dual the main hand is drawn on
+	// a layer placed by a STATIC MODELDEF Offset (hw_weapon.cpp nulls ModifyBobLayer3D for every
+	// layer that is not the off-hand weapon's own), so the hand-position sliders could not reach
+	// it and appeared to do nothing at all.
+	//
+	// So the latch now starts OFF and the Dual key turns it on, which is what having a Dual key
+	// is for. One gun in hand is the normal case again, and the sliders work there.
+	bool want[MAXPLAYERS];
 	static bool Wants(PlayerInfo p)
 	{
 		let h = AE_DualHandler(EventHandler.Find('AE_DualHandler'));
-		return !h || !h.off[p.mo ? p.mo.PlayerNumber() : 0];
+		return h && h.want[p.mo ? p.mo.PlayerNumber() : 0];
 	}
 
 	override void NetworkProcess(ConsoleEvent e)
 	{
 		if (e.Name != "ae_dual" || e.Player < 0 || e.Player >= MAXPLAYERS)
 			return;
-		off[e.Player] = !off[e.Player];
+		want[e.Player] = !want[e.Player];
 	}
 
 	// "Start with dual pistols": the copy from the first tic, no second pickup

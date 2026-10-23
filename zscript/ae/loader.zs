@@ -1,0 +1,907 @@
+// THE P-5000 POWER LOADER, step 1 of docs/DESIGN_2026-10-23_power_loader.md: it is heavy.
+//
+// Nothing is drawn differently here. What changes is that the machine has weight and answers
+// your arms: it actually slows you down (for the first time -- see below), it hums and the hum
+// tracks how fast you are moving the booms, the floor shakes when you walk, and an arm stopping
+// hard clunks and kicks that controller.
+//
+// WHY THE SLOWDOWN IS NEW. `actors/weapons/mechloader.txt` has called `A_SetSpeed(0.7)` and
+// `A_SetSpeed(0.35)` since it was written, and neither has ever done anything. PlayerPawn's
+// MovePlayer reassigns Speed at the top of EVERY tic before using it:
+//     player.zs:1374-1383   Speed = Default.Speed * 8   (VR, vr_momentum false by default)
+//                           Speed = Default.Speed       (otherwise)
+// so a value written from a weapon state is gone before it is read. Verified at 9afc750917.
+// The TC's own `avw_speed_mult` is dead the same way (superhuman_attributes.txt writes
+// pawn.Speed). The hook that WORKS is Inventory.GetSpeedFactor(), which MovePlayer multiplies
+// over the whole inventory chain inside TweakSpeeds (player.zs:1313-1322) -- after the
+// reassignment, on the movement itself. So the slowdown lives on a token, not in a state.
+//
+// ae_loader_speed is deliberately a SERVER cvar, not user. GetSpeedFactor runs inside
+// MovePlayer for every player on every machine; if each machine had its own value the players
+// would move differently on different machines. Movement is playsim, so it is server.
+// The sound and haptic cvars below are user, because those are presentation.
+
+// Layer ids. Verified clean against every id the pack uses: 2100, 2101, 2102-2104,
+// 2120-2123, 2130, 2200, 2201, 2202, 2203, 2210. The 2300 band is untouched.
+class AE_LoaderLayers abstract
+{
+	const ARM_MAIN = 2300;
+	// 2026-10-23: the off arm sits in the 2200 band, next to the layers the pack already
+	// drives successfully with RSQ_Hands as their caller (2200, 2201, 2202, 2210). At
+	// 2301 the engine created it and something removed it again within the tic.
+	const ARM_OFF  = 2211;
+	const BEACON   = 2304;
+}
+
+class AE_LoaderWorn : Inventory
+{
+	Default
+	{
+		Inventory.MaxAmount 1;
+		+INVENTORY.UNDROPPABLE
+		+INVENTORY.UNTOSSABLE
+		+INVENTORY.QUIET
+	}
+
+	// The only hook that actually slows a VR player down. 1.0 is normal speed.
+	override double GetSpeedFactor()
+	{
+		let cv = CVar.FindCVar('ae_loader_speed');
+		double f = cv ? cv.GetFloat() : 0.35;
+		return clamp(f, 0.10, 1.0);
+	}
+
+	States
+	{
+	// The rotating orange beacon. The sprite name exists because this state names it -- the
+	// same trick RSQ_CounterSprites uses for the pulse rifle's counter, and the same one the
+	// Doom patch uses for every sprite the TC owns. MODELDEF binds loader_lamp.md3 to this
+	// class and this sprite (modeldef.loader.txt).
+	Beacon:
+		AELB A -1;
+		Stop;
+	Hidden:
+		TNT1 A -1;
+		Stop;
+	}
+}
+
+
+// Owns the MAIN-controller arm layer. It must be an actor that is NEITHER the ready weapon nor
+// the off-hand weapon: models.cpp:221 sends a layer to the off controller only when its caller
+// IS the OffhandWeapon, so an inventory item puts it on the main controller.
+class AE_LoaderArms : Inventory
+{
+	Default
+	{
+		Inventory.MaxAmount 1;
+		+INVENTORY.UNDROPPABLE
+		+INVENTORY.UNTOSSABLE
+		+INVENTORY.QUIET
+	}
+	States
+	{
+	ArmR:
+		AEAR A -1;
+		Stop;
+	ArmL:
+		AEAL A -1;
+		Stop;
+	}
+}
+
+class AE_LoaderHandler : EventHandler
+{
+	// the loader classes this applies to
+	static bool IsLoader(Weapon w)
+	{
+		return w && (w is 'Loader_3D' || w is 'AELoader_3D');
+	}
+
+	static bool ArmsOn()
+	{
+		let c = CVar.FindCVar('ae_loader_arms');
+		return !c || c.GetFloat() > 0;
+	}
+
+	static bool Worn(PlayerPawn mo)
+	{
+		return mo && mo.player && IsLoader(mo.player.ReadyWeapon);
+	}
+
+	// --- per-player state. Flat arrays: index [n*2 + hand], hand 0 = main, 1 = off. -------
+	Vector3 handPrev[MAXPLAYERS * 2];
+	double  spRing[MAXPLAYERS * 2 * 3];		// the last three single-tic speeds
+	double  spWas[MAXPLAYERS * 2];			// last tic's chosen speed, for the clunk edge
+	int     quiet[MAXPLAYERS * 2];			// clunk rate limit
+	Vector3 bodyPrev[MAXPLAYERS];
+	double  yawPrev[MAXPLAYERS];
+	double  step[MAXPLAYERS];				// footstep phase accumulator
+	bool    hadPose[MAXPLAYERS];
+	bool    humming[MAXPLAYERS];
+	int     quakes[MAXPLAYERS];
+
+	// STEP 4, MASS THROUGH LAG. A ring of each hand's AIM. Lagging the aim needs no frame
+	// conversion -- the engine already draws the arm at the hand, and a turn added on top via
+	// psp.x/y points it where the hand pointed N tics ago.
+	//
+	// DEFAULT OFF. The first version of this shipped at 3 tics and the owner's verdict was that
+	// it looked like a cloned model that could not keep up with itself -- which is exactly what
+	// pivoting a 2.28 m boom by a few degrees about its own origin looks like: the far end
+	// travels a long way for a small angle. The mechanism is here and tunable; it stays at zero
+	// until he dials it up, because a default nobody asked for that makes the thing look broken
+	// is worse than no feature.
+	const RING = 12;
+	double  aimYaw[MAXPLAYERS * 2 * RING];
+	double  aimPit[MAXPLAYERS * 2 * RING];
+	int     ringAt[MAXPLAYERS * 2];
+	bool    ringUp[MAXPLAYERS * 2];
+
+	// STEP 5, THE CLAW. Closure per hand, 0..1, and the swing rate limit.
+	double  clawShut[MAXPLAYERS * 2];	// 0..1. NOT 'claw': ZScript identifiers are
+										// case-insensitive, so it would collide with Claw().
+	int     swingQuiet[MAXPLAYERS * 2];
+
+	// STEP 6, GRAB / CARRY / THROW / PIN / CRUSH.
+	Actor   held[MAXPLAYERS * 2];
+	int     crushFor[MAXPLAYERS * 2];
+	bool    heldGrav[MAXPLAYERS * 2];
+	Vector3 clawPrev[MAXPLAYERS * 2];
+	// thrown things, so a thrown body hurts what it lands on
+	Array<Actor> flung;
+	Array<double> flungWas;				// diagnostic: footsteps actually fired
+	double  spin[MAXPLAYERS];				// beacon yaw, degrees
+	static double F(Name n, double def)
+	{
+		let c = CVar.FindCVar(n);
+		return c ? c.GetFloat() : def;
+	}
+
+	override void WorldTick()
+	{
+		TickFlung();
+
+		for (int n = 0; n < MAXPLAYERS; n++)
+		{
+			if (!playeringame[n] || !players[n].mo)
+				continue;
+			let mo = PlayerPawn(players[n].mo);
+			if (!mo)
+				continue;
+			let p = mo.player;
+
+			bool worn = Worn(mo);
+			Token(mo, worn);
+
+			// ae_loader_debug 3 is a SELF TEST for grab/carry/crush, because grabbing needs
+			// hand poses and a headless run has none. It drops a barrel in front of the
+			// player, fires the real net event at it, and the line below reports whether it
+			// was taken. The whole path -- event, search, filter, Take, Carry -- is exercised.
+			if (F('ae_loader_debug', 0.0) >= 3 && worn && level.maptime == 70)
+			{
+				Vector3 at = mo.pos + (cos(mo.angle), sin(mo.angle), 0) * 48.0;
+				Actor b = Actor.Spawn('ExplosiveBarrel', at);
+				if (b)
+					EventHandler.SendNetworkEvent("ae_grab", int(at.x * 8), int(at.y * 8),
+					                              int(at.z * 8));
+			}
+
+			// One-shot ammo report: what the ready weapon actually uses and what the player
+			// actually has. Built to answer "are the ammo types fucked up" with facts.
+			if (F('ae_loader_debug', 0.0) > 0 && level.maptime == 70)
+			{
+				let w = p.ReadyWeapon;
+				Console.Printf("AMMO ready=%s type1=%s(%d) type2=%s(%d)",
+					w ? w.GetClassName() : 'none',
+					w && w.Ammo1 ? w.Ammo1.GetClassName() : 'none',
+					w && w.Ammo1 ? w.Ammo1.Amount : -1,
+					w && w.Ammo2 ? w.Ammo2.GetClassName() : 'none',
+					w && w.Ammo2 ? w.Ammo2.Amount : -1);
+				for (let inv = mo.Inv; inv; inv = inv.Inv)
+					if (inv is 'Ammo')
+						Console.Printf("AMMO   have %-24s %d", inv.GetClassName(), inv.Amount);
+			}
+
+			// TEMPORARY, 2026-10-23: ae_loader_debug 1 prints what this handler actually sees,
+			// once a second. Built because "nothing happens in game" needs a fact, not a guess.
+			if (F('ae_loader_debug', 0.0) > 0 && (level.maptime % 35) == 0)
+			{
+				let tok = mo.FindInventory('AE_LoaderWorn');
+				Console.Printf("LOADER n=%d ready=%s worn=%d token=%d invr=%d speedfactor=%.2f beacon=%d spin=%.0f steps=%d arms=%d/%d held=%s",
+					n, p.ReadyWeapon ? p.ReadyWeapon.GetClassName() : 'none',
+					worn, tok ? 1 : 0, RSVR_VRHand.InVR(mo) ? 1 : 0,
+					tok ? tok.GetSpeedFactor() : -1.0,
+					p.FindPSprite(AE_LoaderLayers.BEACON) ? 1 : 0, spin[n], quakes[n],
+					p.FindPSprite(AE_LoaderLayers.ARM_MAIN) ? 1 : 0,
+					p.FindPSprite(RSQ_Layers.FREEHAND) ? 1 : 0,
+					held[n * 2] ? held[n * 2].GetClassName() : 'none');
+			}
+
+			if (!worn || mo.health <= 0)
+			{
+				Hush(mo, n);
+				hadPose[n] = false;
+				continue;
+			}
+
+			// ae_loader_debug 2 shoves the player along from script so the footstep path can be
+			// exercised with no input at all. A command-line +forward does not hold a key down,
+			// and a feature nobody can test without a headset on gets shipped broken.
+			if (F('ae_loader_debug', 0.0) >= 2 && mo.player && mo.player.onground)
+				mo.vel.xy = (cos(mo.angle), sin(mo.angle)) * 6.0;	// forward, not world east
+
+			for (int h = 0; h < 2; h++)
+			{
+				int ci = n * 2 + h;
+				if (held[ci])
+					Carry(mo, ci, RSVR_VRHand.InVR(mo) ? ClawPoint(mo, h == 1)
+					                                   : held[ci].pos);
+			}
+
+			Footsteps(mo, n);
+			// The beacon is bolted to the machine, not to your hands: it must NOT sit behind
+			// the "are we in VR" gate below. It was, which is why it never appeared.
+			Beacon(mo, n);
+			// Arms() needs no hand DATA -- each layer reaches the right controller purely by
+			// its caller -- so like the beacon it must not sit behind the VR gate below.
+			Arms(mo, n);
+
+			// Everything below reads AttackPos/OffhandPos, which exist only for a local VR
+			// player. Desktop and remote players get the weight and the shake but no arm
+			// sounds -- which is correct, because they have no arms to move.
+			if (!RSVR_VRHand.InVR(mo))
+			{
+				Hush(mo, n);
+				hadPose[n] = false;
+				continue;
+			}
+
+			Vector3 body = mo.pos;
+			Vector3 bodyStep = hadPose[n] ? body - bodyPrev[n] : (0, 0, 0);
+			// deltaangle() is not visible from an EventHandler, so wrap it here. We only need
+			// the magnitude, to notice a snap turn.
+			double yawDelta = 0.0;
+			if (hadPose[n])
+			{
+				yawDelta = mo.angle - yawPrev[n];
+				while (yawDelta > 180.0)
+					yawDelta -= 360.0;
+				while (yawDelta < -180.0)
+					yawDelta += 360.0;
+			}
+
+			double loud = 0.0;
+			for (int h = 0; h < 2; h++)
+			{
+				int i = n * 2 + h;
+				Vector3 cur = RSVR_HandMotion.HandPos(mo, h == 1);
+				double s = 0.0;
+				if (hadPose[n])
+				{
+					Vector3 hs = cur - handPrev[i];
+					s = RSVR_HandMotion.Bogus(hs, yawDelta)
+					    ? 0.0 : RSVR_HandMotion.Speed(hs, bodyStep);
+				}
+				handPrev[i] = cur;
+
+				// fastest of the last three tics, so a flick counts like a sweep
+				spRing[i * 3 + 2] = spRing[i * 3 + 1];
+				spRing[i * 3 + 1] = spRing[i * 3 + 0];
+				spRing[i * 3 + 0] = s;
+				double best = max(spRing[i * 3 + 0], max(spRing[i * 3 + 1], spRing[i * 3 + 2]));
+
+				Clunk(mo, i, best, h == 1);
+				Claw(mo, n, best, h);
+				HandGrab(mo, n, h, best);
+				loud = max(loud, best);
+			}
+
+			bodyPrev[n] = body;
+			yawPrev[n] = mo.angle;
+			hadPose[n] = true;
+
+			Hum(mo, n, loud);
+			ArmLag(mo, n);
+		}
+	}
+
+	// Give the worn token while the loader is up, take it the moment it is not. Doing this
+	// from the handler rather than the weapon's Select/Deselect states means it cannot be
+	// stranded by a death, a level change or any switch path the TC takes that we do not know
+	// about -- a flag set and never cleared is the bug that outlives the session.
+	void Token(PlayerPawn mo, bool worn)
+	{
+		let has = mo.FindInventory('AE_LoaderWorn');
+		if (worn && !has)
+			mo.GiveInventory('AE_LoaderWorn', 1);
+		else if (!worn && has)
+			mo.TakeInventory('AE_LoaderWorn', 1);
+	}
+
+	// A_Quake with damrad 0 so it can never hurt anyone. Driven by mo.vel, which IS playsim,
+	// so this is deterministic on every machine and needs no net event -- and everyone inside
+	// tremrad feels the loader coming, which is free and correct.
+	void Footsteps(PlayerPawn mo, int n)
+	{
+		if (!mo.player || !mo.player.onground)
+		{
+			step[n] = 0.0;
+			return;
+		}
+		double gap = F('ae_loader_stride', 42.0);
+		if (gap < 4.0)
+			return;
+		double sp = mo.vel.xy.Length();
+		if (sp < 0.5)
+		{
+			step[n] = 0.0;
+			return;
+		}
+		step[n] += sp;
+		if (step[n] < gap)
+			return;
+		step[n] -= gap;
+		double q = F('ae_loader_quake', 1.0);
+		if (q <= 0)
+			return;
+		int inten = int(clamp(1.0 + sp / 12.0, 1.0, 3.0) * q);
+		if (inten > 0)
+		{
+			mo.A_Quake(inten, 6, 0, 256, "");
+			quakes[n]++;
+		}
+	}
+
+	// The hum is re-asserted EVERY tic. Two lessons copied verbatim from the saber, both of
+	// which cost it a round of bug reports: a volume set only where the loop starts silently
+	// reverts, so it must be re-set every tic; and zero volume must STOP the channel, because
+	// SoundEngine::StartSound refuses volume <= 0 and a loop started at zero leaves no channel
+	// for the re-assert to act on.
+	void Hum(PlayerPawn mo, int n, double armSpeed)
+	{
+		double vol = F('ae_loader_hum', 0.0);
+		if (vol <= 0.0)
+		{
+			Hush(mo, n);
+			return;
+		}
+		if (!humming[n])
+		{
+			mo.A_StartSound("ae/loaderhum", CHAN_7, CHANF_LOOPING, vol);
+			humming[n] = true;
+		}
+		mo.A_SoundVolume(CHAN_7, vol);
+		double ref = max(F('ae_loader_hum_ref', 90.0), 1.0);
+		mo.A_SoundPitch(CHAN_7, 1.0 + clamp((armSpeed - 6.0) / ref, 0.0, 0.3));
+	}
+
+	// THE ROTATING BEACON. The mesh (loader_lamp.md3, one surface named loader_alarm), its
+	// brightmap (gldefs.txt:13) and a PointLight (gldefs.txt:18) all already ship -- and all
+	// three are attached to `Frame CSAWP`, the PICKUP's sprite frame. So the loader lying on
+	// the floor has a glowing spinning beacon and the one you are wearing has nothing.
+	//
+	// MDL_ROTATING is world-path only (models.cpp:116-128); RenderHUDModel has no rotation
+	// handling at all. The way to turn a HUD model from play is psp.x, which hw_weapon.cpp:108
+	// reads back as model yaw in QUARTER degrees. oldx must be carried by hand: nothing in the
+	// playsim advances it (p_pspr.h:114 is its only writer), so leaving it pins the beacon's
+	// interpolation to zero and it judders instead of spinning. This pack has made that exact
+	// mistake once already, in the dual-wield recoil follow.
+	//
+	// The light goes on the PAWN, not the layer -- a psprite has no sprite frame for GLDEFS to
+	// key on, which is the diagnosis of why the worn loader never lit anything. Because HUD
+	// models gather light from around the player (hw_weapon.cpp:988), a light on the pawn
+	// washes orange across the arms, which is most of the effect.
+	void Beacon(PlayerPawn mo, int n)
+	{
+		let p = mo.player;
+		bool on = F('ae_loader_beacon', 1.0) > 0;
+		let psp = p.FindPSprite(AE_LoaderLayers.BEACON);
+
+		if (!on)
+		{
+			if (psp)
+				p.SetPsprite(AE_LoaderLayers.BEACON, null);
+			mo.A_RemoveLight('aeloaderbeacon');
+			return;
+		}
+
+		let worn = mo.FindInventory('AE_LoaderWorn');
+		if (!worn)
+			return;
+
+		if (!psp)
+		{
+			p.SetPsprite(AE_LoaderLayers.BEACON, worn.FindState('Beacon'), false, worn);
+			psp = p.FindPSprite(AE_LoaderLayers.BEACON);
+			if (!psp)
+				return;
+			psp.bAddWeapon = false;
+			psp.bAddBob = false;
+			psp.y = WEAPONTOP;
+			psp.oldy = psp.y;
+			psp.x = 0;
+			psp.oldx = 0;
+			spin[n] = 0;
+			mo.A_AttachLight('aeloaderbeacon', DynamicLight.PointLight, 0xFF7814,
+			                 int(F('ae_loader_beacon_radius', 96.0)), 0, 0, (0, 0, 40));
+		}
+
+		// 90 rpm = 540 deg/s = 15.43 deg per tic. psp.x is yaw in quarter-degrees.
+		double rpm = clamp(F('ae_loader_beacon_rpm', 90.0), 0.0, 600.0);
+		spin[n] = (spin[n] + rpm * 6.0 / TICRATE) % 360.0;
+		psp.oldx = psp.x;
+		psp.x = spin[n] * 4.0;
+	}
+
+
+
+	// THE TWO ARMS, one per controller. Which controller a layer lands on is decided purely by
+	// its CALLER (models.cpp:221): AE_LoaderArms is an inventory item so its layer draws on the
+	// main controller; RSQ_Hands IS the off-hand weapon so its layer draws on the off one.
+	// Both are "not the ready weapon's" layers, so hw_weapon.cpp:332 routes them through the
+	// off-hand weapon's psprite and :943 finds ModifyBobLayer3D on RSQ_Hands, which overrides
+	// it -- so unlike dual wield, both arms are placeable from script.
+	//
+	// The old single held model is not removed: its psprite keeps running the TC's own state
+	// machine, which we do not own. It is just drawn at zero alpha, and gets its alpha back the
+	// moment the loader is put away.
+	void Arms(PlayerPawn mo, int n)
+	{
+		let p = mo.player;
+		bool on = F('ae_loader_arms', 1.0) > 0;
+
+		let gun = p.FindPSprite(PSP_WEAPON);
+		if (gun)
+			gun.alpha = on ? 0.0 : 1.0;
+
+		if (!on)
+		{
+			if (p.FindPSprite(AE_LoaderLayers.ARM_MAIN))
+				p.SetPsprite(AE_LoaderLayers.ARM_MAIN, null);
+			return;
+		}
+
+		let arms = mo.FindInventory('AE_LoaderArms');
+		if (!arms)
+		{
+			mo.GiveInventory('AE_LoaderArms', 1);
+			arms = mo.FindInventory('AE_LoaderArms');
+			if (!arms)
+				return;
+		}
+		let hands = mo.FindInventory('RSQ_Hands');
+		if (!hands)
+			return;
+
+		// the LEFT arm is drawn by hands.zs on RSQ_Hands' own free-hand layer
+		Arm(p, AE_LoaderLayers.ARM_MAIN, Actor(arms), arms, "ArmR");
+	}
+
+	void Arm(PlayerInfo p, int id, Actor caller, Actor stateOwner, String label)
+	{
+		// FindStateByString, as the pack's own SetLayer does -- FindState wants a StateLabel.
+		State want = stateOwner.FindStateByString(label);
+		let psp = p.FindPSprite(id);
+		if (psp && psp.Caller == caller && psp.CurState == want)
+			return;
+		p.SetPsprite(id, want, false, caller);
+		psp = p.FindPSprite(id);
+		if (!psp)
+		{
+			if (F('ae_loader_debug', 0.0) > 0)
+				Console.Printf("LOADER arm layer %d REFUSED: caller=%s state=%s offhand=%s",
+					id, caller ? caller.GetClassName() : 'null',
+					want ? "ok" : "null",
+					p.OffhandWeapon ? p.OffhandWeapon.GetClassName() : 'none');
+			return;
+		}
+		psp.bAddWeapon = false;
+		psp.bAddBob = true;
+		psp.y = WEAPONTOP;		// y 0 tilts a HUD model 8 degrees
+		psp.oldy = psp.y;
+	}
+
+
+	// Push this tic's aim into the ring and return the lagged turn, relative to where the hand
+	// points NOW. Overshoot carries the last step past the target.
+	void Lag(PlayerPawn mo, int i, bool off, out double dYaw, out double dPit)
+	{
+		dYaw = 0; dPit = 0;
+		// AttackDir/OffhandDir take (actor, angle, pitch) and return ANGLES: .x yaw, .y pitch,
+		// already including the engine's mirror of the off controller (vrhand.zs:40, :54).
+		Vector3 ap = off ? mo.OffhandDir(mo, mo.angle, mo.pitch)
+		                 : mo.AttackDir(mo, mo.angle, mo.pitch);
+		double yaw = ap.x, pit = ap.y;
+
+		int at = ringAt[i];
+		aimYaw[i * RING + at] = yaw;
+		aimPit[i * RING + at] = pit;
+		ringAt[i] = (at + 1) % RING;
+		if (!ringUp[i])
+		{
+			for (int k = 0; k < RING; k++)
+			{
+				aimYaw[i * RING + k] = yaw;
+				aimPit[i * RING + k] = pit;
+			}
+			ringUp[i] = true;
+			return;
+		}
+
+		int lag = int(clamp(F('ae_loader_lag', 0.0), 0.0, RING - 2));
+		if (lag <= 0)
+			return;
+		int old = ((at - lag) % RING + RING) % RING;
+		int older = ((at - lag - 1) % RING + RING) % RING;
+		double oy = aimYaw[i * RING + old], op = aimPit[i * RING + old];
+		double over = clamp(F('ae_loader_overshoot', 0.0), 0.0, 1.5);
+		oy += Wrap(oy - aimYaw[i * RING + older]) * over;
+		op += (op - aimPit[i * RING + older]) * over;
+		dYaw = Wrap(oy - yaw);
+		dPit = op - pit;
+	}
+
+	static double Wrap(double a)
+	{
+		while (a > 180.0)
+			a -= 360.0;
+		while (a < -180.0)
+			a += 360.0;
+		return a;
+	}
+
+	// Apply the lag to whichever arm layers exist. Costs nothing while ae_loader_lag is 0.
+	void ArmLag(PlayerPawn mo, int n)
+	{
+		if (F('ae_loader_lag', 0.0) <= 0)
+			return;
+		let p = mo.player;
+		for (int h = 0; h < 2; h++)
+		{
+			let ap = p.FindPSprite(h == 0 ? AE_LoaderLayers.ARM_MAIN : RSQ_Layers.FREEHAND);
+			if (!ap)
+				continue;
+			double dy, dp;
+			Lag(mo, n * 2 + h, h == 1, dy, dp);
+			// oldx/oldy carried by hand: nothing in the playsim advances them (p_pspr.h:114),
+			// so leaving them makes the turn ramp from zero inside every tic -- a shake.
+			ap.oldx = ap.x;
+			ap.oldy = ap.y;
+			ap.x = dy * 4.0;
+			ap.y = WEAPONTOP - dp * 4.0;
+		}
+	}
+
+
+	// THE CLAW. Three things, and the third is the point of it.
+	//
+	// 1. CLOSURE. QuestZDoom exports no analogue trigger -- UserCmd is `buttons` plus six
+	//    int16s and neither is a trigger axis -- so closure is driven by how long the trigger
+	//    is HELD, 0 to 1 over ae_loader_claw_tics. What matters is that it is analogue in the
+	//    dimension you can see: the jaws are at a continuous position.
+	// 2. WHERE THE CLAW IS. The arm reaches 228 model units, which at the pack's own scale is
+	//    about 72 map units -- the same number the TC's own A_CustomPunch(500, 72) used, so
+	//    whoever wrote that had measured the same arm. The claw point is the hand's position
+	//    plus that reach along the hand's own direction.
+	// 3. DAMAGE WHERE THE CLAW IS, not down a line from your face. That is the whole
+	//    difference between a mech arm and a punch.
+	//
+	// NETPLAY. AttackPos/OffhandPos are written only for the local VR player, so the detection
+	// here is local and must never touch the playsim directly. It sends the claw POINT as a net
+	// event and every machine runs the same search against it -- no actor ids, no lookup table,
+	// the same answer everywhere. That is the shape vreload.zs uses for its grip key.
+	void Claw(PlayerPawn mo, int n, double armSpeed, int h)
+	{
+		int i = n * 2 + h;
+		if (swingQuiet[i] > 0)
+			swingQuiet[i]--;
+
+		let p = mo.player;
+		bool held = (p.cmd.buttons & (h == 0 ? BT_ATTACK : BT_OFFHANDATTACK)) != 0;
+		double tics = max(F('ae_loader_claw_tics', 7.0), 1.0);
+		clawShut[i] = clamp(clawShut[i] + (held ? 1.0 : -1.0) / tics, 0.0, 1.0);
+
+		// A swing lands when the claw is moving fast enough. The threshold is higher than the
+		// saber's 8.0 because the claw sits on a 2.28 m boom: the same wrist turn moves it more
+		// than twice as far, and a mech swing should be slower than a lightsaber flourish.
+		double cut = F('ae_loader_swing', 14.0);
+		if (cut <= 0 || armSpeed < cut || swingQuiet[i] > 0)
+			return;
+		swingQuiet[i] = int(max(F('ae_loader_swing_gap', 12.0), 1.0));
+
+		Vector3 pt = ClawPoint(mo, h == 1);
+		// thousandths, so the event carries a position every machine agrees on
+		EventHandler.SendNetworkEvent("ae_claw", int(pt.x * 8), int(pt.y * 8),
+		                              int(pt.z * 8) | (h << 24));
+	}
+
+	static Vector3 ClawPoint(PlayerPawn mo, bool off)
+	{
+		double ps = mo.Level.pixelstretch;
+		if (ps <= 0)
+			ps = 1.2;
+		Vector3 d = off ? RSVR_VRHand.OffDir(mo, 0, 0, ps) : RSVR_VRHand.HandDir(mo, 0, 0, ps);
+		Vector3 o = off ? mo.OffhandPos : mo.AttackPos;
+		double reach = F2('ae_loader_reach', 72.0);
+		return o + d * reach;
+	}
+
+	static double F2(Name n, double def)
+	{
+		let c = CVar.FindCVar(n);
+		return c ? c.GetFloat() : def;
+	}
+
+	// Every machine runs this against the same point, so it stays in step.
+	override void NetworkProcess(ConsoleEvent e)
+	{
+		int hand = 0;
+		if (e.Name == "ae_grab" || e.Name == "ae_drop" || e.Name == "ae_crush" || e.Name == "ae_claw")
+			hand = e.Name == "ae_crush" ? e.Args[0] : ((e.Args[2] >> 24) & 1);
+		else
+			return;
+		int n = e.Player;
+		if (n < 0 || n >= MAXPLAYERS || !playeringame[n] || !players[n].mo)
+			return;
+		let mo = PlayerPawn(players[n].mo);
+		if (!mo || !Worn(mo))
+			return;
+
+
+		if (e.Name == "ae_grab")
+		{
+			int i = n * 2 + hand;
+			if (held[i])
+				return;
+			Vector3 g = (e.Args[0] / 8.0, e.Args[1] / 8.0, (e.Args[2] & 0xFFFFFF) / 8.0);
+			double rad = F2('ae_loader_grab_radius', 48.0);
+			Actor best = null;
+			double bestd = 1e9;
+			let git = BlockThingsIterator.CreateFromPos(g.x, g.y, g.z, 0, rad, false);
+			while (git.Next())
+			{
+				let t = git.thing;
+				if (!Grabbable(t, mo))
+					continue;
+				double d = (t.pos - g).Length();
+				if (d < bestd)
+				{
+					bestd = d;
+					best = t;
+				}
+			}
+			if (best)
+				Take(mo, i, best);
+			return;
+		}
+
+		if (e.Name == "ae_drop")
+		{
+			Vector3 v = (e.Args[0] / 64.0, e.Args[1] / 64.0,
+			             ((e.Args[2] << 8) >> 8) / 64.0);
+			Drop(n * 2 + hand, v);
+			return;
+		}
+
+		if (e.Name == "ae_crush")
+		{
+			int i = n * 2 + hand;
+			let t = held[i];
+			if (!t)
+				return;
+			Drop(i);
+			// past the gib threshold, so it comes apart rather than just dying. Not A_Die,
+			// which deals exactly health and leaves it whole; never Destroy, which gives no
+			// death, no gibs, no kill credit and no drop.
+			t.DamageMobj(mo, mo, t.health + abs(t.GetGibHealth()) + 1, 'Crush', DMG_FORCED);
+			mo.A_StartSound("melee/hitwall", CHAN_AUTO, 0, 1.0, ATTN_NORM, 0.7);
+			return;
+		}
+
+		Vector3 pt = (e.Args[0] / 8.0, e.Args[1] / 8.0, (e.Args[2] & 0xFFFFFF) / 8.0);
+		double rad = F2('ae_loader_claw_radius', 40.0);
+		int dmg = int(F2('ae_loader_damage', 180.0));
+
+		let it = BlockThingsIterator.CreateFromPos(pt.x, pt.y, pt.z, 0, rad, false);
+		int hits = 0;
+		while (it.Next() && hits < 8)
+		{
+			let t = it.thing;
+			if (!t || t == mo || !t.bShootable || t.health <= 0)
+				continue;
+			if ((t.pos - pt).Length() > rad + t.radius)
+				continue;
+			hits++;
+			t.DamageMobj(mo, mo, dmg, 'Melee');
+		}
+		if (hits > 0)
+			mo.A_StartSound("melee/hitwall", CHAN_AUTO, 0, 1.0, ATTN_NORM);
+	}
+
+
+	// WHAT CAN BE PICKED UP. Data, not a class list: mass and flags agree with each other, so
+	// a barrel (Mass 100) and a drone pass while a Baron or Cyberdemon (1000, and +BOSS) do
+	// not. ExplosiveBarrel qualifies on its own merits and is never named.
+	static bool Grabbable(Actor t, Actor by)
+	{
+		if (!t || t == by || t.player)
+			return false;
+		if (t.bBOSS || t.bNOTARGET || t.bINVULNERABLE || t.bNODAMAGE)
+			return false;
+		if (!t.bShootable && !t.bCORPSE)
+			return false;
+		return t.Mass <= 700 && t.Height <= 80;
+	}
+
+	// Carry is a VELOCITY SPRING, never SetOrigin. SetOrigin is a teleport: it would shove a
+	// monster THROUGH the wall you are pinning it against, and there would be nothing to pin.
+	// Asking its velocity to point at the claw lets the engine's own movement code do the
+	// collision -- so pinning is not a feature anyone writes, it is what happens when the claw
+	// keeps asking and the wall keeps refusing.
+	void Carry(PlayerPawn mo, int i, Vector3 pt)
+	{
+		let t = held[i];
+		if (!t || t.health <= 0 && !t.bCORPSE)
+		{
+			Drop(i);
+			return;
+		}
+		Vector3 d = pt - t.pos;
+		double k = clamp(F2('ae_loader_carry', 0.35), 0.05, 1.0);
+		t.vel = d * k;
+		if (t.vel.Length() > 40)
+			t.vel = t.vel.Unit() * 40;
+	}
+
+	void Take(PlayerPawn mo, int i, Actor t)
+	{
+		if (!t)
+			return;
+		held[i] = t;
+		heldGrav[i] = t.bNOGRAVITY;
+		t.bNOGRAVITY = true;
+		t.bTHRUACTORS = true;
+		crushFor[i] = 0;
+	}
+
+	// Let go, restoring exactly what we changed. A flag set and never put back is the bug that
+	// outlives the session.
+	void Drop(int i, Vector3 throwVel = (0, 0, 0))
+	{
+		let t = held[i];
+		held[i] = null;
+		crushFor[i] = 0;
+		if (!t)
+			return;
+		t.bNOGRAVITY = heldGrav[i];
+		t.bTHRUACTORS = false;
+		if (throwVel.Length() > 0.1)
+		{
+			t.vel = throwVel;
+			flung.Push(t);
+			flungWas.Push(throwVel.Length());
+		}
+	}
+
+	// A thrown thing hurts what it lands on, and itself. Done with our own tracker rather than
+	// +MISSILE: making a Cacodemon a missile sends it to its Death state on the first doorframe
+	// it clips, and permanently mutates an actor that survives the throw.
+	// NOT Flung(): ZScript identifiers are case-insensitive and `flung` is the array.
+	void TickFlung()
+	{
+		for (int i = flung.Size() - 1; i >= 0; i--)
+		{
+			let t = flung[i];
+			if (!t || t.health <= 0 && !t.bCORPSE)
+			{
+				flung.Delete(i); flungWas.Delete(i);
+				continue;
+			}
+			double now = t.vel.Length();
+			double was = flungWas[i];
+			flungWas[i] = now;
+			if (was < 8.0)
+			{
+				flung.Delete(i); flungWas.Delete(i);
+				continue;
+			}
+			if (now > was * 0.5)
+				continue;		// still flying
+
+			// it stopped: that is the impact
+			int dmg = int(clamp(was * F2('ae_loader_throw_dmg', 6.0), 0, 400));
+			let it = BlockThingsIterator.CreateFromPos(t.pos.x, t.pos.y, t.pos.z, 0,
+			                                           t.radius + 24, false);
+			while (it.Next())
+			{
+				let o = it.thing;
+				if (!o || o == t || !o.bShootable || o.health <= 0 || o.player)
+					continue;
+				o.DamageMobj(t, t, dmg, 'Melee');
+			}
+			if (t.bShootable && t.health > 0)
+				t.DamageMobj(t, t, dmg / 2, 'Melee');
+			flung.Delete(i); flungWas.Delete(i);
+		}
+	}
+
+
+	// The local half: decide, then SEND. Nothing here touches the playsim, because the claw
+	// point comes from AttackPos/OffhandPos which only this machine has.
+	void HandGrab(PlayerPawn mo, int n, int h, double armSpeed)
+	{
+		int i = n * 2 + h;
+		let p = mo.player;
+		bool shut = clawShut[i] > 0.6;
+		Vector3 pt = ClawPoint(mo, h == 1);
+
+		if (!held[i])
+		{
+			if (shut && clawShut[i] >= 1.0)
+				EventHandler.SendNetworkEvent("ae_grab", int(pt.x * 8), int(pt.y * 8),
+				                              int(pt.z * 8) | (h << 24));
+			return;
+		}
+
+		// holding: let go when the claw opens, and throw at the speed the arm was moving
+		if (!shut)
+		{
+			Vector3 v = (pt - ClawWas(i)) * F2('ae_loader_throw', 1.6);
+			clawPrev[i] = pt;
+			EventHandler.SendNetworkEvent("ae_drop", int(v.x * 64), int(v.y * 64),
+			                              int(v.z * 64) | (h << 24));
+			return;
+		}
+		clawPrev[i] = pt;
+
+		// squeezed shut and held: crush. Deliberate, because a barrel crushed in your hands
+		// goes off in your face -- which is correct, and worth having to mean.
+		if (clawShut[i] >= 0.98)
+		{
+			crushFor[i]++;
+			if (crushFor[i] == int(max(F2('ae_loader_crush_tics', 12.0), 1.0)))
+				EventHandler.SendNetworkEvent("ae_crush", h, 0, 0);
+		}
+		else
+		{
+			crushFor[i] = 0;
+		}
+	}
+
+	Vector3 ClawWas(int i)
+	{
+		return clawPrev[i];
+	}
+
+	void Hush(PlayerPawn mo, int n)
+	{
+		if (humming[n])
+		{
+			mo.A_StopSound(CHAN_7);
+			humming[n] = false;
+		}
+	}
+
+	// An arm that was moving fast and has just stopped: a servo clunk and a kick in THAT
+	// controller. Per-hand haptics do exist on this engine -- SpawnPlayerMissile fires a
+	// 150 ms pulse at 0.8 on the hand chosen by ALF_ISOFFHAND (p_mobj.cpp:7546-7563), gated on
+	// a non-zero DamageType, which is exactly why RSVR_Buzz carries DamageType "RSVRHaptic".
+	void Clunk(PlayerPawn mo, int i, double now, bool off)
+	{
+		if (quiet[i] > 0)
+			quiet[i]--;
+		double trip = F('ae_loader_clunk', 18.0);
+		double was = spWas[i];
+		spWas[i] = now;
+		if (trip <= 0 || quiet[i] > 0)
+			return;
+		if (was < trip || now > trip / 3.0)
+			return;
+		quiet[i] = 10;
+		mo.A_StartSound("melee/hitwall", CHAN_AUTO, 0, clamp(was / 40.0, 0.4, 1.0), ATTN_NORM,
+		                clamp(0.7 + was / 120.0, 0.7, 1.0));
+		if (F('ae_loader_haptic', 1.0) > 0)
+			mo.SpawnPlayerMissile('RSVR_Buzz', mo.angle, noautoaim: true,
+			                      aimflags: off ? ALF_ISOFFHAND : 0);
+	}
+}

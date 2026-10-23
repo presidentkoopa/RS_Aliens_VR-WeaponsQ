@@ -8,9 +8,10 @@ class RSP_Guns abstract
 	{
 		if (!w)
 			return 0;
-		Name n = w.GetClassName();
-		if (n == 'NewShotgun_3D')	return 1;
-		if (n == 'YutaniShotgun_3D')	return 2;
+		// FIXED 2026-10-23: same exact-name bug as RSR_Guns.Index -- AE_Off_NewShotgun and
+		// AE_Off_YutaniShotgun derive from these two and were falling through to 0.
+		if (w is 'NewShotgun_3D')	return 1;
+		if (w is 'YutaniShotgun_3D')	return 2;
 		return 0;
 	}
 
@@ -126,6 +127,11 @@ class RSP_Guns abstract
 		return (0, 0, 0);
 	}
 
+	// VERIFIED 2026-10-23: AxisInHand and HandRot below AGREE. Pushing the shell surface's
+	// principal axis (models/weapons/shotgun/m37a2.md3 surface [3], 188 verts, axis
+	// (1.0000, 0.0017, -0.0044)) through the engine's chain gives elevation +57.35 deg at
+	// HandRot, against the +57.53 deg this table declares. They were suspected of being a
+	// BD22 value copied onto a different mesh; they are not. Do not "fix" them by re-deriving.
 	clearscope static Vector3 AxisInHand(int i)
 	{
 		switch (i)
@@ -268,12 +274,18 @@ class RSP_Guns abstract
 		return 0;
 	}
 
+	// FILLED 2026-10-23: the pump's FORWARD stroke was silent (SndBack above was already
+	// STGNPUMP). BD22 gives its two shotguns separate back and forward sounds; the TC has only
+	// the one pump sound, so both strokes use it. ChanFwd is 0 while ChanBack is 5, so the
+	// forward stroke does not cut the back stroke short.
+	// No double-up: the states that play STGNPUMP themselves (RSP_P1Stock / RSP_P1BStock) are
+	// the non-VR fallback animations, which do not run while the hand works the pump.
 	clearscope static String SndFwd(int i)
 	{
 		switch (i)
 		{
-		case 1:	return "";
-		case 2:	return "";
+		case 1:	return "STGNPUMP";
+		case 2:	return "STGNPUMP";
 		}
 		return "";
 	}
@@ -288,12 +300,15 @@ class RSP_Guns abstract
 		return 0;
 	}
 
+	// FILLED 2026-10-23: the spent shell thrown out of the port had no landing sound. Read as the
+	// dropped shell's BounceSound (rsr_pump.zs:608), so a $random alias is fine. Our own
+	// RS_Ballistics casing set, carried in and aliased in SNDINFO.rsr.
 	clearscope static String SndLand(int i)
 	{
 		switch (i)
 		{
-		case 1:	return "";
-		case 2:	return "";
+		case 1:	return "rsr/shelldrop";
+		case 2:	return "rsr/shelldrop";
 		}
 		return "";
 	}
@@ -301,7 +316,18 @@ class RSP_Guns abstract
 	// PORTED 2026-10-22 (rsr_pump.zs 1.92 InsertWanted / feedOK): what is in the tube, and how much it holds
 	clearscope static String Loaded(int i)
 	{
-		return i == 1 || i == 2 ? "ShotgunLoaded" : "";	// both AE shotguns count ShotgunLoaded
+		// FIXED 2026-10-23: the two shotguns do NOT share a tube counter. The TC gives every
+		// Yutani variant its own, and the rest of the pack already honours that (counter.zs,
+		// pumpgl.zs and rsr_guns.zs all use YPulseLoaded / YSmartLoaded for the Yutani rifle
+		// and smartgun, and MagAmmo() below already said YShotgunLoaded). This row was the one
+		// place that merged them, so the hand-fed shells landed in the Colonial gun's tube and
+		// the Yutani shotgun could never fire what you loaded into it.
+		switch (i)
+		{
+		case 1:	return "ShotgunLoaded";
+		case 2:	return "YShotgunLoaded";
+		}
+		return "";
 	}
 
 	clearscope static int Cap(int i)

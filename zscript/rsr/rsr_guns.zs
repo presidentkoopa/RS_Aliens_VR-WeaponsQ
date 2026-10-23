@@ -10,17 +10,24 @@ class RSR_Guns abstract
 	{
 		if (!w)
 			return 0;
-		Name n = w.GetClassName();
-		if (n == 'M4A3Pistol_3D')	return 1;
-		if (n == 'PulseRifle_3D')	return 2;
-		if (n == 'Smartgun_3D')	return 3;
-		if (n == 'M240Flamethrower_3D')	return 4;
-		if (n == 'MercPistol_3D')	return 5;
-		if (n == 'SynthPistol_3D')	return 6;
-		if (n == 'YutaniPistol_3D')	return 7;
-		if (n == 'YutaniRifle_3D')	return 8;
-		if (n == 'YutaniSmartgun_3D')	return 9;
-		if (n == 'YutaniFlamer_3D')	return 10;
+		// FIXED 2026-10-23: this matched on the EXACT class name, so every dual-wield
+		// off-hand copy -- AE_Off_M4A3Pistol and the rest, each of which derives from the
+		// gun it copies (DECORATE.aedual) -- fell through to 0. Index 0 means every Snd*()
+		// returns "" and every piece of reload geometry (Well, MagCentre, Axis) is absent,
+		// so an off-hand pistol reloaded in total silence with nothing to aim a magazine at.
+		// `is` instead of a name compare: the twelve guns are siblings, each deriving from
+		// its own TC parent, so no gun is a descendant of another and the test cannot
+		// mis-order. Any future copy of a gun inherits its reload for free.
+		if (w is 'M4A3Pistol_3D')	return 1;
+		if (w is 'PulseRifle_3D')	return 2;
+		if (w is 'Smartgun_3D')	return 3;
+		if (w is 'M240Flamethrower_3D')	return 4;
+		if (w is 'MercPistol_3D')	return 5;
+		if (w is 'SynthPistol_3D')	return 6;
+		if (w is 'YutaniPistol_3D')	return 7;
+		if (w is 'YutaniRifle_3D')	return 8;
+		if (w is 'YutaniSmartgun_3D')	return 9;
+		if (w is 'YutaniFlamer_3D')	return 10;
 		return 0;
 	}
 
@@ -474,85 +481,114 @@ class RSR_Guns abstract
 		case 1:	return "PTCLIPOU";
 		case 2:	return "PULSREL1";
 		case 3:	return "SMARTOUT";
-		case 4:	return "FLAMPICK";
+		case 4:	return "MISREL";	// the tank's own release; FLAMPICK is the generic
+							// handling clack the pistol's zoom also plays
 		case 5:	return "PTCLIPOU";
 		case 6:	return "PTCLIPOU";
 		case 7:	return "PTCLIPOU";
 		case 8:	return "PULSREL1";
 		case 9:	return "SMARTOUT";
-		case 10:	return "FLAMPICK";
+		case 10:	return "MISREL";
 		}
 		return "";
 	}
 
+	// FIXED 2026-10-23: the rifles, smartguns and flamers returned their SndOut sound here
+	// too, so a magazine going in was the same noise as one coming out -- the half of a
+	// reload you actually wait for had no sound of its own. The TC ships the counterparts
+	// and its own stock reload states already use them (PULSREL2 at rifle.txt:126, SMARTUP
+	// at smartgun.txt:159, FLAMERE3 at flamethrower.txt:117); only this table had missed
+	// them. Verified present in _A01's SNDINFO before changing, not assumed from a comment.
 	clearscope static String SndIn(int i)
 	{
 		switch (i)
 		{
 		case 1:	return "PTCLIPIN";
-		case 2:	return "PULSREL1";
-		case 3:	return "SMARTOUT";
-		case 4:	return "FLAMPICK";
+		case 2:	return "PULSREL2";
+		case 3:	return "SMARTUP";
+		case 4:	return "FLAMERE3";
 		case 5:	return "PTCLIPIN";
 		case 6:	return "PTCLIPIN";
 		case 7:	return "PTCLIPIN";
-		case 8:	return "PULSREL1";
-		case 9:	return "SMARTOUT";
-		case 10:	return "FLAMPICK";
+		case 8:	return "PULSREL2";
+		case 9:	return "SMARTUP";
+		case 10:	return "FLAMERE3";
 		}
 		return "";
 	}
 
+	// FILLED 2026-10-23. Every one of these was "" so every charging-handle pull and every
+	// release was silent. The names and the pairing are BD22 VR-Reloaded 1.92's
+	// (zscript/rsr/rsr_guns.bd.zs SndBack/SndFwd, which uses rsr/slideback + rsr/smgfwd for its
+	// pistol and SMG); the two wavs ship in this pack now, see SNDINFO.rsr.
+	// Silent on purpose: 3 and 9 (smartguns) and 4 and 10 (flamers) have no handle to work.
 	clearscope static String SndBack(int i)
 	{
 		switch (i)
 		{
-		case 1:	return "";
-		case 2:	return "";
-		case 3:	return "";
+		case 1:	return "rsr/slideback";
+		case 2:	return "rsr/boltback";	// the pulse rifles get a rifle's charging handle,
+		case 3:	return "";				// not the 9mm pistol slide they shared with the M4A3
 		case 4:	return "";
-		case 5:	return "";
-		case 6:	return "";
-		case 7:	return "";
-		case 8:	return "";
+		case 5:	return "rsr/slideback";
+		case 6:	return "rsr/slideback";
+		case 7:	return "rsr/slideback";
+		case 8:	return "rsr/boltback";
 		case 9:	return "";
 		case 10:	return "";
 		}
 		return "";
 	}
 
+	// FILLED 2026-10-23. Every one of these was "" so every charging-handle pull and every
+	// release was silent. The names and the pairing are BD22 VR-Reloaded 1.92's
+	// (zscript/rsr/rsr_guns.bd.zs SndBack/SndFwd, which uses rsr/slideback + rsr/smgfwd for its
+	// pistol and SMG); the two wavs ship in this pack now, see SNDINFO.rsr.
+	// Silent on purpose: 3 and 9 (smartguns) and 4 and 10 (flamers) have no handle to work.
+	// 2026-10-23 the pistols get rsr/slidefwd, an actual slide slamming shut. They had
+	// rsr/smgfwd, which traces by md5 to RS_CombatFX's pistol/unsorted/9mmclip2.wav -- a
+	// MAGAZINE sound standing in for a slide, which is why the end of a pistol reload
+	// sounded like the start of one. The pulse rifles (2, 8) now take rsr/boltfwd, a bolt
+	// locking rather than a pistol slide. Nothing in RS_CombatFX is filed as a pulse rifle,
+	// so that pick is by archetype and length, not by ear -- see SNDINFO.rsr.
+	// rsr/smgfwd is left declared but is no longer used by any gun.
 	clearscope static String SndFwd(int i)
 	{
 		switch (i)
 		{
-		case 1:	return "";
-		case 2:	return "";
+		case 1:	return "rsr/slidefwd";
+		case 2:	return "rsr/boltfwd";	// bolt into battery
 		case 3:	return "";
 		case 4:	return "";
-		case 5:	return "";
-		case 6:	return "";
-		case 7:	return "";
-		case 8:	return "";
+		case 5:	return "rsr/slidefwd";
+		case 6:	return "rsr/slidefwd";
+		case 7:	return "rsr/slidefwd";
+		case 8:	return "rsr/boltfwd";
 		case 9:	return "";
 		case 10:	return "";
 		}
 		return "";
 	}
 
+	// FILLED 2026-10-23: the dropped magazine hitting the floor, previously silent for every gun.
+	// BD22 uses weapons/smallmagdrop / weapons/largemagdrop, which are Brutal Doom's own and are
+	// not on the Aliens TC, so these are our own RS_Ballistics debris sets carried in and aliased
+	// in SNDINFO.rsr. Same small/large split BD22 makes: pistol magazines small, the pulse rifle
+	// magazines, smartgun drums and flamer tanks big.
 	clearscope static String SndLand(int i)
 	{
 		switch (i)
 		{
-		case 1:	return "";
-		case 2:	return "";
-		case 3:	return "";
-		case 4:	return "";
-		case 5:	return "";
-		case 6:	return "";
-		case 7:	return "";
-		case 8:	return "";
-		case 9:	return "";
-		case 10:	return "";
+		case 1:	return "rsr/magdrop";
+		case 2:	return "rsr/magdrop_big";
+		case 3:	return "rsr/magdrop_big";
+		case 4:	return "rsr/magdrop_big";
+		case 5:	return "rsr/magdrop";
+		case 6:	return "rsr/magdrop";
+		case 7:	return "rsr/magdrop";
+		case 8:	return "rsr/magdrop_big";
+		case 9:	return "rsr/magdrop_big";
+		case 10:	return "rsr/magdrop_big";
 		}
 		return "";
 	}
@@ -655,16 +691,23 @@ class RSR_Guns abstract
 	}
 }
 
-// every sprite the reload shows (MODELDEF.rsr), so the engine knows the names; never spawned
+// every sprite the reload shows (MODELDEF.rsr), so the engine knows the names; never spawned.
+// 2026-10-23: the six guns with a slide/bolt gained a third frame C -- the gun with NEITHER
+// its magazine nor its slide, which is what a dry pistol looks like with the slide locked
+// back and the magazine out. A frame the engine has never heard of cannot be addressed by
+// psp.Frame, and MODELDEF has nothing to bind its model to, so the block below is not
+// decoration: without the letter here the new MODELDEF blocks are dead.
 class RSR_GunSprites : Actor
 {
 	States
 	{
 	Spawn:
-		RSPM AB 0;	// AE/M4A3Pistol_3D
+		RSPM ABC 0;	// AE/M4A3Pistol_3D
 		RSPP AB 0;
 		RSPW A 0;
-		RSLM AB 0;	// AE/PulseRifle_3D
+		RSLM ABC 0;	// AE/PulseRifle_3D
+		RSLG A 0;	// the rifle without its launcher pump (pumpgl.zs)
+		RSLQ A 0;	// the launcher pump alone
 		RSLP AB 0;
 		RSLW A 0;
 		RSSM A 0;	// AE/Smartgun_3D
@@ -673,16 +716,18 @@ class RSR_GunSprites : Actor
 		RSFM A 0;	// AE/M240Flamethrower_3D
 		RSFP A 0;
 		RSFW A 0;
-		RSMM AB 0;	// AE/MercPistol_3D
+		RSMM ABC 0;	// AE/MercPistol_3D
 		RSMP AB 0;
 		RSMW A 0;
-		RSYM AB 0;	// AE/SynthPistol_3D
+		RSYM ABC 0;	// AE/SynthPistol_3D
 		RSYP AB 0;
 		RSYW A 0;
-		RSNM AB 0;	// AE/YutaniPistol_3D
+		RSNM ABC 0;	// AE/YutaniPistol_3D
 		RSNP AB 0;
 		RSNW A 0;
-		RSRM AB 0;	// AE/YutaniRifle_3D
+		RSRM ABC 0;	// AE/YutaniRifle_3D
+		RSRG A 0;
+		RSRQ A 0;
 		RSRP AB 0;
 		RSRW A 0;
 		RSVM A 0;	// AE/YutaniSmartgun_3D

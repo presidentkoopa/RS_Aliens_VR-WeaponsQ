@@ -24,9 +24,16 @@ OptionValue "AE_Ballistics"
 
 OptionValue "AE_GrabWith"
 {
-	67108864, "Off hand trigger"
-	4,        "Use key"
-	67108868, "Either"
+	// FIXED 2026-10-23: "Use key" was 4 and "Either" 67108868, but at 9afc750
+	// constants.zs:835-836 BT_USE is 1<<1 = 2 and BT_JUMP is 1<<2 = 4 -- so both rows
+	// bound the ammo grab to JUMP. BT_OFFHANDATTACK is 1<<26 = 67108864.
+	// 2026-10-23: these were usercmd BUTTON MASKS, which is the wrong shape for this choice.
+	// "Either" let the grip and the trigger both grab, and "Use key" put BT_USE in the mask,
+	// which grabs a magazine AND opens the door behind it. 1.92 picks ONE input and, for the
+	// Use key, intercepts it for the duration of the reload. Values are rsr_grab_with now.
+	0, "Off hand trigger"
+	1, "Off hand grip"
+	2, "Use key"
 }
 
 OptionMenu "AE_Options"
@@ -42,9 +49,26 @@ OptionMenu "AE_Options"
 	Slider "Long gun hand forward",        "ae_gunhand_fwd",     -10.0, 10.0, 0.25, 2
 	Slider "Long gun hand up",             "ae_gunhand_up",      -10.0, 10.0, 0.25, 2
 	Slider "Long gun hand side (left +)",  "ae_gunhand_side",    -10.0, 10.0, 0.25, 2
-	Slider "Support hand forward",         "ae_support_fwd",     -10.0, 10.0, 0.25, 2
-	Slider "Support hand up",              "ae_support_up",      -10.0, 10.0, 0.25, 2
-	Slider "Support hand side (left +)",   "ae_support_side",    -10.0, 10.0, 0.25, 2
+	Slider "Knife hand forward",           "ae_knifehand_fwd",   -10.0, 10.0, 0.25, 2
+	Slider "Knife hand up",                "ae_knifehand_up",    -10.0, 10.0, 0.25, 2
+	Slider "Knife hand side (left +)",     "ae_knifehand_side",  -10.0, 10.0, 0.25, 2
+	Slider "Smartgun hand forward",        "ae_smarthand_fwd",   -10.0, 10.0, 0.25, 2
+	Slider "Smartgun hand up",             "ae_smarthand_up",    -10.0, 10.0, 0.25, 2
+	Slider "Smartgun hand side (left +)",  "ae_smarthand_side",  -10.0, 10.0, 0.25, 2
+	Slider "Satchel hand forward",         "ae_satchelhand_fwd", -10.0, 10.0, 0.25, 2
+	Slider "Satchel hand up",              "ae_satchelhand_up",  -10.0, 10.0, 0.25, 2
+	Slider "Satchel hand side (left +)",   "ae_satchelhand_side", -10.0, 10.0, 0.25, 2
+	StaticText ""
+	StaticText "Support hand rest offset (cm) -- per family, NOT shared", 1
+	Slider "Long gun support forward",      "ae_support_gun_fwd",    -10.0, 10.0, 0.25, 2
+	Slider "Long gun support up",           "ae_support_gun_up",     -10.0, 10.0, 0.25, 2
+	Slider "Long gun support side (left +)", "ae_support_gun_side",  -10.0, 10.0, 0.25, 2
+	Slider "Pistol support forward",        "ae_support_pistol_fwd",  -10.0, 10.0, 0.25, 2
+	Slider "Pistol support up",             "ae_support_pistol_up",   -10.0, 10.0, 0.25, 2
+	Slider "Pistol support side (left +)",  "ae_support_pistol_side", -10.0, 10.0, 0.25, 2
+	Slider "Smartgun support forward",      "ae_support_smart_fwd",   -10.0, 10.0, 0.25, 2
+	Slider "Smartgun support up",           "ae_support_smart_up",    -10.0, 10.0, 0.25, 2
+	Slider "Smartgun support side (left +)", "ae_support_smart_side", -10.0, 10.0, 0.25, 2
 	Slider "Satchel hand yaw",             "ae_satchel_yaw",     -180.0, 180.0, 5.0, 0
 	Slider "Satchel hand pitch",           "ae_satchel_pitch",   -180.0, 180.0, 5.0, 0
 	Slider "Satchel hand roll",            "ae_satchel_roll",    -180.0, 180.0, 5.0, 0
@@ -54,15 +78,16 @@ OptionMenu "AE_Options"
 	StaticText ""
 	Option "Left handed",                 "ae_lefthanded",     "OnOff"
 	Option "Reloading",                   "rsq_reload",        "AE_ReloadMode"
-	Option "Grab ammo with",              "rsr_grab_buttons",  "AE_GrabWith"
+	Option "Grab ammo with",              "rsr_grab_with",     "AE_GrabWith"
 	Slider "Reload assist",               "rsr_assist",        0.5, 3.0, 0.25, 2
 	Option "Show reload capture zones",   "rsr_assist_debug",  "OnOff"
 	Option "Flick down to reload",        "ae_flick_reload",   "OnOff"
 	Option "Shotgun slug alt fire",       "ae_shotgun_slug",   "OnOff"
 	Option "Hand fire selector",          "ae_handswitch",     "OnOff"
 	Option "Melee by motion (knife, fist)", "ae_stab",          "OnOff"
+	Option "Knife trigger swing animation", "ae_knife_swing",   "OnOff"
 	Slider "Melee swing speed (m/s)",      "ae_stab_speed",     1.0, 5.0, 0.25, 2
-	Slider "Melee reach (cm)",             "ae_stab_reach",     30.0, 120.0, 5.0, 0
+	Slider "Melee reach (cm)",             "ae_stab_reach",     20.0, 120.0, 2.5, 0
 	Slider "Launcher pump: rounds per grenade", "ae_glpump_cost", 1, 40, 1, 0
 	Slider "Launcher pump: grab radius (cm)",   "ae_glpump_grab", 6.0, 30.0, 1.0, 0
 	Option "Body holsters",               "ae_holsters",       "OnOff"
@@ -72,6 +97,17 @@ OptionMenu "AE_Options"
 	Submenu "Smartgun Options",           "AE_SmartOptions"
 	StaticText " "
 	StaticText "No voxel options: this set ships no voxels.", "DarkGrey"
+	StaticText ""
+	StaticText "Power Loader", "Gold"
+	Slider "Walk speed in the loader",     "ae_loader_speed",        0.10, 1.00, 0.05, 2
+	Slider "Floor shake per step",         "ae_loader_quake",        0.0, 2.0, 0.25, 2
+	Slider "Hydraulic hum",                "ae_loader_hum",          0.0, 1.0, 0.05, 2
+	Slider "Arm clunk threshold",          "ae_loader_clunk",        0.0, 60.0, 2.0, 0
+	Option "Kick the controller on a clunk", "ae_loader_haptic",     "OnOff"
+	Option "Rotating beacon",              "ae_loader_beacon",       "OnOff"
+	Slider "Beacon speed (rpm)",           "ae_loader_beacon_rpm",   0.0, 300.0, 10.0, 0
+	Slider "Beacon light radius",          "ae_loader_beacon_radius", 0.0, 256.0, 16.0, 0
+
 }
 
 OptionMenu "AE_SmartOptions"

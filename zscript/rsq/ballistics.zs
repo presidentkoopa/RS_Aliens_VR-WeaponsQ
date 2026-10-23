@@ -273,6 +273,18 @@ class RSQ_Debris : Actor
 
 // follows one player projectile: a short trail while it flies, and an impact
 // where it lands
+// what one gun's round looks like in the air: set once when the tracer attaches, read
+// every tic by Trail. Colour is only half of it -- lifetime, size and points-per-tic are
+// what keep a seven-pellet shotgun blast affordable on a Quest.
+class RSQ_ShotLook
+{
+	Color col;
+	int pts;	// particles spawned per tic: 2 draws a line, 1 draws a spray
+	int life;	// tics a point lives
+	double size;
+	double alpha;
+}
+
 class RSQ_Tracer : Thinker
 {
 	Actor missile;
@@ -280,7 +292,7 @@ class RSQ_Tracer : Thinker
 	RSQ_Ballistics h;
 	Vector3 lastPos;
 	Vector3 lastVel;
-	Color col;
+	RSQ_ShotLook look;
 	int age;
 
 	static void Attach(Actor m, RSQ_Ballistics h)
@@ -291,23 +303,66 @@ class RSQ_Tracer : Thinker
 		t.h = h;
 		t.lastPos = m.pos;
 		t.lastVel = m.vel;
-		t.col = ColorFor(m);
+		t.look = LookFor(m);
 		h.liveTracers++;
 	}
 
-	static Color ColorFor(Actor a)
+	// 2026-10-23 PER-GUN LOOK (owner: "get the ballistics for the guns done this pass too,
+	// something lovely for quest"). This used to colour by substring -- plasma, bfg, rail,
+	// fire -- and NOT ONE of the Aliens set's projectiles matches any of those words, so
+	// every gun in the pack fired the same warm round. The names below are the set's own,
+	// taken from the A_FireProjectile / A_FireCustomMissile calls in actors/weapons/.
+	//
+	// The weights matter as much as the colours on a Quest. A shotgun blast is SEVEN
+	// ShotgunTracers and MAX_TRACERS is 24, so three blasts in the air would eat the whole
+	// budget and starve everything else of trails. Pellets therefore get a cheap profile --
+	// one point per tic instead of two, gone in four -- which is also what buckshot should
+	// look like: a brief spray, not seven rifle streaks.
+	// NOT Look(): ZScript identifiers are case-insensitive, so a static Look() and the
+	// field `look` below are the same name and the class will not compile.
+	static RSQ_ShotLook LookFor(Actor a)
 	{
-		String cn = a.GetClassName();
-		cn = cn.MakeLower();
-		if (cn.IndexOf("plasma") >= 0)
-			return Color(120, 180, 255);
-		if (cn.IndexOf("bfg") >= 0)
-			return Color(140, 255, 140);
-		if (cn.IndexOf("rail") >= 0)
-			return Color(200, 160, 255);
-		if (cn.IndexOf("fire") >= 0 || cn.IndexOf("flame") >= 0)
-			return Color(255, 150, 60);
-		return Color(255, 190, 130);
+		let k = new('RSQ_ShotLook');
+		k.pts = 2; k.life = 7; k.size = 2.5; k.alpha = 0.9;
+		switch (a.GetClassName())
+		{
+		// pistols: brass-warm, and the two synthetic/corporate ones run cold
+		case 'ColPistol':		k.col = Color(255, 200, 130); break;
+		case 'MerPistol':		k.col = Color(255, 178, 105); break;
+		case 'SynPistol':		k.col = Color(190, 220, 255); break;
+		case 'YutPistol':		k.col = Color(160, 230, 255); break;
+
+		// buckshot: short, dim and CHEAP -- seven of these fly per trigger pull
+		case 'ShotgunTracer':
+			k.col = Color(255, 170, 100); k.pts = 1; k.life = 4; k.size = 1.6; k.alpha = 0.7;
+			break;
+
+		// the pulse rifle's 10mm caseless: the gun the film is about, so it gets the
+		// longest, brightest line in the set
+		case 'HeavyTracer':
+			k.col = Color(255, 214, 150); k.life = 9; k.size = 2.8; break;
+		case 'PulseGrenade':	k.col = Color(255, 140, 60); k.life = 10; k.size = 3.2; break;
+
+		// M56 armour-piercing: heavier and hotter than the rifle's
+		case 'SmartgunTracer':
+		case 'SmartgunTracer2':
+			k.col = Color(255, 228, 175); k.life = 8; k.size = 3.0; break;
+
+		case 'BulletTracer':	k.col = Color(255, 190, 130); break;
+		default:
+			// anything this pack does not own: the portable fallback this module shipped
+			// with, so it still drops unchanged into another set (see the file header)
+			String cn = a.GetClassName();
+			cn = cn.MakeLower();
+			if (cn.IndexOf("plasma") >= 0)			k.col = Color(120, 180, 255);
+			else if (cn.IndexOf("bfg") >= 0)		k.col = Color(140, 255, 140);
+			else if (cn.IndexOf("rail") >= 0)		k.col = Color(200, 160, 255);
+			else if (cn.IndexOf("fire") >= 0 || cn.IndexOf("flame") >= 0)
+													k.col = Color(255, 150, 60);
+			else									k.col = Color(255, 190, 130);
+			break;
+		}
+		return k;
 	}
 
 	override void Tick()
@@ -336,22 +391,28 @@ class RSQ_Tracer : Thinker
 	{
 		if (!missile.Level)
 			return;
+		if (!look)
+			return;
 		FSpawnParticleParams p;
-		p.color1 = col;
+		p.color1 = look.col;
 		p.style = STYLE_Add;
 		p.flags = SPF_FULLBRIGHT;
-		p.lifetime = 7;
-		p.size = 2.5;
-		p.sizestep = -2.5 / 7;
-		p.startalpha = 0.9;
+		p.lifetime = look.life;
+		p.size = look.size;
+		p.sizestep = -look.size / look.life;
+		p.startalpha = look.alpha;
 		p.fadestep = -1;
 		p.vel = (0, 0, 0);
 		p.accel = (0, 0, 0);
-		// two points per tic so a fast round leaves a line, not dots
+		// two points per tic so a fast round leaves a line, not dots -- one for buckshot,
+		// where seven pellets are in the air at once and the line is not worth the cost
 		p.pos = to;
 		missile.Level.SpawnParticle(p);
-		p.pos = (lastPos + to) * 0.5;
-		missile.Level.SpawnParticle(p);
+		if (look.pts > 1)
+		{
+			p.pos = (lastPos + to) * 0.5;
+			missile.Level.SpawnParticle(p);
+		}
 	}
 }
 

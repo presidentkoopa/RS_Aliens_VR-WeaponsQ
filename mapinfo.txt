@@ -7,5 +7,5 @@ Gameinfo
 	// line above because 'EventHandlers =' REPLACES the list: with the two
 	// in separate MAPINFO lumps, whichever was read second won and the
 	// other set never ran.
-	AddEventHandlers = "RSQ_HandHandler", "RSR_Handler", "RSP_Handler", "AE_SwitchHandler", "AE_SmartHandler", "AE_HolsterHandler", "AE_FlickHandler", "AE_DualHandler", "RSQ_Ballistics", "RSQ_MeleeHandler", "RSQ_PumpGL"
+	AddEventHandlers = "RSQ_HandHandler", "RSR_Handler", "RSP_Handler", "AE_SwitchHandler", "AE_SmartHandler", "AE_HolsterHandler", "AE_FlickHandler", "AE_DualHandler", "RSQ_Ballistics", "RSQ_MeleeHandler", "RSQ_PumpGL", "AE_LoaderHandler"
 }

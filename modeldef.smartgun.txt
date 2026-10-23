@@ -114,7 +114,13 @@ Model Smartgun_3D
 
 	Scale -0.9 0.9 0.9
 	Offset 0.0 -30.0 -7.0
-	
+
+	// FIXED 2026-10-23: a readout must not be INTERPOLATED. Without this the engine blends the
+	// display mesh between frames (models.cpp CalcModelFrame), so switching mode or firing
+	// morphs the readout instead of changing it -- the owner's "goes crazy during firing".
+	// The Yutani block below always had NOINTERPOLATION; the Colonial one never did.
+	NOINTERPOLATION
+
 	FrameIndex SMHD A 0 0
 }
 
@@ -122,15 +128,19 @@ Model Smartgun_3D
 Model Smartgun_3D
 {
 	Path "Models\Weapons\smartgun"
+	// FIXED 2026-10-23: this drew the SAME mesh TWICE -- Model 0 and Model 1 were both
+	// smart_hud.md3 with the same skin, bound to frames 2 and 3 by two FrameIndex statements
+	// crammed onto one line. Two overlapping copies of a flat readout z-fight, which is the
+	// other half of "goes crazy". One mesh, one frame.
 	Model 0 "smart_hud.md3"
 	Skin 0 "smart_mode2.png"
-	Model 1 "smart_hud.md3"
-	Skin 1 "smart_mode2.png"
 
 	Scale -0.9 0.9 0.9
 	Offset 0.0 -30.0 -7.0
-	
-	FrameIndex SMHD B 0 2	FrameIndex SMHD B 1 3
+
+	NOINTERPOLATION
+
+	FrameIndex SMHD B 0 2
 }
 
 //Flash
@@ -292,13 +302,59 @@ Model YutaniSmartgun_3D
 	Offset 0.0 -30.0 -7.0
 	
 	NOINTERPOLATION
-	
+
+	// FIXED 2026-10-23: Skin and Offset are BLOCK properties, not per-frame ones. This block
+	// used to set them BETWEEN FrameIndex lines as though each applied only to the frames that
+	// followed -- so the parser simply took the last of each and applied it to the whole block:
+	// every frame ended up skinned "empty.png" (invisible) at Offset 0 -60 -7 (30 units out of
+	// place). The Yutani display was therefore not drawn at all.
+	// One skin and one offset per block means one BLOCK per skin/offset, which is what the
+	// three blocks below are. Same rule the pulse rifle's counter follows with its 100 blocks.
 	FrameIndex SMHD A 0 0
+}
+
+//Smart hud -- mode 2
+Model YutaniSmartgun_3D
+{
+	Path "Models\Weapons\smartgun"
+	Model 0 "smart_hud.md3"
 	Skin 0 "smart_mode2.png"
+
+	Scale -0.9 0.9 0.9
+	Offset 0.0 -30.0 -7.0
+
+	NOINTERPOLATION
+
 	FrameIndex SMHD B 0 1
+}
+
+//Smart hud -- mode 2, lowered
+Model YutaniSmartgun_3D
+{
+	Path "Models\Weapons\smartgun"
+	Model 0 "smart_hud.md3"
+	Skin 0 "smart_mode2.png"
+
+	Scale -0.9 0.9 0.9
 	Offset 0.0 -60.0 -7.0
+
+	NOINTERPOLATION
+
 	FrameIndex SMHD C 0 1
+}
+
+//Smart hud -- blank
+Model YutaniSmartgun_3D
+{
+	Path "Models\Weapons\smartgun"
+	Model 0 "smart_hud.md3"
 	Skin 0 "empty.png"
+
+	Scale -0.9 0.9 0.9
+	Offset 0.0 -30.0 -7.0
+
+	NOINTERPOLATION
+
 	FrameIndex SMHD D 0 1
 }
 

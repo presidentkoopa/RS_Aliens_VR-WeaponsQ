@@ -34,6 +34,24 @@ Model M4A3Pistol_3D
 	FrameIndex RSPM B 0 0
 }
 
+// 2026-10-23 SLIDE LOCK (1.92 1.13/1.23): the gun with NEITHER its magazine nor its
+// slide -- what a dry pistol looks like with its slide locked back and the
+// magazine out. Surfaces cleared here are the union of frames A and B.
+Model M4A3Pistol_3D
+{
+	Path "models/weapons/pistol"
+	Model 0 "m4a3.md3"
+	SurfaceSkin 0 0 "m4a3.png"
+	SurfaceSkin 0 1 "m4a3.png"
+	SurfaceSkin 0 2 "m4a3.png"
+	SurfaceSkin 0 3 "rsr_clear.png"
+	SurfaceSkin 0 4 "rsr_clear.png"
+	Scale -0.8200 0.8200 0.8200
+	Offset 0.0000 -29.0000 0.0
+	ZOffset -8.0000
+	FrameIndex RSPM C 0 0
+}
+
 // the handle / slide alone
 Model RSR_GunParts
 {
@@ -133,6 +151,24 @@ Model PulseRifle_3D
 	Offset 0.0000 -30.0000 0.0
 	ZOffset -9.0000
 	FrameIndex RSLM B 0 0
+}
+
+// 2026-10-23 SLIDE LOCK (1.92 1.13/1.23): the gun with NEITHER its magazine nor its
+// slide -- what a dry pistol looks like with its slide locked back and the
+// magazine out. Surfaces cleared here are the union of frames A and B.
+Model PulseRifle_3D
+{
+	Path "models/weapons/rifle"
+	Model 0 "m41a.md3"
+	SurfaceSkin 0 0 "m41a.png"
+	SurfaceSkin 0 1 "m41a.png"
+	SurfaceSkin 0 2 "m41a.png"
+	SurfaceSkin 0 3 "rsr_clear.png"
+	SurfaceSkin 0 4 "rsr_clear.png"
+	Scale -1.1000 1.1000 1.1000
+	Offset 0.0000 -30.0000 0.0
+	ZOffset -9.0000
+	FrameIndex RSLM C 0 0
 }
 
 // the handle / slide alone
@@ -370,6 +406,24 @@ Model MercPistol_3D
 	FrameIndex RSMM B 0 0
 }
 
+// 2026-10-23 SLIDE LOCK (1.92 1.13/1.23): the gun with NEITHER its magazine nor its
+// slide -- what a dry pistol looks like with its slide locked back and the
+// magazine out. Surfaces cleared here are the union of frames A and B.
+Model MercPistol_3D
+{
+	Path "models/weapons/pistol"
+	Model 0 "m4a3.md3"
+	SurfaceSkin 0 0 "m4a3.png"
+	SurfaceSkin 0 1 "m4a3.png"
+	SurfaceSkin 0 2 "m4a3.png"
+	SurfaceSkin 0 3 "rsr_clear.png"
+	SurfaceSkin 0 4 "rsr_clear.png"
+	Scale -0.8200 0.8200 0.8200
+	Offset 0.0000 -29.0000 0.0
+	ZOffset -8.0000
+	FrameIndex RSMM C 0 0
+}
+
 // the handle / slide alone
 Model RSR_GunParts
 {
@@ -469,6 +523,24 @@ Model SynthPistol_3D
 	Offset 0.0000 -29.0000 0.0
 	ZOffset -8.0000
 	FrameIndex RSYM B 0 0
+}
+
+// 2026-10-23 SLIDE LOCK (1.92 1.13/1.23): the gun with NEITHER its magazine nor its
+// slide -- what a dry pistol looks like with its slide locked back and the
+// magazine out. Surfaces cleared here are the union of frames A and B.
+Model SynthPistol_3D
+{
+	Path "models/weapons/pistol"
+	Model 0 "m4a3.md3"
+	SurfaceSkin 0 0 "m4a3.png"
+	SurfaceSkin 0 1 "m4a3.png"
+	SurfaceSkin 0 2 "m4a3.png"
+	SurfaceSkin 0 3 "rsr_clear.png"
+	SurfaceSkin 0 4 "rsr_clear.png"
+	Scale -0.8200 0.8200 0.8200
+	Offset 0.0000 -29.0000 0.0
+	ZOffset -8.0000
+	FrameIndex RSYM C 0 0
 }
 
 // the handle / slide alone
@@ -572,6 +644,24 @@ Model YutaniPistol_3D
 	FrameIndex RSNM B 0 0
 }
 
+// 2026-10-23 SLIDE LOCK (1.92 1.13/1.23): the gun with NEITHER its magazine nor its
+// slide -- what a dry pistol looks like with its slide locked back and the
+// magazine out. Surfaces cleared here are the union of frames A and B.
+Model YutaniPistol_3D
+{
+	Path "models/weapons/pistol"
+	Model 0 "m4a3.md3"
+	SurfaceSkin 0 0 "m4a3.png"
+	SurfaceSkin 0 1 "m4a3.png"
+	SurfaceSkin 0 2 "m4a3.png"
+	SurfaceSkin 0 3 "rsr_clear.png"
+	SurfaceSkin 0 4 "rsr_clear.png"
+	Scale -0.8200 0.8200 0.8200
+	Offset 0.0000 -29.0000 0.0
+	ZOffset -8.0000
+	FrameIndex RSNM C 0 0
+}
+
 // the handle / slide alone
 Model RSR_GunParts
 {
@@ -671,6 +761,24 @@ Model YutaniRifle_3D
 	Offset 0.0000 -30.0000 0.0
 	ZOffset -9.0000
 	FrameIndex RSRM B 0 0
+}
+
+// 2026-10-23 SLIDE LOCK (1.92 1.13/1.23): the gun with NEITHER its magazine nor its
+// slide -- what a dry pistol looks like with its slide locked back and the
+// magazine out. Surfaces cleared here are the union of frames A and B.
+Model YutaniRifle_3D
+{
+	Path "models/weapons/rifle"
+	Model 0 "m41a.md3"
+	SurfaceSkin 0 0 "m41a.png"
+	SurfaceSkin 0 1 "m41a.png"
+	SurfaceSkin 0 2 "m41a.png"
+	SurfaceSkin 0 3 "rsr_clear.png"
+	SurfaceSkin 0 4 "rsr_clear.png"
+	Scale -1.1000 1.1000 1.1000
+	Offset 0.0000 -30.0000 0.0
+	ZOffset -9.0000
+	FrameIndex RSRM C 0 0
 }
 
 // the handle / slide alone
@@ -881,6 +989,75 @@ Model RSQ_Hands
 	Model 0 "ammo_hand.md3"
 	Skin 0 "hand.png"
 	Scale -1.0 1.0 1.0
-	Offset 0.0 -24.0 -10.0
+	Offset 0.0000 -30.0000 0.0
+	ZOffset -7.0000
 	FrameIndex RQHN I 0 3
+}
+
+// 2026-10-23 LAUNCHER PUMP AS A REAL PART (parity step 4). Surface [1] of m41a.md3 is
+// m41a_pump, 448 verts; the same isolate-with-a-clear-skin trick MODELDEF.rsrpump uses for
+// the shotgun. Its own sprite pair rather than more frames on RSLP, because RSR.SetPart
+// reserves SprPart frames 0/1/2 for WELLMAG / HANDLE / BOLT.
+// the rifle without its LAUNCHER PUMP: it is on its own layer while the hand works it
+Model PulseRifle_3D
+{
+	Path "models/weapons/rifle"
+	Model 0 "m41a.md3"
+	SurfaceSkin 0 0 "m41a.png"
+	SurfaceSkin 0 1 "rsr_clear.png"
+	SurfaceSkin 0 2 "m41a.png"
+	SurfaceSkin 0 3 "m41a.png"
+	SurfaceSkin 0 4 "m41a.png"
+	Scale -1.1000 1.1000 1.1000
+	Offset 0.0000 -30.0000 0.0
+	ZOffset -9.0000
+	FrameIndex RSLG A 0 0
+}
+
+// the launcher pump alone (main controller), driven by the hand -- zscript/rsq/pumpgl.zs
+Model RSR_GunParts
+{
+	Path "models/weapons/rifle"
+	Model 0 "m41a.md3"
+	SurfaceSkin 0 0 "rsr_clear.png"
+	SurfaceSkin 0 1 "m41a.png"
+	SurfaceSkin 0 2 "rsr_clear.png"
+	SurfaceSkin 0 3 "rsr_clear.png"
+	SurfaceSkin 0 4 "rsr_clear.png"
+	Scale -1.1000 1.1000 1.1000
+	Offset 0.0000 -30.0000 0.0
+	ZOffset -9.0000
+	FrameIndex RSLQ A 0 0
+}
+
+// the rifle without its LAUNCHER PUMP: it is on its own layer while the hand works it
+Model YutaniRifle_3D
+{
+	Path "models/weapons/rifle"
+	Model 0 "m41a.md3"
+	SurfaceSkin 0 0 "m41a.png"
+	SurfaceSkin 0 1 "rsr_clear.png"
+	SurfaceSkin 0 2 "m41a.png"
+	SurfaceSkin 0 3 "m41a.png"
+	SurfaceSkin 0 4 "m41a.png"
+	Scale -1.1000 1.1000 1.1000
+	Offset 0.0000 -30.0000 0.0
+	ZOffset -9.0000
+	FrameIndex RSRG A 0 0
+}
+
+// the launcher pump alone (main controller), driven by the hand -- zscript/rsq/pumpgl.zs
+Model RSR_GunParts
+{
+	Path "models/weapons/rifle"
+	Model 0 "m41a.md3"
+	SurfaceSkin 0 0 "rsr_clear.png"
+	SurfaceSkin 0 1 "m41a.png"
+	SurfaceSkin 0 2 "rsr_clear.png"
+	SurfaceSkin 0 3 "rsr_clear.png"
+	SurfaceSkin 0 4 "rsr_clear.png"
+	Scale -1.1000 1.1000 1.1000
+	Offset 0.0000 -30.0000 0.0
+	ZOffset -9.0000
+	FrameIndex RSRQ A 0 0
 }

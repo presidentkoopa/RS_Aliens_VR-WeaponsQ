@@ -58,6 +58,7 @@ class RSR abstract
 	const GRAB_HANDLE = 7.0;	// the hand within this of the handle takes it
 	const LEAVE_HANDLE = 12.0;	// the hand further than this from the handle's track lets go
 	const RACKED = 0.85;		// of the handle's travel: far enough back to chamber a round
+	const LOCK_TUG = 1.5;		// 1.23: cm the hand pulls a locked-back slide/bolt to release it
 	const SPRING = 4.0;			// cm a released handle goes forward per tic
 	const DROP_TICS = 4;
 	const DROP_CM = 24.0;		// how far the old magazine slides in DROP_TICS before it falls free
@@ -66,17 +67,28 @@ class RSR abstract
 	// the off hand's frame (the free hand's MODELDEF placement): the middle of the closed hand
 	clearscope static Vector3 PalmGrab() { return (-1.5, 2.0, -4.5); }
 
-	// PORTED 2026-10-22 (rsr_pump.zs 1.92): the buttons that grab anywhere. BD22 1.92 has
-	// rsr_grab_with (trigger / grip / Use); this pack grabs with rsr_grab_buttons only.
-	clearscope static int GrabMask(PlayerInfo p)
-	{
-		return PlayerInt(p, 'rsr_grab_buttons', BT_OFFHANDATTACK);
-	}
-
 	clearscope static int PlayerInt(PlayerInfo p, Name n, int def)
 	{
 		let cv = CVar.GetCVar(n, p);
 		return cv ? cv.GetInt() : def;
+	}
+
+	// PORTED FROM BD22 1.92 2026-10-23. "Grab ammo with" (rsr_grab_with): 0 the off trigger,
+	// 1 the off grip (only away from the engine's steadying range), 2 the Use key (intercepted
+	// only while a reload has the hand). ONE OF THE THREE, NEVER A MIX.
+	//
+	// The pack had replaced this with a raw usercmd button MASK in rsr_grab_buttons, which is
+	// why the grip grabbed magazines whatever the setting, and why picking "Use key" opened a
+	// door at the same time as grabbing -- a mask cannot intercept a key, it can only add one.
+	clearscope static int GrabWith(PlayerInfo p)
+	{
+		return PlayerInt(p, 'rsr_grab_with', 0);
+	}
+
+	// the usercmd buttons that grab: the off trigger, only when it is the chosen way
+	clearscope static int GrabMask(PlayerInfo p)
+	{
+		return GrabWith(p) == 0 ? PlayerInt(p, 'rsr_grab_buttons', BT_OFFHANDATTACK) : 0;
 	}
 
 	clearscope static double Float(Name n, double def)
@@ -180,6 +192,14 @@ class RSR_State play
 
 	// the grab (RSR.GripCanGrab; synchronised: rsr_grip network events from
 	// RSR_Handler.InputProcess, and usercmd buttons)
+	// PORTED FROM BD22 1.92 2026-10-23 (its 1.13 + 1.23). A gun fired dry locks its slide back
+	// and STAYS back through the magazine change until the hand racks it. Taking hold of a
+	// locked slide does not close it; a short tug (LOCK_TUG) racks it with the sound, and
+	// letting go then sends it home.
+	bool slideLock;			// the gun ran dry, its slide is locked back until racked
+	bool lockedGrab;		// the handle was taken with the slide/bolt locked back
+	int lockGun;			// the gun the locked slide belongs to (the reload may be idle)
+	bool netUse;			// the Use key, taken over while a reload has the hand, grabs
 	bool netGrip;			// the off grip's key is down
 	bool gripFree;			// ...and its press could not start steadying (latched at the press)
 	int netPresses;			// grip presses that grab
@@ -266,10 +286,10 @@ class RSR_State play
 	// the off hand is holding on: its trigger anywhere, or a grip that grabbed (RSR.GripCanGrab)
 	bool Grip(PlayerPawn mo)
 	{
-		int mask = RSR.PlayerInt(mo.player, 'rsr_grab_buttons', BT_OFFHANDATTACK);
+		int mask = RSR.GrabMask(mo.player);
 		bool trig = (RSVR_VRHand.Buttons(mo) & mask) != 0;
 		bool grip = netGrip && gripFree && !RSVR_VRHand.Steadied(mo);
-		return trig || grip;
+		return trig || grip || netUse;
 	}
 
 	// where the magazine in the hand is against the well: depth (cm out of home along the
@@ -500,6 +520,14 @@ class RSR_State play
 					racked = false;
 					backSounded = false;
 					pull = pullPrev = 0;
+					// 1.23 (owner): taking a slide that is locked back must not close it. It
+					// stays open in the hand; a short tug back racks it (the sound), letting go
+					// then sends it home. A slide with no separate bolt -- which is every gun in
+					// this set, BoltRatio is 0.000 for all ten -- is drawn all the way back
+					// meanwhile.
+					lockedGrab = slideLock;
+					if (lockedGrab && RSR_Guns.BoltRatio(i) <= 0)
+						pull = pullPrev = RSR_Guns.Travel(i);
 					Buzz(mo);
 					SetPhase(mo, RSR.PULL);
 				}
@@ -513,6 +541,21 @@ class RSR_State play
 			double s = rel dot pd;
 			double side = (rel - pd * s).Length();
 			double travel = RSR_Guns.Travel(i);
+			if (lockedGrab)
+			{
+				// the slide (or bolt) is held open by the lock; the hand's tug back releases it
+				pull = RSR_Guns.BoltRatio(i) <= 0 ? travel : clamp(s - grabS, 0, travel);
+				if (!racked && s - grabS >= RSR.LOCK_TUG)
+				{
+					racked = true;
+					backSounded = true;
+					PlaySnd(mo, RSR_Guns.SndBack(i));
+					Buzz(mo);
+				}
+				if (!g || side > RSR_Assist.Leave(mo.player, RSR_Assist.MagGrab(mo.player, i)) * 1.2)
+					SetPhase(mo, RSR.RELEASED);
+				break;
+			}
 			pull = clamp(s - grabS, 0, travel);
 			if (!backSounded && pull >= RSR_Guns.BackAt(i) * travel)
 			{
@@ -530,6 +573,15 @@ class RSR_State play
 		}
 
 		case RSR.RELEASED:
+			if (lockedGrab && !racked)
+			{
+				// let go without the tug: it is still locked open, waiting for the hand
+				pull = pullPrev = 0;
+				lockedGrab = false;
+				slideLock = true;
+				SetPhase(mo, RSR.CHARGE);
+				break;
+			}
 			pull = max(0, pull - RSR.SPRING);
 			if (pull <= 0)
 			{
@@ -564,6 +616,7 @@ class RSR_State play
 		weap = null;
 		wellShown = handShown = false;
 		d = dPrev = pull = pullPrev = 0;
+		lockedGrab = false;
 		netGrip = false;
 	}
 
@@ -575,6 +628,27 @@ class RSR_State play
 		int i = RSR_Guns.Index(w);
 		let psp = p.FindPSprite(PSP_WEAPON);
 		bool active = phase != RSR.IDLE && w && w == weap;
+
+		// SLIDE / BOLT LOCK (BD22 1.92's 1.13 + 1.23), on the guns that have one for real:
+		// RSR_Guns.HasHandle is the list -- 1 M4A3Pistol, 2 PulseRifle, 5 MercPistol,
+		// 6 SynthPistol, 7 YutaniPistol, 8 YutaniRifle. The smartguns and flamers have no
+		// handle to work and are left out, as they are everywhere else in this file.
+		// 1.92 hard-codes its own gun numbers here (i == 1 || i == 2 || i == 3 || i == 5);
+		// the Aliens index space is different, so ask HasHandle instead of copying the literal.
+		if (RSR_Guns.HasHandle(i) && psp)
+		{
+			class<Inventory> ma = RSR_Guns.MagAmmo(i);
+			int loaded = ma ? mo.CountInv(ma) : 1;
+			if (!active && loaded <= 0 && RSR.IsReadyFrame(psp, i))
+				slideLock = true;
+			// 1.23: a locked slide taken in the hand stays locked until the tug racks it
+			if (active && (phase == RSR.PULL || phase == RSR.RELEASED) && (!lockedGrab || racked) || !active && loaded > 0)
+				slideLock = false;
+		}
+		else if (!active)
+			slideLock = false;
+		lockGun = slideLock ? i : 0;
+
 		if (psp && i > 0)
 		{
 			Name gs = RSR_Guns.SprGun(i);
@@ -583,7 +657,7 @@ class RSR_State play
 				if (phase >= RSR.DROP && phase <= RSR.INSERT)
 				{
 					psp.Sprite = Actor.GetSpriteIndex(gs);		// the gun without its magazine
-					psp.Frame = 0;
+					psp.Frame = slideLock ? 2 : 0;				// (and without its slide: locked back)
 				}
 				else if (phase == RSR.PULL || phase == RSR.RELEASED)
 				{
@@ -604,8 +678,19 @@ class RSR_State play
 							ShowReady(psp, i);
 					}
 				}
+				else if (slideLock)
+				{
+					psp.Sprite = Actor.GetSpriteIndex(gs);		// slide locked back: on its own layer
+					psp.Frame = 1;
+				}
 				else
 					ShowReady(psp, i);
+			}
+			else if (!active && slideLock && RSR.IsReadyFrame(psp, i))
+			{
+				class<Inventory> nm = RSR_Guns.NoMag(i);
+				psp.Sprite = Actor.GetSpriteIndex(gs);
+				psp.Frame = nm && mo.CountInv(nm) > 0 ? 2 : 1;	// no slide (and no magazine if it is out)
 			}
 			else if (!active && RSR_Guns.NoMag(i) != "")
 			{
@@ -621,14 +706,14 @@ class RSR_State play
 		}
 
 		let parts = RSR_GunParts(mo.FindInventory('RSR_GunParts'));
-		if (!parts && active)
+		if (!parts && (active || slideLock))
 		{
 			mo.GiveInventory('RSR_GunParts', 1);
 			parts = RSR_GunParts(mo.FindInventory('RSR_GunParts'));
 		}
-		int gi = active ? gun : 0;
+		int gi = active ? gun : slideLock ? lockGun : 0;
 		Name sp = gi > 0 ? RSR_Guns.SprPart(gi) : 'TNT1';
-		bool handle = active && (phase == RSR.PULL || phase == RSR.RELEASED) && RSR_Guns.HandleLayers(gi);
+		bool handle = (active && (phase == RSR.PULL || phase == RSR.RELEASED) || slideLock) && RSR_Guns.HandleLayers(gi);
 		RSR.SetPart(p, RSR.WELLMAG, parts, active && wellShown, sp, 0);
 		RSR.SetPart(p, RSR.HANDLE, parts, handle, sp, 1);
 		RSR.SetPart(p, RSR.BOLT, parts, handle && RSR_Guns.BoltRatio(gi) > 0, sp, 2);
@@ -797,6 +882,7 @@ class RSR_Handler : EventHandler
 	ui Array<int> gripKeys;
 	ui String gripKeysFrom;
 	ui bool eaten[512];
+	ui bool useEaten[512];
 
 	clearscope static RSR_Handler Get()
 	{
@@ -868,8 +954,15 @@ class RSR_Handler : EventHandler
 		case RSR.WELLMAG:
 			return t + RSR_Guns.WellHook(i) * (s.dPrev + (s.d - s.dPrev) * ticfrac), r;
 		case RSR.HANDLE:
+			// 1.13: locked back, all the way (a rifle's charging handle stays home, which is
+			// what BoltRatio > 0 means -- it is 0.000 for every gun in this set, so every one
+			// of them takes the Travel branch and the slide is drawn fully back)
+			if (s.slideLock && s.lockGun > 0)
+				return t + RSR_Guns.HandleHook(s.lockGun) * (RSR_Guns.BoltRatio(s.lockGun) > 0 ? 0 : RSR_Guns.Travel(s.lockGun)), r;
 			return t + RSR_Guns.HandleHook(i) * (s.pullPrev + (s.pull - s.pullPrev) * ticfrac), r;
 		case RSR.BOLT:
+			if (s.slideLock && s.lockGun > 0)	// 1.13: the bolt locked back
+				return t + RSR_Guns.HandleHook(s.lockGun) * (RSR_Guns.BoltRatio(s.lockGun) * RSR_Guns.Travel(s.lockGun)), r;
 			return t + RSR_Guns.HandleHook(i) * (RSR_Guns.BoltRatio(i) * (s.pullPrev + (s.pull - s.pullPrev) * ticfrac)), r;
 		case RSR.HANDMAG:
 			return t + RSR_Guns.HandHook(i) + DeskShift(owner, s, RSR_Guns.Scale(i)), r;
@@ -947,7 +1040,22 @@ class RSR_Handler : EventHandler
 
 	override void NetworkProcess(ConsoleEvent e)
 	{
+		if (e.Name == "rsr_use")
+		{
+			int un = e.Player;
+			if (un < 0 || un >= MAXPLAYERS || !playeringame[un])
+				return;
+			if (!st[un])
+				st[un] = new('RSR_State');
+			st[un].netUse = e.Args[0] != 0;
+			return;
+		}
 		if (e.Name != "rsr_grip")
+			return;
+		// PORTED 2026-10-23: the grip kept starting the engine's two-hand steadying when
+		// reaching for a magazine near the gun, so it grabs ONLY when "Grab ammo with" is set
+		// to the grip. Without this the off grip was a second grab button at all times.
+		if (e.Player < 0 || e.Player >= MAXPLAYERS || RSR.GrabWith(players[e.Player]) != 1)
 			return;
 		int n = e.Player;
 		if (n < 0 || n >= MAXPLAYERS || !playeringame[n])
@@ -985,6 +1093,32 @@ class RSR_Handler : EventHandler
 		let me = players[consoleplayer];
 		if (RSR.Debug(me))
 			Console.Printf("rsr key %s %d (%s)", down ? "down" : "up", k, e.KeyString);
+		// PORTED FROM BD22 1.92 2026-10-23. "Intercept Use key". While a reload has the off
+		// hand, the Use key IS the grab (held = holding, like the off trigger) and does not
+		// reach doors or switches. Any other time Use is untouched. This is why the option
+		// cannot be a button mask: a mask adds BT_USE to the grab AND still opens the door.
+		// RSB_Handler / RSK_M203Handler are not shipped in this pack (no break action, no
+		// M203), so those two terms are dropped -- leaving them in is a hard compile error.
+		if (k >= 0 && k < 512 && RSR.GrabWith(me) == 2 && IsUseKey(k))
+		{
+			if (down)
+			{
+				let us = consoleplayer < MAXPLAYERS ? st[consoleplayer] : null;
+				bool ubusy = us && us.phase != RSR.IDLE || RSP_Handler.Busy(consoleplayer) || RSP_Handler.Feedable(consoleplayer);
+				if (!ubusy)
+					return false;
+				useEaten[k] = true;
+				EventHandler.SendNetworkEvent("rsr_use", 1, k);
+				return true;
+			}
+			if (useEaten[k])
+			{
+				useEaten[k] = false;
+				EventHandler.SendNetworkEvent("rsr_use", 0, k);
+				return true;
+			}
+			return false;
+		}
 		if (!IsGripKey(me, k))
 			return false;
 		EventHandler.SendNetworkEvent("rsr_grip", down ? 1 : 0, k);
@@ -998,12 +1132,22 @@ class RSR_Handler : EventHandler
 			// rsb_guns.zs are not shipped and the term is dropped. Leaving the
 			// call in is a hard "Unknown identifier" error, not a no-op.
 			bool busy = s && s.phase != RSR.IDLE || RSP_Handler.Busy(consoleplayer);	// RSR-PUMP's reload has the hand too
-			eaten[k] = busy && RSR.PlayerInt(me, 'rsr_eat_grip', 1) != 0;
+			// PORTED 2026-10-23: ...and only when the grip is the chosen grab button. Without
+			// the GrabWith term the grip key was swallowed during EVERY reload, so stock
+			// two-hand steadying went dead the moment a reload started.
+			eaten[k] = busy && RSR.GrabWith(me) == 1 && RSR.PlayerInt(me, 'rsr_eat_grip', 1) != 0;
 			return eaten[k];
 		}
 		bool was = eaten[k];
 		eaten[k] = false;
 		return was;		// only an up whose down was eaten
+	}
+
+	ui bool IsUseKey(int k)
+	{
+		Array<int> keys;
+		Bindings.GetAllKeysForCommand(keys, "+use");
+		return keys.Find(k) != keys.Size();
 	}
 
 	ui bool IsGripKey(PlayerInfo me, int k)

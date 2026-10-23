@@ -57,7 +57,11 @@ server int ae_start_dual = 0;
 // Server, not user: the effects draw playsim random numbers, so every machine
 // has to make the same choice. Off by default -- on is a change to how the
 // set looks, and that should be asked for.
-server bool rsq_ballistics = false;
+// 2026-10-23 ON by default (owner: "get the ballistics for the guns done this pass too,
+// something lovely for quest"). It was off because turning it on changes how the set
+// looks and that is the owner's call to make -- they have now made it. Options >
+// Aliens VR > Ballistics still puts it back to Stock.
+server bool rsq_ballistics = true;
 
 // 2026-10-22 rest-pose tuning for the gun hand, centimetres (Options > Aliens VR). Bake into
 // RSQ_HandTable.GunHook when settled: fwd subtracts from z, up adds to y, side adds to x.
@@ -68,15 +72,53 @@ user float ae_gunhand_fwd = 0.0;
 user float ae_gunhand_up = 0.0;
 user float ae_gunhand_side = 0.0;
 
+// 2026-10-23 the knife is a THIRD hand-seat family. It used to fall through to the long-gun
+// sliders above, which are fitted to a rifle braced in two hands -- so the one weapon you
+// cannot steady had the tuning of the one you can, and no slider of its own to undo it.
+user float ae_knifehand_fwd = 0.0;
+user float ae_knifehand_up = 0.0;
+user float ae_knifehand_side = 0.0;
+
+// 2026-10-23 the smartgun and the satchel are their own families too -- they were on the
+// long-gun sliders, so every rifle tweak dragged them along.
+user float ae_smarthand_fwd = 0.0;
+user float ae_smarthand_up = 0.0;
+user float ae_smarthand_side = 0.0;
+user float ae_satchelhand_fwd = 0.0;
+user float ae_satchelhand_up = 0.0;
+user float ae_satchelhand_side = 0.0;
+
 // 2026-10-22 VR melee by motion (zscript/rsq/melee.zs)
 server bool ae_stab = true;			// a fast thrust with the knife, or a fast punch with the free fist, lands a blow
+// 2026-10-23 the knife's trigger swing animation. Off by default: in VR the blade is in
+// your hand and the 19-tic canned slash fights the motion you are making with it. Server
+// scope so a co-op game agrees on what the knife does -- see actors/weapons/knife.txt.
+server bool ae_knife_swing = false;
+
 server float ae_stab_speed = 2.0;	// m/s the hand has to move
-server float ae_stab_reach = 70.0;	// cm the blow reaches past the hand
+// MEASURED 2026-10-23: models/weapons/knife/knife.md3 is one surface, 518 verts, 53.508 md3
+// units end to end along its principal axis (0.3001, 0.0000, 0.9539). x Scale 0.65 x 1.02 =
+// 35.48 cm -- the knife's own length, fist to tip. This was 70.0, twice the whole weapon, so
+// the blow landed on bodies the blade was nowhere near. The slider stays for taste.
+server float ae_stab_reach = 35.5;	// cm the blow reaches past the hand (= the knife's length)
 
 // 2026-10-22 more rest-pose tuning (owner): the support hand, the satchel hand's turn, the held shell
-user float ae_support_fwd = 0.0;
-user float ae_support_up = 0.0;
-user float ae_support_side = 0.0;
+user float ae_support_gun_fwd = 0.0;
+user float ae_support_gun_up = 0.0;
+user float ae_support_gun_side = 0.0;
+
+// 2026-10-23 the support hand is per family as well (owner: "all the support poses are
+// shared?"). The rifle's forward grip, the pistol's cupped hand and the smartgun's
+// handlebar fist were all moved by one set of sliders. Knives and satchels have no
+// support pose, so they need none. These start at 0 = the solver's fit: the old global
+// ae_support_* is gone rather than carried into one family, because whatever was in it
+// was aimed at one gun and wrong on the other seven.
+user float ae_support_pistol_fwd = 0.0;
+user float ae_support_pistol_up = 0.0;
+user float ae_support_pistol_side = 0.0;
+user float ae_support_smart_fwd = 0.0;
+user float ae_support_smart_up = 0.0;
+user float ae_support_smart_side = 0.0;
 user float ae_satchel_yaw = 0.0;
 user float ae_satchel_pitch = 0.0;
 user float ae_satchel_roll = 0.0;
@@ -87,4 +129,39 @@ user float ae_shell_roll = 0.0;
 // 2026-10-22 pulse rifle: pump to load the launcher (zscript/rsq/pumpgl.zs)
 server int ae_glpump_cost = 20;		// rounds one grenade costs
 server float ae_glpump_grab = 14.0;	// cm: the off hand this close to the pump takes it (trigger)
-server float ae_glpump_travel = 6.0;	// cm the pump must come back
+// MEASURED 2026-10-23: the launcher pump's own stroke in models/weapons/rifle/m41a.md3 is
+// 14.201 md3 units (surface [1] m41a_pump against [2] m41a_body, frame 8 -> 10, purely along
+// -x, 0.000 on y and z). x Scale 1.1 x vr_weaponScale 1.02 = 15.93 cm. This was 6.0, so the
+// part reached the end of its travel after about a third of the hand's stroke and then sat
+// there. Memory rule: measure it, never pick a round number and call it a slider default.
+server float ae_glpump_travel = 15.9;	// cm the pump must come back (= the mesh's own stroke)
+
+// THE POWER LOADER (2026-10-23, docs/DESIGN_2026-10-23_power_loader.md step 1).
+// ae_loader_speed is SERVER, not user, on purpose: GetSpeedFactor runs inside MovePlayer for
+// every player on every machine, so a per-machine value would make players move differently on
+// different machines. Movement is playsim. The rest are presentation and so are user.
+server float ae_loader_speed = 0.35;		// 1.0 = normal walking speed
+user float ae_loader_quake = 1.0;			// floor shake per footstep, 0 = off
+user float ae_loader_stride = 42.0;			// map units travelled per footstep
+user float ae_loader_hum = 0.0;				// hydraulic hum volume. 0 until the pack HAS a hum loop
+user float ae_loader_hum_ref = 90.0;		// arm speed that reaches full hum pitch
+user float ae_loader_clunk = 18.0;			// arm speed above which a hard stop clunks, 0 = off
+user float ae_loader_haptic = 1.0;			// kick that controller on a hard stop, 0 = off
+user float ae_loader_beacon = 1.0;			// the rotating orange beacon, 0 = off
+user float ae_loader_beacon_rpm = 90.0;		// how fast it sweeps
+user float ae_loader_beacon_radius = 96.0;	// its light radius, 0 = no light
+user float ae_loader_debug = 0.0;			// print what the loader handler sees, once a second
+user float ae_loader_arms = 1.0;			// an arm on each controller, 0 = the old single model
+user float ae_loader_lag = 0.0;				// tics the arms swing behind your hands. 0 = rigid
+user float ae_loader_overshoot = 0.0;		// how far past the stop they carry
+user float ae_loader_claw_tics = 7.0;		// tics for the claw to close fully
+user float ae_loader_swing = 14.0;			// claw speed that counts as a swing, 0 = off
+user float ae_loader_swing_gap = 12.0;		// tics between swings
+server float ae_loader_reach = 72.0;		// how far the claw is from your hand, map units
+server float ae_loader_claw_radius = 40.0;	// how wide a swing reaches
+server float ae_loader_damage = 180.0;		// damage a swing does
+server float ae_loader_grab_radius = 48.0;	// how close the claw must be to take something
+server float ae_loader_carry = 0.35;		// how hard the claw pulls what it holds
+server float ae_loader_throw = 1.6;			// throw speed multiplier
+server float ae_loader_throw_dmg = 6.0;		// damage per unit of impact speed
+server float ae_loader_crush_tics = 12.0;	// how long a full squeeze takes to crush
