@@ -199,3 +199,9 @@ server float ae_loader_arc_chain = 3.0;		// how many bodies one strike walks thr
 server float ae_loader_arc_jump = 72.0;		// how far it jumps from one body to the next
 server float ae_loader_flame = 1.0;			// the off arm's cutting torch, 0 = off
 server float ae_loader_flame_rate = 3.0;	// tics between flame puffs while held
+
+// THE SWING GATES, 2026-10-24, from VR_MELEE_ON_QUESTZDOOM_2026-10-24.md section 1.4. Speed
+// alone was the whole test and that is the documented oversensitivity: raising the boom was a
+// hit. Direction rejects a wind-up; displacement rejects a twitch or one noisy tracker sample.
+server float ae_loader_swing_down = 0.0;	// 0 = level or down cuts; BD22 ended at 0.25 (15 deg down) for an axe
+server float ae_loader_swing_len = 24.0;	// cm the boom must have travelled in 3 tics, not just moved fast once

@@ -795,6 +795,33 @@ class AE_LoaderHandler : EventHandler
 		// A swing lands when the claw is moving fast enough. The threshold is higher than the
 		// saber's 8.0 because the claw sits on a 2.28 m boom: the same wrist turn moves it more
 		// than twice as far, and a mech swing should be slower than a lightsaber flourish.
+		// A BACKSWING IS NOT A STRIKE, and SPEED ALONE IS NOT A SWING. 2026-10-24, straight
+		// out of VR_MELEE_ON_QUESTZDOOM_2026-10-24.md section 1.4, which is BD22's gate after
+		// three owner reports: "the test used to be speed alone, so raising the axe to strike
+		// was itself a hit -- it landed before the player had swung, and read as the axe being
+		// wildly oversensitive". This claw had exactly that test and nothing else.
+		//
+		// Two gates, both from that document:
+		//   DIRECTION. Motion that is mostly upward is a wind-up. BD22 ended at "must point
+		//     DOWN by 0.25 of its speed" for an axe; a loader also sweeps level at something
+		//     in front of it, so the default here is 0.0 -- level or down cuts, rising never
+		//     does -- and ae_loader_swing_down tightens it to BD22's 0.25 if wanted.
+		//   DISPLACEMENT. "The strongest single idea in the three mods' swing detectors ... a
+		//     displacement test layered on a velocity test, immune to exactly the thing a
+		//     velocity test cannot see: a twitch, a tracker glitch, or one noisy sample." The
+		//     boom must have TRAVELLED, not merely moved fast for one sample.
+		// ON ITS OWN LINE: "ZScript will not dereference .z off a parenthesised expression"
+		// -- the same reference's trap table, and it rejected this exact line first time with
+		// "Unable to dereference left side of Z".
+		Vector3 hNow = RSVR_HandMotion.HandPos(mo, h == 1);
+		double dz = hNow.z - handPrev[i].z;
+		double rise = armSpeed > 0 ? dz * 100.0 * 1.2 / 34.0 / armSpeed : 0;
+		if (rise > -clamp(F('ae_loader_swing_down', 0.0), 0.0, 0.9))
+			return;
+		double travel = spRing[i * 3 + 0] + spRing[i * 3 + 1] + spRing[i * 3 + 2];
+		if (travel < F('ae_loader_swing_len', 24.0))
+			return;
+
 		// An arm with something in its claw does not swing at it. The carried object sits AT
 		// the claw point by construction (Carry()), so a fast sweep put it inside its own
 		// swing: a barrel went off in your hand, and anything you picked up alive died on the
@@ -1182,13 +1209,43 @@ class AE_LoaderHandler : EventHandler
 				continue;
 			if ((t.pos - pt).Length() > rad + t.radius)
 				continue;
+			// REACHABILITY, 2026-10-24. "A cut iterator with no reachability test: a swing
+			// near a thin wall or a closed door killed what was behind it" -- the melee
+			// reference's trap table, paid for twice (SABER e825d10, SHIELD 2d10397). This
+			// was a bare blockmap sweep: the boom swung through walls.
+			//
+			// The trace runs from the CLAW to the body, not from the player's eyes -- the
+			// same document warns that guessing a muzzle off the body cost SHIELD most of its
+			// guard. TRF_THRUACTORS so only geometry blocks; another monster in the way is
+			// not a reason to spare this one.
+			if (!Reaches(mo, pt, t))
+				continue;
 			hits++;
 			t.DamageMobj(mo, mo, dmg, 'Melee');
+			// and the sound comes from the thing that was hit, not from inside the player's
+			// chest: "a metre-long blade's whoosh arrives from inside your chest, dead
+			// centre, the same whatever you do with your arm" (SABER, three commits).
+			t.A_StartSound("melee/hitwall", CHAN_AUTO, 0, 1.0, ATTN_NORM);
 		}
-		if (hits > 0)
-			mo.A_StartSound("melee/hitwall", CHAN_AUTO, 0, 1.0, ATTN_NORM);
 	}
 
+
+	// Can the claw actually reach it, or is there a wall in between?
+	static bool Reaches(PlayerPawn mo, Vector3 from, Actor t)
+	{
+		Vector3 d = t.pos + (0, 0, t.height * 0.5) - from;
+		double dist = d.Length();
+		if (dist < 1)
+			return true;
+		FLineTraceData lt;
+		// TRF_ABSPOSITION: the three offsets are literal coordinates, not offsets -- the trap
+		// table records a trace that began at the map origin because they were read as offsets.
+		bool hitSomething = mo.LineTrace(atan2(d.y, d.x), dist,
+			-asin(clamp(d.z / dist, -1.0, 1.0)),
+			TRF_THRUACTORS | TRF_ABSPOSITION, from.z, from.x, from.y, lt);
+		// geometry in the way, short of the body
+		return !hitSomething || lt.Distance >= dist - 4.0;
+	}
 
 	// The arc's flash. AE_LoaderCageSpark already ships with the set and already has
 	// mechaloader_spark.md3 bound to it in modeldef.loader.txt, so the arc costs no new art
