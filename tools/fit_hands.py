@@ -96,44 +96,57 @@ BOX = {
 }
 
 
-def enclosure(cls, it, hand_items, f, grip, lmax=9.0):
-    """Is the gun INSIDE the hand's curl at the plane F = f?
+def enclosure(cls, it, hand_items, f, grip, box=None, lmax=9.0):
+    """Is the grip INSIDE the hand's curl?
 
-    The kit's check for a doubtful grip is the cross-section: "the part must sit inside the
-    hand's curl" (HAND_FITTING, and the melee fits' xsec sheets). support.section() already
-    gives the gun's outline at a plane; this slices the hand at the same plane and asks, from
-    the gun's centre, how many of eight bearings have hand within 6 cm. 8/8 is a closed fist
-    round the part; a flat palm laid on top scores about half, which is the failure the owner
-    caught on the minigun.
+    The kit's check for a doubtful grip is the cross-section -- "the part must sit inside the
+    hand's curl" -- and saw_fix.py adds that a contact score alone is not trusted because a
+    round tube scores much the same at many rolls, so the sheets decide. This is the numeric
+    half; docs/renders/fit/xsec_*.png is the other.
+
+    THREE VERSIONS OF THIS MEASURED THE WRONG THING, which is worth leaving on the record:
+      1. sliced at F = the fit's SHIFT. A shift is a translation, not a place.
+      2. centred on the whole cross-section of the receiver instead of on the grip.
+      3. still cut perpendicular to F. The knife's handle runs along U, so that cut crossed it
+         LENGTHWISE and found hand on two bearings -- 2/8 -- while the sheet plainly showed the
+         handle held between palm and fingers.
+    So the cut is taken across the GRIP'S OWN LONG AXIS, from its points, and the bearings are
+    swept in that plane. Working in point clouds rather than planar outlines because
+    align.surface_points already gives both bodies in the same frame.
     """
-    # `gc` MUST be the grip, not the gun. First version sliced at F = the fit's SHIFT (a
-    # translation, not a place) and centred on the whole cross-section, so it was asking
-    # whether the hand surrounded the middle of the receiver. The caller now passes the grip
-    # point the fit was matched against -- the centroid of align.box over the grip region.
-    g = support.section(cls, f)
-    if not len(g):
+    box = box or dict(f=(-22, 6), l=(-5, 5), u=(-24, -1))
+    gpts = align.box(align.surface_points(it), **box)
+    if len(gpts) < 8:
         return None, None
-    gc = np.array(grip[1:], float)
+    gc = np.asarray(grip, float)
+    d = gpts - gpts.mean(0)
+    ax = np.linalg.svd(d, full_matrices=False)[2][0]
+    # two axes spanning the plane across the grip
+    tmp = np.array([0.0, 0.0, 1.0])
+    if abs(ax @ tmp) > 0.9:
+        tmp = np.array([1.0, 0.0, 0.0])
+    e1 = np.cross(ax, tmp)
+    e1 /= np.linalg.norm(e1)
+    e2 = np.cross(ax, e1)
+
     H = []
     for h in hand_items:
-        for a, b, c3, _ in gunview.triangles([h]):
-            a, b, c3 = np.atleast_2d(a), np.atleast_2d(b), np.atleast_2d(c3)
-            for p, q in ((a, b), (b, c3), (c3, a)):
-                s = (p[:, 0] - f) * (q[:, 0] - f)
-                m = s < 0
-                if m.any():
-                    w = (f - p[m, 0]) / (q[m, 0] - p[m, 0])
-                    H.append((p[m] + (q[m] - p[m]) * w[:, None])[:, 1:])
+        H.append(align.surface_points(h, per_tri=False))
     if not H:
         return 0, gc
     H = np.concatenate(H)
+    rel = H - gc
+    near = np.abs(rel @ ax) < 2.0          # a 4 cm slab across the grip
+    if not near.any():
+        return 0, gc
+    P = np.stack([rel[near] @ e1, rel[near] @ e2], 1)
+
     hit = 0
     for k in range(8):
         th = k * np.pi / 4
-        d = np.array([np.cos(th), np.sin(th)])
-        rel = H - gc
-        along = rel @ d
-        off = np.abs(rel @ np.array([-d[1], d[0]]))
+        dd = np.array([np.cos(th), np.sin(th)])
+        along = P @ dd
+        off = np.abs(P @ np.array([-dd[1], dd[0]]))
         if ((along > 0) & (along < 6.0) & (off < 2.5)).any():
             hit += 1
     return hit, gc
@@ -183,7 +196,7 @@ def main():
         gpts = align.box(align.surface_points(it), **box)
         grip = gpts.mean(0) if len(gpts) else np.array([0.0, 0.0, 0.0])
         gf = float(grip[0])
-        enc, gc = enclosure(cls, it, items[1:2], gf, grip)
+        enc, gc = enclosure(cls, it, items[1:2], gf, grip, box=box)
         print('%-16s %-24s %-7.2f %-24s %-7s %s'
               % (cls, np.round(t, 2), err,
                  np.round(sup, 2) if sup is not None else 'handle (minigun_fit)',

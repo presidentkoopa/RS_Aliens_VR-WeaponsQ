@@ -9,3 +9,11 @@ alias ae_dualkey "netevent ae_dual"
 // controller's X button (free in QuestZDoom's default layout: A use, Y jump, B free, X free).
 // Rebind under Customize Controls -> Aliens VR Weapons.
 defaultbind Pad_X ae_dualkey
+// RESET THE HAND SLIDERS, 2026-10-24. The hand placement is hook + slider ADDED
+// (zscript/rsq/hands.zs:150): "the owner tunes in the headset and bakes the numbers into
+// GunHook afterwards". So baking a fitted hook is one step with two halves -- set the
+// hook AND clear the slider that was standing in for it -- and doing only the first
+// moves the hand by the sum of both. This is the second half, in one command, so the
+// two can happen together instead of one of them being forgotten.
+//   ae_hands_reset        every hand slider back to 0
+alias ae_hands_reset "ae_gunhand_fwd 0; ae_gunhand_side 0; ae_gunhand_up 0; ae_knifehand_fwd 0; ae_knifehand_side 0; ae_knifehand_up 0; ae_pistolhand_fwd 0; ae_pistolhand_side 0; ae_pistolhand_up 0; ae_satchelhand_fwd 0; ae_satchelhand_side 0; ae_satchelhand_up 0; ae_smarthand_fwd 0; ae_smarthand_side 0; ae_smarthand_up 0; ae_support_gun_fwd 0; ae_support_gun_side 0; ae_support_gun_up 0; ae_support_pistol_fwd 0; ae_support_pistol_side 0; ae_support_pistol_up 0; ae_support_smart_fwd 0; ae_support_smart_side 0; ae_support_smart_up 0"

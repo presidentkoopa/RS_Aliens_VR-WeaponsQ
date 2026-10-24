@@ -25,7 +25,7 @@
    -0.09,
    -2.99
   ],
-  "enc": 7
+  "enc": 8
  },
  "PulseRifle_3D": {
   "gun": [
@@ -39,7 +39,7 @@
    -0.09,
    -10.8
   ],
-  "enc": 7
+  "enc": 8
  },
  "Smartgun_3D": {
   "gun": [
@@ -49,7 +49,7 @@
   ],
   "gun_err": 1.41,
   "sup": null,
-  "enc": 6
+  "enc": 8
  },
  "Knife_3D": {
   "gun": [
@@ -69,7 +69,7 @@
   ],
   "gun_err": 3.34,
   "sup": null,
-  "enc": 0
+  "enc": 2
  },
  "M240Flamethrower_3D": {
   "gun": [
