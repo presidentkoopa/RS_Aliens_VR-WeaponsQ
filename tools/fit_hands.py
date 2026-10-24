@@ -50,11 +50,8 @@ guns = _load('guns', KIT + '/tool/hands/guns.py')
 # the pack on ours alone never reached align.fit() -- it looked our classes up in BD22's
 # registry, got None, and died subscripting it. Point them at the one that knows this pack.
 align.guns = guns
-try:
-    import support as _sup
-    _sup.guns = guns
-except Exception:
-    pass
+import support
+support.guns = guns
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..')).replace('\\', '/')
 
@@ -87,49 +84,112 @@ BOX = {
 }
 
 
+def enclosure(cls, it, hand_items, f, grip, lmax=9.0):
+    """Is the gun INSIDE the hand's curl at the plane F = f?
+
+    The kit's check for a doubtful grip is the cross-section: "the part must sit inside the
+    hand's curl" (HAND_FITTING, and the melee fits' xsec sheets). support.section() already
+    gives the gun's outline at a plane; this slices the hand at the same plane and asks, from
+    the gun's centre, how many of eight bearings have hand within 6 cm. 8/8 is a closed fist
+    round the part; a flat palm laid on top scores about half, which is the failure the owner
+    caught on the minigun.
+    """
+    # `gc` MUST be the grip, not the gun. First version sliced at F = the fit's SHIFT (a
+    # translation, not a place) and centred on the whole cross-section, so it was asking
+    # whether the hand surrounded the middle of the receiver. The caller now passes the grip
+    # point the fit was matched against -- the centroid of align.box over the grip region.
+    g = support.section(cls, f)
+    if not len(g):
+        return None, None
+    gc = np.array(grip[1:], float)
+    H = []
+    for h in hand_items:
+        for a, b, c3, _ in gunview.triangles([h]):
+            a, b, c3 = np.atleast_2d(a), np.atleast_2d(b), np.atleast_2d(c3)
+            for p, q in ((a, b), (b, c3), (c3, a)):
+                s = (p[:, 0] - f) * (q[:, 0] - f)
+                m = s < 0
+                if m.any():
+                    w = (f - p[m, 0]) / (q[m, 0] - p[m, 0])
+                    H.append((p[m] + (q[m] - p[m]) * w[:, None])[:, 1:])
+    if not H:
+        return 0, gc
+    H = np.concatenate(H)
+    hit = 0
+    for k in range(8):
+        th = k * np.pi / 4
+        d = np.array([np.cos(th), np.sin(th)])
+        rel = H - gc
+        along = rel @ d
+        off = np.abs(rel @ np.array([-d[1], d[0]]))
+        if ((along > 0) & (along < 6.0) & (off < 2.5)).any():
+            hit += 1
+    return hit, gc
+
+
 def main():
-    md = os.path.join(ROOT, 'modeldef.pistol.txt')
-    # every modeldef.*.txt in the pack, so one registration covers all four guns
     for name in sorted(os.listdir(ROOT)):
         if name.lower().startswith('modeldef') and os.path.isfile(os.path.join(ROOT, name)):
             guns.add_pack(os.path.join(ROOT, name), ROOT)
     guns.READY.extend(READY)
     handtable.TABLE.update(ROWS)
+    import fitall
 
-    print('%-18s %-22s %-8s %s' % ('gun', 'gun-hand shift F L U', 'residual', 'note'))
-    print('-' * 78)
+    out = os.path.join(ROOT, 'docs', 'renders', 'fit')
+    os.makedirs(out, exist_ok=True)
+    print('%-16s %-24s %-7s %-24s %-7s %s'
+          % ('gun', 'gun hand F L U', 'resid', 'support F L U', 'resid', 'enclosure'))
+    print('-' * 104)
+    res = {}
     for cls, (gs, ss, where) in ROWS.items():
         it = guns.item(cls)
         if not it:
-            print('%-18s MODELDEF block not found -- add_pack could not measure it' % cls)
+            print('%-16s no MODELDEF block' % cls)
             continue
         box = BOX.get(cls, dict(f=(-22, 6), l=(-5, 5), u=(-24, -1)))
-        try:
-            t, err, _ = align.fit(cls, gs, 1, box)
-        except Exception as exc:
-            print('%-18s fit failed: %s' % (cls, exc))
-            continue
+        t, err, _ = align.fit(cls, gs, 1, box)
         t = np.array(t, float) + np.array([0, 0, -1.5])
-        note = 'box %s' % ('per-gun' if cls in BOX else 'kit default')
-        if err > 2.0:
-            note += '  *** residual over 2 cm, do not trust ***'
-        print('%-18s %-22s %-8.2f %s'
-              % (cls, np.round(t, 2), err, note))
-        # OPEN THE SHEET. 000_READ_THIS_FIRST section 6: never trust a tool's silence -- both
-        # owner-caught bugs in the shipped pack were visible in sheets nobody opened.
+
+        sup, serr = None, None
+        if where[0] != 'handle':
+            try:
+                r, _t, t2 = fitall.run(cls)
+                if t2 is not None:
+                    sup, serr = np.array(t2, float), r.get('sup_err', 0.0)
+            except Exception as exc:
+                print('      support fit failed: %s' % exc)
+
         items = [dict(it, color=[120, 120, 110]),
                  dict(path=ROOT + '/models/rsq/hand.md3', frame=5, scale=[-1, 1, 1],
                       off=[0, -24, -10], hook=align.hook_from_shift(t), color=[235, 140, 40])]
-        out = os.path.join(ROOT, 'docs', 'renders', 'fit', 'kitfit_%s_%%s.png' % cls)
-        os.makedirs(os.path.dirname(out), exist_ok=True)
+        if sup is not None:
+            items.append(dict(path=ROOT + '/models/rsq/hand2.md3', frame=2, scale=[-1, 1, 1],
+                              off=[0, -24, -10], hook=align.hook_from_shift(sup),
+                              color=[60, 200, 80]))
+        # the plane through the gun hand's grip
+        # the grip the fit was matched against, in the gun's own frame
+        gpts = align.box(align.surface_points(it), **box)
+        grip = gpts.mean(0) if len(gpts) else np.array([0.0, 0.0, 0.0])
+        gf = float(grip[0])
+        enc, gc = enclosure(cls, it, items[1:2], gf, grip)
+        print('%-16s %-24s %-7.2f %-24s %-7s %s'
+              % (cls, np.round(t, 2), err,
+                 np.round(sup, 2) if sup is not None else 'handle (minigun_fit)',
+                 ('%.2f' % serr) if serr is not None else '-',
+                 ('%d/8 at grip F%+.1f L%+.1f U%+.1f' % (enc, grip[0], grip[1], grip[2])) if enc is not None else 'no section'))
+        res[cls] = dict(gun=t.round(2).tolist(), gun_err=round(err, 2),
+                        sup=sup.round(2).tolist() if sup is not None else None,
+                        enc=enc)
         for kind in ('side', 'front'):
             try:
-                gunview.view(items, out % kind, kind=kind, title='%s %s  kit fit' % (cls, kind))
+                gunview.view(items, os.path.join(out, 'kitfit_%s_%s.png' % (cls, kind)),
+                             kind=kind, title='%s %s  kit fit' % (cls, kind))
             except Exception as exc:
                 print('      %s sheet failed: %s' % (kind, exc))
+    import json
+    json.dump(res, open(os.path.join(ROOT, 'docs', 'kitfit.json'), 'w'), indent=1)
     print()
-    print('Support hands: "same" and "wrap" are fitall.run()\'s own branches; "handle" is')
-    print('minigun_fit.rot_hook, which tools/smartgun_fit.py drives off the measured bar.')
+    print('enclosure 8/8 = the grip is inside the hand all round; a flat palm scores ~4.')
 
 
 if __name__ == '__main__':
