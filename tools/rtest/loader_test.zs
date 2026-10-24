@@ -120,8 +120,18 @@ class AET_LoaderTest : EventHandler
 			want |= 1;				// off main
 		if (s == 3)
 			want |= 2;				// off alt
+		// THROW: grab with a SHORT squeeze, then let go of the trigger, then alt fire.
+		// Holding the trigger shut for ae_loader_crush_tics (12) IS the crush -- the first
+		// version held it 90 tics and crushed the barrel before the throw could run, so the
+		// test destroyed its own subject and reported the wrong feature.
+		// THE THROW'S WINDOW IS NARROW and both earlier attempts missed it in opposite ways.
+		// clawShut needs ae_loader_claw_tics (7) to close; ae_grab fires then; crushFor starts
+		// counting from that tic and ae_crush lands ae_loader_crush_tics (12) later. And
+		// Fling() needs held[i], so the trigger must STAY down. So alt fire has to arrive
+		// between about tic 8 and tic 18 with the trigger still held: hold 4 throughout, add
+		// 8 at tic 12, and be finished before 19.
 		if (s == 4)
-			want |= (n < 90) ? 4 : 8;	// main trigger to grab, then main alt to throw
+			want |= (n < 19) ? (4 | ((n >= 12 && n < 16) ? 8 : 0)) : 0;
 		if (s == 5)
 			want |= 4;				// main trigger, held, to crush
 		if (s == 6)
@@ -130,6 +140,11 @@ class AET_LoaderTest : EventHandler
 		if (bc && bc.GetInt() != want)
 			bc.SetInt(want);
 
+		// THE CAGE: `god` has to be OFF or the player takes nothing and ModifyDamage never
+		// runs. The first version set god at t=10 and reported "health 100 -> 100" as if the
+		// cage had eaten everything.
+		if (s == 7 && n == 10)
+			mo.bINVULNERABLE = false;
 		if (s == 7 && n == 20 && mo.health > 40)
 		{
 			Console.Printf("LOADER health before %d", mo.health);
