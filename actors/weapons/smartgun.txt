@@ -224,11 +224,11 @@ actor Smartgun_3D : Smartgun replaces Smartgun
   Spawn:
 	SMTG A 0 A_JumpIf(GetCVAR("avw_pickupmodel")==1, "Spawn3D")
     SMTG A 1
-    stop
+    Loop
   Spawn3D:
 	SMTG A 0 A_JumpIf(GetCVAR("avw_pickupmodel")==0, "Spawn")
     SMTG P 1 Bright
-    stop
+    Loop
   
 	// RSR: real VR reload (zscript/rsr/vreload.zs, tools/rsr_patch_ae.py AE_GUNS).
 	// Not in VR, or with real reload off, RSR_Start falls through to the
@@ -510,11 +510,11 @@ actor YutaniSmartgun_3D : YutaniSmartgun replaces YutaniSmartgun
   Spawn:
 	SMTG A 0 A_JumpIf(GetCVAR("avw_pickupmodel")==1, "Spawn3D")
     SMTG A 1
-    stop
+    Loop
   Spawn3D:
 	SMTG A 0 A_JumpIf(GetCVAR("avw_pickupmodel")==0, "Spawn")
     SMTG P 1 Bright
-    stop
+    Loop
   
 	// RSR: real VR reload (zscript/rsr/vreload.zs, tools/rsr_patch_ae.py AE_GUNS).
 	// Not in VR, or with real reload off, RSR_Start falls through to the

@@ -59,7 +59,7 @@ weapons/ricochet7	RICO7
 $random knife/hitwall { melee/metal }
 melee/metal			KNSTON
 
-$random melee/hitbody { melee/punchbody1 melee/punchbody2 melee/punchbody3 melee/punchbody4 melee/punchbody5 melee/punchbody6 }
+$random melee/hitbody { melee/punchbody1 melee/punchbody2 melee/punchbody3 melee/punchbody5 }
 melee/punchbody1	PLSPNCH1
 melee/punchbody2	PLSPNCH2
 melee/punchbody3	PLSPNCH3

@@ -182,5 +182,6 @@ ACTOR AEBerserk_3D : AEBerserk replaces AEBerserk
 	Pickup:
 		TNT1 A 0 A_GiveInventory("AELoader_3D")
 		TNT1 A 0 A_SelectWeapon("AELoader_3D")
+		Stop
 	}
 }

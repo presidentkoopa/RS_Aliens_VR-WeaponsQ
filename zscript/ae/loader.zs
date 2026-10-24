@@ -47,8 +47,12 @@ class AE_LoaderCageSpark : Actor
 	{
 		Radius 1;
 		Height 1;
-		RenderStyle "Add";
-		Alpha 0.9;
+		// Normal, NOT Add. A model drawn with any non-Normal RenderStyle is drawn with no
+		// depth test even at full alpha, so the spark mesh reads straight through walls --
+		// and the arc now spawns up to four of these per strike, several times a second,
+		// which turns that into a wall-hack. +BRIGHT already carries the hot look.
+		RenderStyle "Normal";
+		Alpha 1.0;
 		Scale 0.7;
 		+NOBLOCKMAP +NOGRAVITY +NOINTERACTION +BRIGHT +CLIENTSIDEONLY
 	}

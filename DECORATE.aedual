@@ -1343,11 +1343,11 @@ ATSG A 0 A_JumpIf(GetCVar("ae_shotgun_slug") && CountInv("ShotgunBurstAlt"), "Fi
   Spawn:
 	SHOT A 0 A_JumpIf(GetCVAR("avw_pickupmodel")==1, "Spawn3D")
     SHOT A 1
-    Stop
+    Loop
   Spawn3D:
 	SHOT A 0 A_JumpIf(GetCVAR("avw_pickupmodel")==0, "Spawn")
     SHOT P 1 Bright
-    Stop
+    Loop
   
 	// RSR-PUMP 1.92 (zscript/rsr/rsr_pump.zs, ported 2026-10-22): the hand-worked pump after a
 	// shot, a shell into the port at any time, the reload button as the hand insert's entry.
@@ -1787,11 +1787,11 @@ YTSG A 0 A_JumpIf(GetCVar("ae_shotgun_slug") && CountInv("ShotgunBurstAlt"), "Fi
   Spawn:
 	SHOT A 0 A_JumpIf(GetCVAR("avw_pickupmodel")==1, "Spawn3D")
     SHOT A 1
-    Stop
+    Loop
   Spawn3D:
 	SHOT A 0 A_JumpIf(GetCVAR("avw_pickupmodel")==0, "Spawn")
     SHOT P 1 Bright
-    Stop
+    Loop
   
 	// RSR-PUMP 1.92 (zscript/rsr/rsr_pump.zs, ported 2026-10-22): the hand-worked pump after a
 	// shot, a shell into the port at any time, the reload button as the hand insert's entry.
@@ -2165,11 +2165,11 @@ ACTOR AE_Off_PulseRifle : PulseRifle_3D
    Spawn:
 	 PLSP A 0 A_JumpIf(GetCVAR("avw_pickupmodel")==1, "Spawn3D")
      PLSP A 1
-     Stop
+     Loop
    Spawn3D:
 	 PLSP A 0 A_JumpIf(GetCVAR("avw_pickupmodel")==0, "Spawn")
      PLSP P 1 Bright
-     Stop
+     Loop
    
 	// RSR: real VR reload (zscript/rsr/vreload.zs, tools/rsr_patch_ae.py AE_GUNS).
 	// Not in VR, or with real reload off, RSR_Start falls through to the
@@ -2472,11 +2472,11 @@ ACTOR AE_Off_YutaniRifle : YutaniRifle_3D
    Spawn:
 	 PLSP A 0 A_JumpIf(GetCVAR("avw_pickupmodel")==1, "Spawn3D")
      PLSP A 1
-     Stop
+     Loop
    Spawn3D:
 	 PLSP A 0 A_JumpIf(GetCVAR("avw_pickupmodel")==0, "Spawn")
      PLSP P 1 Bright
-     Stop
+     Loop
    
 	// RSR: real VR reload (zscript/rsr/vreload.zs, tools/rsr_patch_ae.py AE_GUNS).
 	// Not in VR, or with real reload off, RSR_Start falls through to the
