@@ -186,3 +186,16 @@ server float ae_loader_carry = 0.35;		// how hard the claw pulls what it holds
 server float ae_loader_throw = 1.6;			// throw speed multiplier
 server float ae_loader_throw_dmg = 6.0;		// damage per unit of impact speed
 server float ae_loader_crush_tics = 12.0;	// how long a full squeeze takes to crush
+
+// THE TWO ARMS, 2026-10-23. The main boom grabs, crushes and throws; the off boom carries the
+// welding gear -- trigger is the arc, alt fire is the torch. Both still swing on arm speed.
+server float ae_loader_fling = 42.0;		// throw speed on the main arm's alt fire
+server float ae_loader_fling_lift = 0.22;	// how much of that goes upward
+server float ae_loader_arc = 1.0;			// the off arm's welding arc, 0 = off
+server float ae_loader_arc_gap = 7.0;		// tics between strikes while held
+server float ae_loader_arc_radius = 44.0;	// how far from the claw the first body is found
+server float ae_loader_arc_damage = 26.0;	// per strike, per body
+server float ae_loader_arc_chain = 3.0;		// how many bodies one strike walks through
+server float ae_loader_arc_jump = 72.0;		// how far it jumps from one body to the next
+server float ae_loader_flame = 1.0;			// the off arm's cutting torch, 0 = off
+server float ae_loader_flame_rate = 3.0;	// tics between flame puffs while held

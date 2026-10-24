@@ -209,6 +209,13 @@ class AE_LoaderHandler : EventHandler
 	int     ramQuiet[MAXPLAYERS * 2];	// tics before this arm may ram again
 	Actor   held[MAXPLAYERS * 2];
 	int     crushFor[MAXPLAYERS * 2];
+
+	// THE OFF ARM'S OWN TOOLS, 2026-10-23. The real P-5000's left boom carries the welding
+	// gear, so that arm is not a second claw: trigger is the arc, alt fire is the torch.
+	int     arcQuiet[MAXPLAYERS];		// tics before the arc may strike again
+	int     flameAt[MAXPLAYERS];		// tics until the next flame puff
+	bool    arcOn[MAXPLAYERS];			// the arc was lit last tic, for the loop sound edge
+	bool    flameOn[MAXPLAYERS];
 	bool    heldGrav[MAXPLAYERS * 2];
 	Vector3 clawPrev[MAXPLAYERS * 2];
 	// thrown things, so a thrown body hurts what it lands on
@@ -358,9 +365,23 @@ class AE_LoaderHandler : EventHandler
 				double best = max(spRing[i * 3 + 0], max(spRing[i * 3 + 1], spRing[i * 3 + 2]));
 
 				Clunk(mo, i, best, h == 1);
+				// THE TWO ARMS ARE NOT THE SAME ARM, 2026-10-23 (owner: "PRIMARY MAINHAND
+				// GRAB / CRUSH / ALTFIRE THROW ... OFFHAND MAIN ATTACK ELECTRICAL ARC,
+				// SECONDARY ATTACK FLAMETHROWER, WITH REAL MELEE SWINGING").
+				//
+				// Claw() sits OUTSIDE the split on purpose: both booms swing, on their own
+				// measured speed, with no animation and no button. That is the melee.
 				Claw(mo, n, best, h);
-				Ram(mo, n, h);			// the arms' second fire mode
-				HandGrab(mo, n, h, best);
+				if (h == 0)
+				{
+					HandGrab(mo, n, 0, best);	// trigger: close, carry, crush
+					Fling(mo, n, 0);			// alt fire: throw what it holds
+				}
+				else
+				{
+					Arc(mo, n);					// trigger: the welding arc
+					Flame(mo, n);				// alt fire: the cutting torch
+				}
 				loud = max(loud, best);
 			}
 
@@ -695,9 +716,11 @@ class AE_LoaderHandler : EventHandler
 			swingQuiet[i]--;
 
 		let p = mo.player;
-		bool held = (p.cmd.buttons & (h == 0 ? BT_ATTACK : BT_OFFHANDATTACK)) != 0;
+		// Only the MAIN arm's trigger works a claw. The off arm's trigger is the arc, and
+		// closing a claw on it would have that boom grabbing while it welds.
+		bool squeeze = h == 0 && (p.cmd.buttons & BT_ATTACK) != 0;
 		double tics = max(F('ae_loader_claw_tics', 7.0), 1.0);
-		clawShut[i] = clamp(clawShut[i] + (held ? 1.0 : -1.0) / tics, 0.0, 1.0);
+		clawShut[i] = clamp(clawShut[i] + (squeeze ? 1.0 : -1.0) / tics, 0.0, 1.0);
 
 		// A swing lands when the claw is moving fast enough. The threshold is higher than the
 		// saber's 8.0 because the claw sits on a 2.28 m boom: the same wrist turn moves it more
@@ -748,6 +771,105 @@ class AE_LoaderHandler : EventHandler
 		                              int(pt.z * 8) | (h << 24));
 	}
 
+	// THE MAIN ARM'S ALT FIRE: THROW IT, 2026-10-23 (owner: "PRIMARY MAINHAND GRAB / CRUSH /
+	// ALTFIRE THROW").
+	//
+	// Letting the claw open while you swing already lets go at the speed the arm was moving,
+	// which is how you put something down or sling it off to one side. This is the other
+	// thing: a deliberate throw, DOWN THE LINE THE ARM IS POINTING, whether the arm is moving
+	// or not. You aim it and it goes there, which is what a throw is and what a release is not.
+	//
+	// With an empty claw the arm has nothing to throw, so alt fire stays the ram it already
+	// was -- that mode is not lost, it is what the arm does when its hand is free.
+	void Fling(PlayerPawn mo, int n, int h)
+	{
+		int i = n * 2 + h;
+		if (!held[i])
+		{
+			Ram(mo, n, h);
+			return;
+		}
+
+		let p = mo.player;
+		bool down = (p.cmd.buttons & (h == 0 ? BT_ALTATTACK : BT_OFFHANDALTATTACK)) != 0;
+		bool press = down && !ramPrev[i];
+		ramPrev[i] = down;			// one flag for the arm's alt fire, whichever mode it took
+		if (!press)
+			return;
+
+		// out along the arm, with a little lift, so a barrel flies instead of skidding
+		Vector3 pt = ClawPoint(mo, h == 1);
+		Vector3 away = pt - mo.pos;
+		double len = away.Length();
+		if (len < 1)
+			return;
+		away /= len;
+		double sp = F2('ae_loader_fling', 42.0);
+		Vector3 v = away * sp + (0, 0, sp * F2('ae_loader_fling_lift', 0.22));
+
+		clawPrev[i] = pt;
+		clawShut[i] = 0.0;			// the claw opens to let it go
+		EventHandler.SendNetworkEvent("ae_drop", int(v.x * 64), int(v.y * 64),
+		                              int(v.z * 64) | (h << 24));
+		mo.A_StartSound("SYNTPN2", CHAN_AUTO, CHANF_OVERLAP, 0.8);
+	}
+
+	// THE OFF ARM'S TRIGGER: THE WELDING ARC, 2026-10-23 (owner: "OFFHAND MAIN ATTACK
+	// ELECTRICAL ARC").
+	//
+	// Held, not tapped: it strikes on a rate while you keep the trigger down, so it reads as a
+	// continuous arc rather than a pistol. It jumps between bodies, because an arc does -- and
+	// the chain is found from positions, not from RNG, so every machine builds the same chain.
+	void Arc(PlayerPawn mo, int n)
+	{
+		if (arcQuiet[n] > 0)
+			arcQuiet[n]--;
+		let p = mo.player;
+		bool down = (p.cmd.buttons & BT_OFFHANDATTACK) != 0;
+		if (!down || F('ae_loader_arc', 1.0) <= 0)
+		{
+			arcOn[n] = false;
+			return;
+		}
+		arcOn[n] = true;
+		if (arcQuiet[n] > 0)
+			return;
+		arcQuiet[n] = int(max(F('ae_loader_arc_gap', 7.0), 1.0));
+
+		Vector3 pt = ClawPoint(mo, true);
+		EventHandler.SendNetworkEvent("ae_arc", int(pt.x * 8), int(pt.y * 8),
+		                              int(pt.z * 8) | (1 << 24));
+	}
+
+	// THE OFF ARM'S ALT FIRE: THE CUTTING TORCH, 2026-10-23 (owner: "SECONDARY ATTACK
+	// FLAMETHROWER").
+	//
+	// It throws the TC's OWN flame, FTFire -- the same actor actors/weapons/flamethrower.txt
+	// fires -- so there is no new art, no new projectile and no new balance to invent: a
+	// loader torch burns exactly as hard as an M240 does. It leaves the claw, not your face.
+	void Flame(PlayerPawn mo, int n)
+	{
+		let p = mo.player;
+		bool down = (p.cmd.buttons & BT_OFFHANDALTATTACK) != 0;
+		if (!down || F('ae_loader_flame', 1.0) <= 0)
+		{
+			flameOn[n] = false;
+			flameAt[n] = 0;
+			return;
+		}
+		flameOn[n] = true;
+		if (flameAt[n] > 0)
+		{
+			flameAt[n]--;
+			return;
+		}
+		flameAt[n] = int(max(F('ae_loader_flame_rate', 3.0), 1.0));
+
+		Vector3 pt = ClawPoint(mo, true);
+		EventHandler.SendNetworkEvent("ae_flame", int(pt.x * 8), int(pt.y * 8),
+		                              int(pt.z * 8) | (1 << 24));
+	}
+
 	static Vector3 ClawPoint(PlayerPawn mo, bool off)
 	{
 		double ps = mo.Level.pixelstretch;
@@ -770,7 +892,8 @@ class AE_LoaderHandler : EventHandler
 	{
 		int hand = 0;
 		if (e.Name == "ae_grab" || e.Name == "ae_drop" || e.Name == "ae_crush"
-		    || e.Name == "ae_claw" || e.Name == "ae_ram")
+		    || e.Name == "ae_claw" || e.Name == "ae_ram"
+		    || e.Name == "ae_arc" || e.Name == "ae_flame")
 			hand = e.Name == "ae_crush" ? e.Args[0] : ((e.Args[2] >> 24) & 1);
 		else
 			return;
@@ -850,6 +973,80 @@ class AE_LoaderHandler : EventHandler
 			return;
 		}
 
+		if (e.Name == "ae_arc")
+		{
+			Vector3 pt = (e.Args[0] / 8.0, e.Args[1] / 8.0, (e.Args[2] & 0xFFFFFF) / 8.0);
+			double rad = F2('ae_loader_arc_radius', 44.0);
+			int dmg = int(F2('ae_loader_arc_damage', 26.0));
+			int chain = int(clamp(F2('ae_loader_arc_chain', 3.0), 1.0, 8.0));
+			double creep = F2('ae_loader_arc_jump', 72.0);
+
+			Spark(mo, pt, 0.55);
+
+			// walk the chain: each link starts at the last body it found, so the arc crawls
+			// from one to the next. Nearest-first, by position, so it is the same chain on
+			// every machine -- no RNG anywhere on this path.
+			Vector3 from = pt;
+			double reach = rad;
+			Array<Actor> hit;
+			for (int link = 0; link < chain; link++)
+			{
+				Actor best = null;
+				double bestd = 1e9;
+				let it = BlockThingsIterator.CreateFromPos(from.x, from.y, from.z, 0,
+				                                           reach, false);
+				while (it.Next())
+				{
+					let t = it.thing;
+					if (!t || t == mo || t.player || !t.bSHOOTABLE || t.health <= 0)
+						continue;
+					if (hit.Find(t) != hit.Size())
+						continue;
+					double d = (t.pos - from).Length();
+					if (d > reach + t.radius || d >= bestd)
+						continue;
+					bestd = d;
+					best = t;
+				}
+				if (!best)
+					break;
+				hit.Push(best);
+				Spark(mo, best.pos + (0, 0, best.height * 0.6), 0.8);
+				// DMG_THRUSTLESS: an arc burns, it does not shove. A shove here would walk
+				// bodies out of the chain between links.
+				best.DamageMobj(mo, mo, dmg, 'Electric', DMG_THRUSTLESS);
+				from = best.pos + (0, 0, best.height * 0.5);
+				reach = creep;
+			}
+			mo.A_StartSound("LODRALTF", CHAN_7, CHANF_OVERLAP,
+			                hit.Size() > 0 ? 0.75 : 0.45, ATTN_NORM, 1.35);
+			return;
+		}
+
+		if (e.Name == "ae_flame")
+		{
+			// the TC's own flame, so there is no second flamethrower to balance
+			Class<Actor> fc = 'FTFire';
+			if (!fc)
+				return;
+			Vector3 pt = (e.Args[0] / 8.0, e.Args[1] / 8.0, (e.Args[2] & 0xFFFFFF) / 8.0);
+			Vector3 away = pt - mo.pos;
+			double len = away.Length();
+			if (len < 1)
+				return;
+			away /= len;
+			let f = Actor.Spawn(fc, pt, ALLOW_REPLACE);
+			if (!f)
+				return;
+			f.target = mo;
+			f.angle = atan2(away.y, away.x);
+			f.pitch = -asin(clamp(away.z, -1.0, 1.0));
+			double sp = f.Speed > 0 ? f.Speed : 20.0;
+			f.vel = away * sp;
+			mo.A_StartSound("FLAMETHR", CHAN_6, CHANF_OVERLAP, 0.7);
+			return;
+		}
+
 		if (e.Name == "ae_crush")
 		{
 			int i = n * 2 + hand;
@@ -885,6 +1082,19 @@ class AE_LoaderHandler : EventHandler
 			mo.A_StartSound("melee/hitwall", CHAN_AUTO, 0, 1.0, ATTN_NORM);
 	}
 
+
+	// The arc's flash. AE_LoaderCageSpark already ships with the set and already has
+	// mechaloader_spark.md3 bound to it in modeldef.loader.txt, so the arc costs no new art
+	// and no new MODELDEF block. It is +NOINTERACTION +CLIENTSIDEONLY, so each machine draws
+	// its own and nothing about it has to stay in step.
+	void Spark(Actor by, Vector3 at, double scale)
+	{
+		let s = Actor.Spawn('AE_LoaderCageSpark', at, ALLOW_REPLACE);
+		if (!s)
+			return;
+		s.target = by;
+		s.A_SetScale(s.Default.Scale.x * scale, s.Default.Scale.y * scale);
+	}
 
 	// WHAT CAN BE PICKED UP. Data, not a class list: mass and flags agree with each other, so
 	// a barrel (Mass 100) and a drone pass while a Baron or Cyberdemon (1000, and +BOSS) do
