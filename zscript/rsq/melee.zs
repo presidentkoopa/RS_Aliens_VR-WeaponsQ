@@ -95,6 +95,13 @@ class RSQ_MeleeHandler : EventHandler
 	Vector3 tipPrev[MAXPLAYERS][2], rootPrev[MAXPLAYERS][2];
 	bool hasPrev[MAXPLAYERS][2];
 	Array<Actor> struck;		// the current swing's hit list: one swing never hits a body twice
+	double travelled[MAXPLAYERS];	// decaying sum of the hand's travel, cm: the displacement test
+
+	static double F(Name n, double def)
+	{
+		let c = CVar.FindCVar(n);
+		return c ? c.GetFloat() : def;
+	}
 
 	static bool KnifeHeld(PlayerInfo p)
 	{
@@ -150,7 +157,31 @@ class RSQ_MeleeHandler : EventHandler
 			if (swinging && handCool[n] == 0)
 			{
 				Vector3 mv = dh / max(dh.Length(), 0.001);
-				if (mv dot kdir > 0.3)
+				double along = mv dot kdir;			// +1 straight down the blade: a thrust
+				// A SLASH IS NOT A THRUST, 2026-10-24 (owner asked for "stab or slash"; this
+				// only ever had the stab). The test was `along > 0.3` -- the hand must move
+				// ALONG the blade -- so a cut drawn ACROSS the target, which is most of what
+				// anyone does with a knife, was rejected outright.
+				//
+				// VR_MELEE_ON_QUESTZDOOM_2026-10-24.md warns about the same axis from the
+				// other side: "a thrust moves the tip along its own axis, the slowest motion
+				// it makes; a stab, a draw-cut and a lean all did nothing" (SABER e825d10). So
+				// the two motions need two tests, not one:
+				//   THRUST  mostly along the blade, and slower is allowed -- a stab is short.
+				//   SLASH   mostly ACROSS it, and the blade has to be moving properly.
+				// The sweep below is the same for both: what the segment passed through is
+				// what it cuts.
+				double lat = sqrt(max(0.0, 1.0 - along * along));
+				bool thrust = along > F('ae_stab_along', 0.3);
+				bool slash = lat > F('ae_stab_across', 0.6)
+				             && sh >= need * F('ae_slash_speed_mul', 1.35);
+				// DISPLACEMENT ON TOP OF VELOCITY. The document calls this "the strongest
+				// single idea in the three mods' swing detectors ... immune to exactly the
+				// thing a velocity test cannot see: a twitch, a tracker glitch, or one noisy
+				// sample". The hand must have gone somewhere, not merely twitched fast.
+				double moved = dh.Length() * 100.0 / vu;		// cm this tic
+				travelled[n] = travelled[n] * 0.6 + moved;		// a short decaying window
+				if ((thrust || slash) && travelled[n] >= F('ae_stab_travel', 9.0))
 				{
 					if (!hasPrev[n][0])
 					{
@@ -257,7 +288,20 @@ class RSQ_MeleeHandler : EventHandler
 			if (!hit || !Clear(mo, a1, at))
 				continue;
 			struck.Push(t);
-			t.DamageMobj(mo, mo, dmg, 'Melee', DMG_THRUSTLESS);
+			// NOT DMG_THRUSTLESS ANY MORE, 2026-10-24. The trap table: "DMG_THRUSTLESS on
+			// every cut path -- a lit blade swept through four imps left four imps standing
+			// exactly where they were" (SABER e825d10). A cut should move what it cuts. The
+			// shove is mass-scaled and runs along the way the blade was travelling, with a
+			// little lift, because "a shove with no lift: a body slides a few units and walks
+			// straight back in" (SABER, SHIELD both).
+			t.DamageMobj(mo, mo, dmg, 'Melee');
+			Vector3 dir = b1 - b0;
+			double dl = dir.Length();
+			if (dl > 0.01 && !t.bBOSS)
+			{
+				double push = F('ae_stab_push', 3.0) * 100.0 / max(t.Mass, 50);
+				t.vel += dir / dl * push + (0, 0, push * 0.3);
+			}
 			class<Actor> pc = puff;
 			if (pc)
 			{

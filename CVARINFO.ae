@@ -205,3 +205,11 @@ server float ae_loader_flame_rate = 3.0;	// tics between flame puffs while held
 // hit. Direction rejects a wind-up; displacement rejects a twitch or one noisy tracker sample.
 server float ae_loader_swing_down = 0.0;	// 0 = level or down cuts; BD22 ended at 0.25 (15 deg down) for an axe
 server float ae_loader_swing_len = 24.0;	// cm the boom must have travelled in 3 tics, not just moved fast once
+
+// THE KNIFE: STAB OR SLASH, 2026-10-24. It only ever had the stab -- the test demanded the
+// hand move ALONG the blade, so a cut drawn across the target did nothing at all.
+server float ae_stab_along = 0.3;		// how much of the motion must be down the blade for a THRUST
+server float ae_stab_across = 0.6;		// how much must be across it for a SLASH
+server float ae_slash_speed_mul = 1.35;	// a slash wants more speed than a stab: a stab is short by nature
+server float ae_stab_travel = 9.0;		// cm the hand must actually have travelled, not just twitched fast
+server float ae_stab_push = 3.0;		// how hard a cut shoves what it cuts, scaled by the body's mass
