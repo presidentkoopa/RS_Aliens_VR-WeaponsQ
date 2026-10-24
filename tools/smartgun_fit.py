@@ -97,6 +97,34 @@ def off_hand():
     bar_axis = np.array([0.0, 1.0, 0.0])            # our bar: straight out along L, level
     Rw = minigun_fit.frame(bar_axis, (1, 0, 0.3)) @ minigun_fit.frame((0, 0, -1), (1, 0, 0)).T
     hook, ypr = minigun_fit.rot_hook(c, BAR_MID, Rw)
+
+    # THEN PUT THE FIST ON THE BAR, not its contact patch. rot_hook's contract is to move the
+    # HELD PATCH's centre onto the target, which is right for the minigun's handle -- but here
+    # it left the fist's bulk 8.3 cm outboard, centred at L 20.8 on a bar that ENDS at L 17.0,
+    # with the thumb past the button rather than on it. A handlebar runs THROUGH the fist, so
+    # the fist's own centre is what belongs on the bar.
+    #
+    # The rotation above is kept exactly as the kit computed it; only the translation is
+    # re-solved, by the same Jacobian this file used before: perturb each hook component, see
+    # where the hand's centre goes, solve the 3x3. Three extra renders, no new maths.
+    def centre(hk):
+        it = dict(path=ROOT.replace(chr(92), '/') + '/models/rsq/hand2.md3', frame=2,
+                  scale=[-1, 1, 1], off=[0, -24, -10], hook=list(hk), rot=list(ypr))
+        tr = gunview.triangles([it])
+        v = np.concatenate([np.concatenate([a, b, cc]) for a, b, cc, _ in tr])
+        return (v.min(0) + v.max(0)) / 2
+
+    h0 = np.array(hook, float)
+    c0 = centre(h0)
+    J = np.zeros((3, 3))
+    for k in range(3):
+        e = h0.copy()
+        e[k] += 10.0
+        J[:, k] = (centre(e) - c0) / 10.0
+    fix = np.linalg.solve(J, BAR_MID - c0)
+    hook = [round(float(x), 2) for x in (h0 + fix)]
+    print('   fist centre was %s -> %s (target %s)'
+          % (np.round(c0, 2), np.round(centre(np.array(hook, float)), 2), np.round(BAR_MID, 2)))
     return hook, ypr, c
 
 

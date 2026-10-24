@@ -126,13 +126,25 @@ class RSQ_HandTable abstract
 
 	clearscope static Vector3 SupportHook(int i)
 	{
+		// SMARTGUNS, indices 8 and 16, REFITTED 2026-10-24 and baked on the owner's standing
+		// "unless you are super confident": the bar is proved INSIDE the fist. The kit's
+		// minigun_fit.rot_hook gives the turn -- Ermac's 91 fist with the bar running THROUGH
+		// it, his source axis (0,0,-1) -- onto the handlebar measured out of the mesh with
+		// HighQualityTools (island ctr [30.5, 13.6, 9.7], model units; F +28.0 L +12.5 U +6.9
+		// in cm). rot_hook puts the CONTACT PATCH on the target, which left the fist's bulk
+		// 8.3 cm outboard of a bar that ends at L +17.0, so the translation is re-solved by
+		// Jacobian to put the FIST'S OWN CENTRE on the bar: a handlebar runs through the hand.
+		// Verified by cross-section, not by eye -- docs/renders/fit/xsec_smart_bar.png cuts
+		// across the bar at L +9, +12 and +15 and the bar's circle is inside the fist outline
+		// in all three. HAND_FITTING is explicit that a flat palm over a bar is the failure.
+		//
 		// FITTED 2026-10-23 with the kit's wrap branch (fitall.py), indices 5/15 shotguns and
 		// 6/13 pulse rifles. ICP of the patch of Ermac's shotgun his support hand holds onto
 		// ours; residual 0.65 cm on the shotgun, 0.90 cm on the rifle. Patched, not
 		// regenerated -- 000_READ_THIS_FIRST section 6.
-		static const double x[] = { 0.000, 0.000, 0.000, 0.000, 0.000, -0.090, -0.090, 0.000, -9.690, 0.000, 0.000, 0.000, 0.000, -0.090, 0.000, -0.090, -9.690 };
-		static const double y[] = { 0.000, 0.000, 0.000, 0.000, 0.000, -2.980, -10.800, 0.000, -16.750, 0.000, 0.000, 0.000, 0.000, -10.800, 0.000, -2.980, -16.750 };
-		static const double z[] = { 0.000, 0.000, 0.000, 0.000, 0.000, -2.800, 10.670, 0.000, 2.520, 0.000, 0.000, 0.000, 0.000, 10.670, 0.000, -2.800, 2.520 };
+		static const double x[] = {0.000,0.000,0.000,0.000,0.000,-0.090,-0.090,0.000, -0.520,0.000,0.000,0.000,0.000,-0.090,0.000,-0.090, -0.520};
+		static const double y[] = {0.000,0.000,0.000,0.000,0.000,-2.980,-10.800,0.000, -11.870,0.000,0.000,0.000,0.000,-10.800,0.000,-2.980, -11.870};
+		static const double z[] = {0.000,0.000,0.000,0.000,0.000,-2.800,10.670,0.000, -8.140,0.000,0.000,0.000,0.000,10.670,0.000,-2.800, -8.140};
 		if (i <= 0 || i >= x.Size())
 			return (0, 0, 0);
 		return (x[i], y[i], z[i]);
@@ -140,9 +152,9 @@ class RSQ_HandTable abstract
 
 	clearscope static Vector3 SupportRot(int i)
 	{
-		static const double x[] = { 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 10.210, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 10.210 };
-		static const double y[] = { 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 16.060, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 16.060 };
-		static const double z[] = { 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 95.160, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 95.160 };
+		static const double x[] = {0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000, 0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000, 0.000};
+		static const double y[] = {0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000, 16.700,0.000,0.000,0.000,0.000,0.000,0.000,0.000, 16.700};
+		static const double z[] = {0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000, 90.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000, 90.000};
 		if (i <= 0 || i >= x.Size())
 			return (0, 0, 0);
 		return (x[i], y[i], z[i]);
