@@ -647,7 +647,22 @@ class RSR_State play
 		// the Aliens index space is different, so ask HasHandle instead of copying the literal.
 		if (RSR_Guns.HasHandle(i) && psp)
 		{
+			// THE MAGAZINE IS THE WEAPON'S OWN, not its index's. Fixed 2026-10-23 after
+			// review. RSR_Guns.Index() resolves an off-hand copy to its PARENT's index --
+			// it tests `w is 'X'`, and AE_Off_M4A3Pistol IS an M4A3Pistol_3D -- so
+			// MagAmmo(i) handed back the MAIN gun's token. The off pistol's slide would not
+			// lock back when it alone ran dry, and showed a locked slide it never earned
+			// when the main one emptied. Six guns, both hands.
+			//
+			// Every gun's AmmoType1 already IS its magazine: the TC declares M4A3Pistol ->
+			// PistolLoaded, PulseRifle -> PulseLoaded, NewShotgun -> ShotgunLoaded, and
+			// DECORATE.aedual overrides AmmoType1 per off-hand copy with that copy's own
+			// AE_*MagOff. So asking the weapon is correct for both hands and needs neither a
+			// second table nor an off-hand index space. The table stays as the fallback for a
+			// gun that somehow has no AmmoType1.
 			class<Inventory> ma = RSR_Guns.MagAmmo(i);
+			if (w.AmmoType1)
+				ma = (class<Inventory>)(w.AmmoType1);
 			int loaded = ma ? mo.CountInv(ma) : 1;
 			if (!active && loaded <= 0 && RSR.IsReadyFrame(psp, i))
 				slideLock = true;
