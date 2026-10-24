@@ -720,9 +720,16 @@ class AE_LoaderHandler : EventHandler
 			swingQuiet[i]--;
 
 		let p = mo.player;
+		// INPUT COMES THROUGH RSVR_VRHand.Buttons(), 2026-10-23. These five reads were
+		// `p.cmd.buttons` direct. In production that is exactly what Buttons() returns, so
+		// nothing changes -- but it is also the seam the whole reload path reads input
+		// through, and reading the usercmd raw here meant the loader was the one subsystem
+		// no harness could drive. Its first scripted run proved the melee and then could not
+		// press a single button. One accessor for input, as the rest of the pack already has.
+		//
 		// Only the MAIN arm's trigger works a claw. The off arm's trigger is the arc, and
 		// closing a claw on it would have that boom grabbing while it welds.
-		bool squeeze = h == 0 && (p.cmd.buttons & BT_ATTACK) != 0;
+		bool squeeze = h == 0 && (RSVR_VRHand.Buttons(mo) & BT_ATTACK) != 0;
 		double tics = max(F('ae_loader_claw_tics', 7.0), 1.0);
 		clawShut[i] = clamp(clawShut[i] + (squeeze ? 1.0 : -1.0) / tics, 0.0, 1.0);
 
@@ -764,7 +771,7 @@ class AE_LoaderHandler : EventHandler
 		if (ramQuiet[i] > 0)
 			ramQuiet[i]--;
 		let p = mo.player;
-		bool down = (p.cmd.buttons & (h == 0 ? BT_ALTATTACK : BT_OFFHANDALTATTACK)) != 0;
+		bool down = (RSVR_VRHand.Buttons(mo) & (h == 0 ? BT_ALTATTACK : BT_OFFHANDALTATTACK)) != 0;
 		bool press = down && !ramPrev[i];
 		ramPrev[i] = down;
 		if (!press || ramQuiet[i] > 0 || held[i])
@@ -802,7 +809,7 @@ class AE_LoaderHandler : EventHandler
 		}
 
 		let p = mo.player;
-		bool down = (p.cmd.buttons & (h == 0 ? BT_ALTATTACK : BT_OFFHANDALTATTACK)) != 0;
+		bool down = (RSVR_VRHand.Buttons(mo) & (h == 0 ? BT_ALTATTACK : BT_OFFHANDALTATTACK)) != 0;
 		bool press = down && !ramPrev[i];
 		ramPrev[i] = down;			// one flag for the arm's alt fire, whichever mode it took
 		if (!press)
@@ -836,7 +843,7 @@ class AE_LoaderHandler : EventHandler
 		if (arcQuiet[n] > 0)
 			arcQuiet[n]--;
 		let p = mo.player;
-		bool down = (p.cmd.buttons & BT_OFFHANDATTACK) != 0;
+		bool down = (RSVR_VRHand.Buttons(mo) & BT_OFFHANDATTACK) != 0;
 		if (!down || F('ae_loader_arc', 1.0) <= 0)
 		{
 			arcOn[n] = false;
@@ -861,7 +868,7 @@ class AE_LoaderHandler : EventHandler
 	void Flame(PlayerPawn mo, int n)
 	{
 		let p = mo.player;
-		bool down = (p.cmd.buttons & BT_OFFHANDALTATTACK) != 0;
+		bool down = (RSVR_VRHand.Buttons(mo) & BT_OFFHANDALTATTACK) != 0;
 		if (!down || F('ae_loader_flame', 1.0) <= 0)
 		{
 			flameOn[n] = false;

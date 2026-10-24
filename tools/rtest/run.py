@@ -60,6 +60,10 @@ user int rsptest_casings = 1;
 user string aet_gun = "";
 user int aet_empty = 0;
 user int aet_dbg = 0;
+user int aet_loader = 0;
+user float aet_swing = 0.0;
+user float aet_period = 20.0;
+user int aet_buttons = 0;
 '''
 
 
@@ -71,12 +75,18 @@ def overlay(path):
     # -- 24 errors of 'Call to unknown function RSR_TestDriver' and its knock-ons.
     body = '\n'.join(open(os.path.join(H, f), encoding='utf-8').read()
                      for f in ('fakehands.zs', 'rsr_testdriver.zs', 'pump_test.zs',
-                               'driver.zs'))
+                               'driver.zs', 'loader_test.zs'))
     with zipfile.ZipFile(path, 'w', zipfile.ZIP_DEFLATED) as z:
         z.writestr('zscript/rsvr/vrhand.zs', body)
+        # handmotion.zs is replaced TOO: the loader reads its arm speed through
+        # RSVR_HandMotion.HandPos, which returns the engine's AttackPos/OffhandPos and so never
+        # moves on a desktop run. It is its own lump and depends on no test class -- its whole
+        # interface is the aet_swing cvar -- so include order cannot bite.
+        z.writestr('zscript/rsvr/handmotion.zs',
+                   open(os.path.join(H, 'fakemotion.zs'), encoding='utf-8').read())
         z.writestr('CVARINFO.rtest', CVARS)
         z.writestr('MAPINFO.rtest',
-                   'gameinfo { AddEventHandlers = "RSR_TestDriver", "RSP_TestDriver", "AET_Driver" }\n')
+                   'gameinfo { AddEventHandlers = "RSR_TestDriver", "RSP_TestDriver", "AET_Driver", "AET_LoaderTest" }\n')
     return path
 
 

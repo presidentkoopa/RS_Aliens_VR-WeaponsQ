@@ -24,6 +24,11 @@ class RSVR_VRHand play
 
 	static Vector3 HandPos(PlayerPawn mo)
 	{
+		// While a loader script is sweeping the arms, the claw point must travel WITH them or
+		// the swing lands somewhere the arm never went. Off (aet_swing 0) this is the fixed
+		// chest-height point every reload run has used, so those are untouched.
+		if (TF('aet_swing', 0) > 0)
+			return RSVR_HandMotion.HandPos(mo, false);
 		return mo.pos + (cos(mo.angle) * 16, sin(mo.angle) * 16, 40);
 	}
 
@@ -66,10 +71,28 @@ class RSVR_VRHand play
 		return HandPos(mo) + w;
 	}
 
+	static double TF(Name n, double def)
+	{
+		let c = CVar.FindCVar(n);
+		return c ? c.GetFloat() : def;
+	}
+
+	// usercmd buttons cannot be written from a handler, so every scripted press arrives here.
+	// aet_buttons is the loader test's: 1 off main, 2 off alt, 4 main trigger, 8 main alt.
 	static int Buttons(PlayerPawn mo)
 	{
 		let d = RSR_TestDriver(EventHandler.Find('RSR_TestDriver'));
-		return mo.player.cmd.buttons | (d && d.trig ? BT_OFFHANDATTACK : 0);
+		int b = mo.player.cmd.buttons | (d && d.trig ? BT_OFFHANDATTACK : 0);
+		int a = int(TF('aet_buttons', 0));
+		if (a & 1)
+			b |= BT_OFFHANDATTACK;
+		if (a & 2)
+			b |= BT_OFFHANDALTATTACK;
+		if (a & 4)
+			b |= BT_ATTACK;
+		if (a & 8)
+			b |= BT_ALTATTACK;
+		return b;
 	}
 
 	static bool Steadied(PlayerPawn mo)
