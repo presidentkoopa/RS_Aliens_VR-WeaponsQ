@@ -2,6 +2,7 @@ version "4.10"
 #include "zscript/rsvr/common.zs"
 #include "zscript/rsvr/vrhand.zs"
 #include "zscript/rsvr/handmotion.zs"	// 2026-10-23 hand speed, the saber's method
+#include "zscript/rsvr/pose.zs"	// 2026-10-24 THE SPINE: hand history in the pawn's frame
 #include "zscript/rsq/handtable.zs"
 #include "zscript/rsq/gunmoves.zs"
 #include "zscript/rsq/hands.zs"

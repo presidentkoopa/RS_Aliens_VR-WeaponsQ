@@ -40,6 +40,27 @@ class AE_LoaderLayers abstract
 	const CAGE     = 2305;
 }
 
+// A SOUND COMES FROM THE THING THAT MAKES IT. "Playing sounds on the player: a metre-long
+// blade's whoosh arrives from inside your chest, dead centre, the same whatever you do with
+// your arm" -- the melee reference, three SABER commits. A 2.28 m boom is worse. This is a
+// one-tic carrier to put a sound where the claw is; the document's "carried emitter at the
+// thing that makes it" for a looping source is a bigger job and the hum is the only loop here.
+class AE_LoaderNoise : Actor
+{
+	Default
+	{
+		Radius 1;
+		Height 1;
+		+NOBLOCKMAP +NOGRAVITY +NOINTERACTION +INVISIBLE
+	}
+	States
+	{
+	Spawn:
+		TNT1 A 35;
+		Stop;
+	}
+}
+
 // The spark the cage throws when it eats a hit. mechaloader_spark.md3 already ships with the
 // set; this is the actor that carries it, so no new art.
 class AE_LoaderCageSpark : Actor
@@ -916,7 +937,7 @@ class AE_LoaderHandler : EventHandler
 		clawShut[i] = 0.0;			// the claw opens to let it go
 		EventHandler.SendNetworkEvent("ae_drop", int(v.x * 64), int(v.y * 64),
 		                              (int(v.z * 64) << 1) | h);
-		mo.A_StartSound("SYNTPN2", CHAN_AUTO, CHANF_OVERLAP, 0.8);
+		Say(mo, pt, "SYNTPN2", 0.8);
 	}
 
 	// THE OFF ARM'S TRIGGER: THE WELDING ARC, 2026-10-23 (owner: "OFFHAND MAIN ATTACK
@@ -1092,11 +1113,16 @@ class AE_LoaderHandler : EventHandler
 					continue;
 				// a shove throws things OFF you: out along the arm and a little up, so a body
 				// leaves the floor instead of grinding along it
+				// REACHABILITY: the ram shoved through doors. Same trap as the swing.
+				if (!Reaches(mo, pt, t))
+					continue;
 				t.vel += away * push + (0, 0, push * 0.35);
+				// NOT thrustless -- the velocity above IS the shove, and the document's
+				// complaint about DMG_THRUSTLESS is bodies that do not move. They move here.
 				t.DamageMobj(mo, mo, dmg, 'Melee', DMG_THRUSTLESS);
 				any = true;
 			}
-			mo.A_StartSound(any ? "melee/hitwall" : "ALIECLW1", CHAN_AUTO, CHANF_OVERLAP, 0.9);
+			Say(mo, pt, any ? "melee/hitwall" : "ALIECLW1", 0.9);
 			if (any)
 				RSQ_MeleeHandler.Buzz(mo);
 			return;
@@ -1139,6 +1165,10 @@ class AE_LoaderHandler : EventHandler
 				}
 				if (!best)
 					break;
+				// REACHABILITY: an arc that welds through a wall is not an arc. Checked from
+				// the previous link, so the chain has to have line of sight along its path.
+				if (!Reaches(mo, from, best))
+					break;
 				hit.Push(best);
 				Spark(mo, best.pos + (0, 0, best.height * 0.6), 0.8);
 				// DMG_THRUSTLESS: an arc burns, it does not shove. A shove here would walk
@@ -1147,8 +1177,7 @@ class AE_LoaderHandler : EventHandler
 				from = best.pos + (0, 0, best.height * 0.5);
 				reach = creep;
 			}
-			mo.A_StartSound("LODRALTF", CHAN_7, CHANF_OVERLAP,
-			                hit.Size() > 0 ? 0.75 : 0.45, ATTN_NORM, 1.35);
+			Say(mo, pt, "LODRALTF", hit.Size() > 0 ? 0.75 : 0.45, 1.35);
 			return;
 		}
 
@@ -1172,7 +1201,7 @@ class AE_LoaderHandler : EventHandler
 			f.pitch = -asin(clamp(away.z, -1.0, 1.0));
 			double sp = f.Speed > 0 ? f.Speed : 20.0;
 			f.vel = away * sp;
-			mo.A_StartSound("FLAMETHR", CHAN_6, CHANF_OVERLAP, 0.7);
+			Say(mo, pt, "FLAMETHR", 0.7);
 			return;
 		}
 
@@ -1187,10 +1216,11 @@ class AE_LoaderHandler : EventHandler
 			// which deals exactly health and leaves it whole; never Destroy, which gives no
 			// death, no gibs, no kill credit and no drop.
 			t.DamageMobj(mo, mo, t.health + abs(t.GetGibHealth()) + 1, 'Crush', DMG_FORCED);
-			mo.A_StartSound("melee/hitwall", CHAN_AUTO, 0, 1.0, ATTN_NORM, 0.7);
 			// the jaws meet: sparks off the claw, since by now it is fully shut (owner:
-			// "then all the way with an effect like sparks")
+			// "then all the way with an effect like sparks"), and the crunch comes from the
+			// claw rather than from inside the player
 			Vector3 cp = ClawPoint(mo, hand == 1);
+			Say(mo, cp, "melee/hitwall", 1.0, 0.7);
 			for (int k = 0; k < 3; k++)
 				Spark(mo, cp + (0, 0, k * 2.0 - 2.0), 0.9);
 			return;
@@ -1229,6 +1259,21 @@ class AE_LoaderHandler : EventHandler
 		}
 	}
 
+
+	// play it AT a point, not on the player
+	static void Say(PlayerPawn mo, Vector3 at, String snd, double vol = 1.0, double pitch = 1.0)
+	{
+		if (snd == "")
+			return;
+		let e = Actor.Spawn('AE_LoaderNoise', at, ALLOW_REPLACE);
+		if (!e)
+		{
+			mo.A_StartSound(snd, CHAN_AUTO, CHANF_OVERLAP, vol, ATTN_NORM, pitch);
+			return;
+		}
+		e.target = mo;
+		e.A_StartSound(snd, CHAN_AUTO, CHANF_OVERLAP, vol, ATTN_NORM, pitch);
+	}
 
 	// Can the claw actually reach it, or is there a wall in between?
 	static bool Reaches(PlayerPawn mo, Vector3 from, Actor t)
