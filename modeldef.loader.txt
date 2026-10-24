@@ -297,6 +297,20 @@ Model AE_LoaderArms
 	Offset -10.0 40.0 -10.0
 
 	FrameIndex AEAR A 0 0
+	FrameIndex AEAR B 0 1
+	FrameIndex AEAR C 0 2
+	FrameIndex AEAR D 0 3
+	FrameIndex AEAR E 0 4
+	FrameIndex AEAR F 0 5
+	FrameIndex AEAR G 0 6
+	FrameIndex AEAR H 0 7
+	FrameIndex AEAR I 0 8
+	FrameIndex AEAR J 0 9
+	FrameIndex AEAR K 0 10
+	FrameIndex AEAR L 0 11
+	FrameIndex AEAR M 0 12
+	FrameIndex AEAR N 0 13
+	FrameIndex AEAR O 0 14
 }
 
 Model RSQ_Hands
@@ -309,4 +323,18 @@ Model RSQ_Hands
 	Offset -10.0 40.0 -10.0
 
 	FrameIndex AEAL A 0 0
+	FrameIndex AEAL B 0 1
+	FrameIndex AEAL C 0 2
+	FrameIndex AEAL D 0 3
+	FrameIndex AEAL E 0 4
+	FrameIndex AEAL F 0 5
+	FrameIndex AEAL G 0 6
+	FrameIndex AEAL H 0 7
+	FrameIndex AEAL I 0 8
+	FrameIndex AEAL J 0 9
+	FrameIndex AEAL K 0 10
+	FrameIndex AEAL L 0 11
+	FrameIndex AEAL M 0 12
+	FrameIndex AEAL N 0 13
+	FrameIndex AEAL O 0 14
 }

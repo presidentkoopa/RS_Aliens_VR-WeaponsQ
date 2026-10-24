@@ -152,6 +152,18 @@ class AET_LoaderTest : EventHandler
 			Console.Printf("LOADER health after  %d  (30 dealt; the cage should have eaten part)", mo.health);
 		}
 
+		// THE PUNCH, frame by frame. The arms were drawn frozen at 0 until 2026-10-24; this
+		// prints both layers' frame every tic through a swing so "it animates" is a sequence
+		// in a log and not an assertion.
+		if (s == 1 && (n % 2) == 0)
+		{
+			let a = p.FindPSprite(2300);
+			let b = p.FindPSprite(2200);
+			Console.Printf("LOADER frame t%d  main %s  left %s", t,
+				a ? String.Format("%d", a.Frame) : "-",
+				b ? String.Format("%d", b.Frame) : "-");
+		}
+
 		if ((n % 35) == 0)
 		{
 			String sub = 'none';

@@ -147,11 +147,18 @@ class AE_LoaderArms : Inventory
 	}
 	States
 	{
+	// FIFTEEN FRAMES EACH, 2026-10-24. loader_arm_r.md3 and loader_arm_l.md3 carry 21 frames
+	// and MODELDEF bound exactly one, so both booms were drawn frozen at frame 0 while the
+	// melee swung. Frames 0..14 are a complete punch: travel peaks at 6 and is back by 14
+	// (15..20 are padding identical to 0, measured with the kit's md3read). A sprite frame
+	// only exists if a state names it, and a MODELDEF FrameIndex for a frame no state names
+	// is silently never drawn -- so all fifteen are named here, and the handler picks one with
+	// psp.Frame, exactly as vreload.zs does for the gun's own slide frames.
 	ArmR:
-		AEAR A -1;
+		AEAR ABCDEFGHIJKLMNO -1;
 		Stop;
 	ArmL:
-		AEAL A -1;
+		AEAL ABCDEFGHIJKLMNO -1;
 		Stop;
 	}
 }
@@ -207,6 +214,10 @@ class AE_LoaderHandler : EventHandler
 	double  clawShut[MAXPLAYERS * 2];	// 0..1. NOT 'claw': ZScript identifiers are
 										// case-insensitive, so it would collide with Claw().
 	int     swingQuiet[MAXPLAYERS * 2];
+	// NOT 'punch': ZScript identifiers are CASE-INSENSITIVE, so a field punch[] and a
+	// method Punch() are the same name -- "Attempt to redefine 'Punch'". The fifth time
+	// this project has hit it (claw/Claw(), look/Look(), pull/Pull(), held/held).
+	int     punchAt[MAXPLAYERS * 2];	// tics left of the arm's punch animation, 0 = at rest
 
 	// STEP 6, GRAB / CARRY / THROW / PIN / CRUSH.
 	bool    ramPrev[MAXPLAYERS * 2];	// alt fire was down last tic
@@ -598,6 +609,37 @@ class AE_LoaderHandler : EventHandler
 
 		// the LEFT arm is drawn by hands.zs on RSQ_Hands' own free-hand layer
 		Arm(p, AE_LoaderLayers.ARM_MAIN, Actor(arms), arms, "ArmR");
+		Punch(p, n);
+	}
+
+	// THE SWING IS DRAWN, 2026-10-24. Until now Claw() landed 180 damage with both booms
+	// motionless, because MODELDEF bound one frame of the 21 each arm mesh carries. Frames
+	// 0..14 are the punch; this plays them over the same gap that rate-limits the swing, so
+	// the animation is exactly as long as the swing it belongs to and can never overlap the
+	// next one. Presentation only: it reads a counter the swing already set and touches no
+	// damage, no event and nothing another machine needs to agree about.
+	void Punch(PlayerInfo p, int n)
+	{
+		double gap = max(F('ae_loader_swing_gap', 12.0), 1.0);
+		for (int h = 0; h < 2; h++)
+		{
+			int i = n * 2 + h;
+			if (punchAt[i] > 0)
+				punchAt[i]--;
+			// the main boom is ours; the left one is on RSQ_Hands' free-hand layer
+			let psp = p.FindPSprite(h == 0 ? AE_LoaderLayers.ARM_MAIN : RSQ_Layers.FREEHAND);
+			if (!psp)
+				continue;
+			// only drive the free-hand layer while it really is showing the arm -- with the
+			// loader off it is an ordinary hand and its frame is not ours to set
+			if (h == 1 && psp.Sprite != Actor.GetSpriteIndex('AEAL'))
+				continue;
+			int fr = 0;
+			if (punchAt[i] > 0)
+				fr = clamp(int(14.0 * (1.0 - punchAt[i] / gap) + 0.5), 0, 14);
+			if (psp.Frame != fr)
+				psp.Frame = fr;
+		}
 	}
 
 	void Arm(PlayerInfo p, int id, Actor caller, Actor stateOwner, String label)
@@ -747,6 +789,7 @@ class AE_LoaderHandler : EventHandler
 		if (cut <= 0 || armSpeed < cut || swingQuiet[i] > 0)
 			return;
 		swingQuiet[i] = int(max(F('ae_loader_swing_gap', 12.0), 1.0));
+		punchAt[i] = swingQuiet[i];		// the boom swings: Arms() plays frames 0..14 over this
 
 		Vector3 pt = ClawPoint(mo, h == 1);
 		// thousandths, so the event carries a position every machine agrees on
