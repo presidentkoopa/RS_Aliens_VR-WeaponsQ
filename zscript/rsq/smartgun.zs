@@ -169,7 +169,6 @@ class AE_SmartHandler : EventHandler
 		if (s.putX == 0 && s.putY == 0)
 			return;
 		Give(p.FindPSprite(PSP_WEAPON), -s.putX, -s.putY);	// hand back exactly what was borrowed
-		Give(p.FindPSprite(AE_Smart.HUDLAYER), -s.putX, -s.putY);
 		s.putX = 0;
 		s.putY = 0;
 	}
@@ -194,18 +193,22 @@ class AE_SmartHandler : EventHandler
 	//    tracking hardest. zscript/rsq/hands.zs:693 and zscript/ae/loader.zs:432 already carry
 	//    them by hand for exactly this reason; this file was the one that did not.
 	//
-	// 2. THE HUD DID NOT COME WITH IT. The gun's own display is a separate psprite overlay
-	//    (actors/weapons/smartgun.txt: A_Overlay(1001, "SmartHud")), and only PSP_WEAPON was
-	//    being tilted -- so the harness swung the gun out from under a display that is bolted
-	//    to it. Both layers take the same borrow now.
+	// 2. THE HUD WAS NEVER LEFT BEHIND, and tilting it here DOUBLED the angle. Corrected
+	//    2026-10-23 after review. The display is a separate overlay (actors/weapons/
+	//    smartgun.txt: A_Overlay(1001, "SmartHud")), and A_Overlay layers carry
+	//    PSPF_ADDWEAPON by default -- which, as hands.zs:737 already writes out, makes
+	//    hw_weapon.cpp add the GUN psprite's own x/y into this layer. So layer 1001 inherited
+	//    the gimbal from PSP_WEAPON for free, and giving it the same borrow a second time
+	//    swung the display to +-44 deg against the gun's +-22: the display came off the
+	//    receiver, which is the complaint it was meant to fix. Only PSP_WEAPON is tilted.
 	static void Apply(PlayerInfo p, AE_SmartState s, double yaw, double pitch)
 	{
 		double newX = yaw * 4.0;
 		double newY = -pitch * 4.0;
 		// each layer keeps whatever the weapon's own states put there; only the gimbal's
 		// share is taken back and re-applied
+		// PSP_WEAPON only. Layer 1001 adds this layer's x/y to its own, so it follows.
 		Give(p.FindPSprite(PSP_WEAPON), newX - s.putX, newY - s.putY);
-		Give(p.FindPSprite(AE_Smart.HUDLAYER), newX - s.putX, newY - s.putY);
 		s.putX = newX;
 		s.putY = newY;
 	}

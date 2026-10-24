@@ -254,7 +254,7 @@ class AE_LoaderHandler : EventHandler
 				Actor b = Actor.Spawn('ExplosiveBarrel', at);
 				if (b)
 					EventHandler.SendNetworkEvent("ae_grab", int(at.x * 8), int(at.y * 8),
-					                              int(at.z * 8));
+					                              int(at.z * 8) << 1);
 			}
 
 			// One-shot ammo report: what the ready weapon actually uses and what the player
@@ -725,6 +725,13 @@ class AE_LoaderHandler : EventHandler
 		// A swing lands when the claw is moving fast enough. The threshold is higher than the
 		// saber's 8.0 because the claw sits on a 2.28 m boom: the same wrist turn moves it more
 		// than twice as far, and a mech swing should be slower than a lightsaber flourish.
+		// An arm with something in its claw does not swing at it. The carried object sits AT
+		// the claw point by construction (Carry()), so a fast sweep put it inside its own
+		// swing: a barrel went off in your hand, and anything you picked up alive died on the
+		// first quick movement. The ram already refused to fire while holding; so does this.
+		if (held[i])
+			return;
+
 		double cut = F('ae_loader_swing', 14.0);
 		if (cut <= 0 || armSpeed < cut || swingQuiet[i] > 0)
 			return;
@@ -733,7 +740,7 @@ class AE_LoaderHandler : EventHandler
 		Vector3 pt = ClawPoint(mo, h == 1);
 		// thousandths, so the event carries a position every machine agrees on
 		EventHandler.SendNetworkEvent("ae_claw", int(pt.x * 8), int(pt.y * 8),
-		                              int(pt.z * 8) | (h << 24));
+		                              (int(pt.z * 8) << 1) | h);
 	}
 
 	// THE RAM -- the arms' second fire mode, 2026-10-23 (owner: "we can have multiple fire
@@ -768,7 +775,7 @@ class AE_LoaderHandler : EventHandler
 		// rather than sent as a second event -- two events for one action can arrive split up,
 		// and the line from you to your own claw IS the arm's forward.
 		EventHandler.SendNetworkEvent("ae_ram", int(pt.x * 8), int(pt.y * 8),
-		                              int(pt.z * 8) | (h << 24));
+		                              (int(pt.z * 8) << 1) | h);
 	}
 
 	// THE MAIN ARM'S ALT FIRE: THROW IT, 2026-10-23 (owner: "PRIMARY MAINHAND GRAB / CRUSH /
@@ -810,7 +817,7 @@ class AE_LoaderHandler : EventHandler
 		clawPrev[i] = pt;
 		clawShut[i] = 0.0;			// the claw opens to let it go
 		EventHandler.SendNetworkEvent("ae_drop", int(v.x * 64), int(v.y * 64),
-		                              int(v.z * 64) | (h << 24));
+		                              (int(v.z * 64) << 1) | h);
 		mo.A_StartSound("SYNTPN2", CHAN_AUTO, CHANF_OVERLAP, 0.8);
 	}
 
@@ -838,7 +845,7 @@ class AE_LoaderHandler : EventHandler
 
 		Vector3 pt = ClawPoint(mo, true);
 		EventHandler.SendNetworkEvent("ae_arc", int(pt.x * 8), int(pt.y * 8),
-		                              int(pt.z * 8) | (1 << 24));
+		                              (int(pt.z * 8) << 1) | 1);
 	}
 
 	// THE OFF ARM'S ALT FIRE: THE CUTTING TORCH, 2026-10-23 (owner: "SECONDARY ATTACK
@@ -867,7 +874,7 @@ class AE_LoaderHandler : EventHandler
 
 		Vector3 pt = ClawPoint(mo, true);
 		EventHandler.SendNetworkEvent("ae_flame", int(pt.x * 8), int(pt.y * 8),
-		                              int(pt.z * 8) | (1 << 24));
+		                              (int(pt.z * 8) << 1) | 1);
 	}
 
 	static Vector3 ClawPoint(PlayerPawn mo, bool off)
@@ -894,7 +901,16 @@ class AE_LoaderHandler : EventHandler
 		if (e.Name == "ae_grab" || e.Name == "ae_drop" || e.Name == "ae_crush"
 		    || e.Name == "ae_claw" || e.Name == "ae_ram"
 		    || e.Name == "ae_arc" || e.Name == "ae_flame")
-			hand = e.Name == "ae_crush" ? e.Args[0] : ((e.Args[2] >> 24) & 1);
+			// SIGN-SAFE PACKING, 2026-10-23. Arg 2 used to be `int(z * 8) | (hand << 24)`,
+			// unpacked with `& 0xFFFFFF` and `>> 24`. ZScript's `>>` is ARITHMETIC (the pack
+			// uses `>>>` where it wants the unsigned one -- casings.zs), so a NEGATIVE z
+			// filled the top bits: the hand bit always read 1, and the z came back as about
+			// two million map units. Every claw point below the controller did it, which is
+			// most of them -- aim a boom at the floor and the arm grabbed, rammed, welded and
+			// swung at a point high above the map, while the grab attached to an arm that
+			// cannot let go. Now the hand is the LOW bit and z is shifted up one, so the sign
+			// survives the round trip. One bit of range is given up; it was +-1M units.
+			hand = e.Name == "ae_crush" ? clamp(e.Args[0], 0, 1) : (e.Args[2] & 1);
 		else
 			return;
 		int n = e.Player;
@@ -910,7 +926,7 @@ class AE_LoaderHandler : EventHandler
 			int i = n * 2 + hand;
 			if (held[i])
 				return;
-			Vector3 g = (e.Args[0] / 8.0, e.Args[1] / 8.0, (e.Args[2] & 0xFFFFFF) / 8.0);
+			Vector3 g = (e.Args[0] / 8.0, e.Args[1] / 8.0, (e.Args[2] >> 1) / 8.0);
 			double rad = F2('ae_loader_grab_radius', 48.0);
 			Actor best = null;
 			double bestd = 1e9;
@@ -920,7 +936,13 @@ class AE_LoaderHandler : EventHandler
 				let t = git.thing;
 				if (!Grabbable(t, mo))
 					continue;
+				// BlockThingsIterator is a 2D blockmap walk: it hands back everything in the
+				// 128-unit blocks it touches, at any height, so the radius has to be tested
+				// here. Without this the claw took things a couple of hundred units away and
+				// on other floors -- every sibling handler (ram, arc, swing) already gates it.
 				double d = (t.pos - g).Length();
+				if (d > rad + t.radius)
+					continue;
 				if (d < bestd)
 				{
 					bestd = d;
@@ -935,14 +957,14 @@ class AE_LoaderHandler : EventHandler
 		if (e.Name == "ae_drop")
 		{
 			Vector3 v = (e.Args[0] / 64.0, e.Args[1] / 64.0,
-			             ((e.Args[2] << 8) >> 8) / 64.0);
+			             (e.Args[2] >> 1) / 64.0);
 			Drop(n * 2 + hand, v);
 			return;
 		}
 
 		if (e.Name == "ae_ram")
 		{
-			Vector3 pt = (e.Args[0] / 8.0, e.Args[1] / 8.0, (e.Args[2] & 0xFFFFFF) / 8.0);
+			Vector3 pt = (e.Args[0] / 8.0, e.Args[1] / 8.0, (e.Args[2] >> 1) / 8.0);
 			// the shove runs from the player out through the claw: that line is the arm
 			Vector3 away = pt - mo.pos;
 			double len = away.Length();
@@ -975,7 +997,7 @@ class AE_LoaderHandler : EventHandler
 
 		if (e.Name == "ae_arc")
 		{
-			Vector3 pt = (e.Args[0] / 8.0, e.Args[1] / 8.0, (e.Args[2] & 0xFFFFFF) / 8.0);
+			Vector3 pt = (e.Args[0] / 8.0, e.Args[1] / 8.0, (e.Args[2] >> 1) / 8.0);
 			double rad = F2('ae_loader_arc_radius', 44.0);
 			int dmg = int(F2('ae_loader_arc_damage', 26.0));
 			int chain = int(clamp(F2('ae_loader_arc_chain', 3.0), 1.0, 8.0));
@@ -1029,7 +1051,7 @@ class AE_LoaderHandler : EventHandler
 			Class<Actor> fc = 'FTFire';
 			if (!fc)
 				return;
-			Vector3 pt = (e.Args[0] / 8.0, e.Args[1] / 8.0, (e.Args[2] & 0xFFFFFF) / 8.0);
+			Vector3 pt = (e.Args[0] / 8.0, e.Args[1] / 8.0, (e.Args[2] >> 1) / 8.0);
 			Vector3 away = pt - mo.pos;
 			double len = away.Length();
 			if (len < 1)
@@ -1062,7 +1084,7 @@ class AE_LoaderHandler : EventHandler
 			return;
 		}
 
-		Vector3 pt = (e.Args[0] / 8.0, e.Args[1] / 8.0, (e.Args[2] & 0xFFFFFF) / 8.0);
+		Vector3 pt = (e.Args[0] / 8.0, e.Args[1] / 8.0, (e.Args[2] >> 1) / 8.0);
 		double rad = F2('ae_loader_claw_radius', 40.0);
 		int dmg = int(F2('ae_loader_damage', 180.0));
 
@@ -1216,7 +1238,7 @@ class AE_LoaderHandler : EventHandler
 		{
 			if (shut && clawShut[i] >= 1.0)
 				EventHandler.SendNetworkEvent("ae_grab", int(pt.x * 8), int(pt.y * 8),
-				                              int(pt.z * 8) | (h << 24));
+				                              (int(pt.z * 8) << 1) | h);
 			return;
 		}
 
@@ -1226,7 +1248,7 @@ class AE_LoaderHandler : EventHandler
 			Vector3 v = (pt - ClawWas(i)) * F2('ae_loader_throw', 1.6);
 			clawPrev[i] = pt;
 			EventHandler.SendNetworkEvent("ae_drop", int(v.x * 64), int(v.y * 64),
-			                              int(v.z * 64) | (h << 24));
+			                              (int(v.z * 64) << 1) | h);
 			return;
 		}
 		clawPrev[i] = pt;

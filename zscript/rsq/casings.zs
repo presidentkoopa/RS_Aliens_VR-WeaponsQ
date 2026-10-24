@@ -188,6 +188,16 @@ class RSQ_Casings : EventHandler
 		if (!c)
 			return;
 		c.target = mo;
+		// THE CASING HAD NO SPRITE, so no casing has ever been drawn. RSR_DroppedMag's states
+		// are `"####" "#"` -- SPR_FIXED, "keep whatever sprite the actor already has" -- so a
+		// spawned casing kept its class default, never RSCS, and FindModelFrameRaw only
+		// returns a mesh when the sprite matches the MODELDEF key exactly. RSQ_CasingSprites
+		// exists purely to make the RSCS name and frames A..E real; this is the line that
+		// points the actor at them. Same two lines the proven dropped-magazine path uses
+		// (vreload.zs). All three casing classes bind every frame A..E to their own mesh, so
+		// frame 0 is as good as any.
+		c.sprite = Actor.GetSpriteIndex('RSCS');
+		c.frame = 0;
 		// Out to the right and a little up. The scatter is HASHED, never the playsim RNG:
 		// this is spawned off a local view of a shot, and drawing from the playsim stream on
 		// a path that does not run identically on every machine walks the stream out of step

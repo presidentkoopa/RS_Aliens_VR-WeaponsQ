@@ -68,6 +68,15 @@ class RSQ_Muzzle : EventHandler
 		let cv = CVar.FindCVar('ae_muzzle_bore');
 		if (cv && !cv.GetBool())
 			return;
+		// NETPLAY, 2026-10-23: WorldThingSpawned is a playsim event -- it runs on EVERY
+		// machine, for every machine's copy of this round. The offset below is built from
+		// HandDir, which is local VR data that only the shooter's machine has, so moving the
+		// round here displaced it on one machine and not the others: divergent impact points,
+		// divergent damage and decal RNG draws, desync. The round is left alone in a net game
+		// until this is carried in an event instead. Single player, where the bore matters to
+		// the person holding the gun, is unaffected.
+		if (multiplayer)
+			return;
 		let a = e.Thing;
 		if (!a || !a.target || !a.target.player || !IsRound(a.GetClassName()))
 			return;
