@@ -155,7 +155,7 @@ class AET_LoaderTest : EventHandler
 		// THE PUNCH, frame by frame. The arms were drawn frozen at 0 until 2026-10-24; this
 		// prints both layers' frame every tic through a swing so "it animates" is a sequence
 		// in a log and not an assertion.
-		if (s == 1 && (n % 2) == 0)
+		if ((s == 1 || s == 5) && (n % 2) == 0)
 		{
 			let a = p.FindPSprite(2300);
 			let b = p.FindPSprite(2200);

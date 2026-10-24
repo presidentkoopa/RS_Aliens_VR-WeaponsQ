@@ -155,10 +155,10 @@ class AE_LoaderArms : Inventory
 	// is silently never drawn -- so all fifteen are named here, and the handler picks one with
 	// psp.Frame, exactly as vreload.zs does for the gun's own slide frames.
 	ArmR:
-		AEAR ABCDEFGHIJKLMNO -1;
+		AEAR ABCDEFGHIJKLMNOPQRSTU -1;
 		Stop;
 	ArmL:
-		AEAL ABCDEFGHIJKLMNO -1;
+		AEAL ABCDEFGHIJKLMNOPQRSTU -1;
 		Stop;
 	}
 }
@@ -634,9 +634,16 @@ class AE_LoaderHandler : EventHandler
 			// loader off it is an ordinary hand and its frame is not ours to set
 			if (h == 1 && psp.Sprite != Actor.GetSpriteIndex('AEAL'))
 				continue;
+			// A PUNCH OVERRIDES THE GRIP POSE: an arm cannot be swinging and holding at the
+			// same time, and the punch is the bigger motion. Sprite frames A..O (0..14) are
+			// the punch; P..U (15..20) are the jaws closing, model frames 21..26, added by
+			// tools/claw_rig.py. clawShut is already 0..1 on the grab and >= 0.98 on the
+			// crush, so it indexes the six straight off.
 			int fr = 0;
 			if (punchAt[i] > 0)
 				fr = clamp(int(14.0 * (1.0 - punchAt[i] / gap) + 0.5), 0, 14);
+			else if (clawShut[i] > 0.02)
+				fr = 15 + clamp(int(clawShut[i] * 5.0 + 0.5), 0, 5);
 			if (psp.Frame != fr)
 				psp.Frame = fr;
 		}
@@ -1135,6 +1142,11 @@ class AE_LoaderHandler : EventHandler
 			// death, no gibs, no kill credit and no drop.
 			t.DamageMobj(mo, mo, t.health + abs(t.GetGibHealth()) + 1, 'Crush', DMG_FORCED);
 			mo.A_StartSound("melee/hitwall", CHAN_AUTO, 0, 1.0, ATTN_NORM, 0.7);
+			// the jaws meet: sparks off the claw, since by now it is fully shut (owner:
+			// "then all the way with an effect like sparks")
+			Vector3 cp = ClawPoint(mo, hand == 1);
+			for (int k = 0; k < 3; k++)
+				Spark(mo, cp + (0, 0, k * 2.0 - 2.0), 0.9);
 			return;
 		}
 

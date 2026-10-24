@@ -311,6 +311,12 @@ Model AE_LoaderArms
 	FrameIndex AEAR M 0 12
 	FrameIndex AEAR N 0 13
 	FrameIndex AEAR O 0 14
+	FrameIndex AEAR P 0 21
+	FrameIndex AEAR Q 0 22
+	FrameIndex AEAR R 0 23
+	FrameIndex AEAR S 0 24
+	FrameIndex AEAR T 0 25
+	FrameIndex AEAR U 0 26
 }
 
 Model RSQ_Hands
@@ -337,4 +343,10 @@ Model RSQ_Hands
 	FrameIndex AEAL M 0 12
 	FrameIndex AEAL N 0 13
 	FrameIndex AEAL O 0 14
+	FrameIndex AEAL P 0 21
+	FrameIndex AEAL Q 0 22
+	FrameIndex AEAL R 0 23
+	FrameIndex AEAL S 0 24
+	FrameIndex AEAL T 0 25
+	FrameIndex AEAL U 0 26
 }
