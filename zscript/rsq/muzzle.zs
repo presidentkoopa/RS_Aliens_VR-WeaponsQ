@@ -68,15 +68,14 @@ class RSQ_Muzzle : EventHandler
 		let cv = CVar.FindCVar('ae_muzzle_bore');
 		if (cv && !cv.GetBool())
 			return;
-		// NETPLAY, 2026-10-23: WorldThingSpawned is a playsim event -- it runs on EVERY
-		// machine, for every machine's copy of this round. The offset below is built from
-		// HandDir, which is local VR data that only the shooter's machine has, so moving the
-		// round here displaced it on one machine and not the others: divergent impact points,
-		// divergent damage and decal RNG draws, desync. The round is left alone in a net game
-		// until this is carried in an event instead. Single player, where the bore matters to
-		// the person holding the gun, is unaffected.
-		if (multiplayer)
-			return;
+		// NETPLAY, 2026-10-23. WorldThingSpawned is a playsim event: it runs on every machine,
+		// and the offset below is built from HandDir, which is local VR data only the shooter
+		// has. So in a net game the shooter displaces the round and nobody else does, which
+		// can diverge the impact point. This was gated behind `if (multiplayer) return;` for
+		// that reason and the owner un-gated it -- this set is played single player, and a
+		// round that leaves 4.3 cm above the barrel is a real fault every shot, against a
+		// desync in a mode nobody runs. If a net game is ever wanted, the fix is to carry the
+		// offset in an event rather than to switch this off again.
 		let a = e.Thing;
 		if (!a || !a.target || !a.target.player || !IsRound(a.GetClassName()))
 			return;

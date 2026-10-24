@@ -29,6 +29,22 @@ class AET_Driver : EventHandler
 		if (!mo || !mo.player)
 			return;
 
+		// WHY DOES EMPTY NOT BECOME CARRY. vreload.zs:426 needs `press && CanTakeMag`, and
+		// press (:410) is `(g && !gripPrev) || netPresses != usedPresses`. Every field is public
+		// on RSR_State, so print them beside the mask test rather than guess again.
+		if (F('aet_dbg', 0) > 0 && (Level.maptime % 7) == 0)
+		{
+			let s = RSR_Handler.StateOf(mo);
+			if (s)
+			{
+				int mask = RSR.GrabMask(mo.player);
+				int btn = RSVR_VRHand.Buttons(mo);
+				Console.Printf("DBG t%d phase %s mask %d btn&mask %d gripPrev %d net %d used %d gripFree %d",
+					Level.maptime, RSR.PhaseName(s.phase), mask, btn & mask,
+					s.gripPrev ? 1 : 0, s.netPresses, s.usedPresses, s.gripFree ? 1 : 0);
+			}
+		}
+
 		String want = S('aet_gun');
 		if (want == "" || want == was)
 			return;

@@ -30,6 +30,7 @@ THE OVERLAY. Built fresh each run and loaded last, so its lumps win:
                              same trick the pack itself uses for ZSCRIPT.ae.
 """
 import os
+import shutil
 import subprocess
 import sys
 import zipfile
@@ -58,6 +59,7 @@ user int rsptest_every = 0;
 user int rsptest_casings = 1;
 user string aet_gun = "";
 user int aet_empty = 0;
+user int aet_dbg = 0;
 '''
 
 
@@ -79,6 +81,17 @@ def overlay(path):
 
 def run(name, tmo, specs):
     os.makedirs(SCRATCH, exist_ok=True)
+    # A FRESH CONFIG EVERY RUN, which the kit does by rebuilding a whole HOME from template.ini
+    # and which I left out of the port. The engine WRITES its cvars back on quit, so a run that
+    # sets rsr_grab_with 1 leaves it set for every run after it -- and the next run's grab mask
+    # is silently 0, the trigger does nothing, and the harness reports a stall that is its own.
+    # Cost me four runs. A test rig that carries state between runs is worse than no rig.
+    # Copy template.ini, do NOT just delete the old one: with no config at all the engine has
+    # no bindings and the console batch never runs -- the run reaches MAP01 and sits there.
+    # template.ini is a config the engine itself wrote on a startup-only run, so every cvar is
+    # at its CVARINFO default, including rsr_grab_with 0.
+    ini = os.path.join(SCRATCH, 'scratch.ini')
+    shutil.copy(os.path.join(H, 'template.ini'), ini)
     pk3 = os.path.join(SCRATCH, 'aet_pack.pk3')
     # the mapset with its MAPINFO episode block closed -- a COPY, in scratch; see fixmapset.py
     mapset, _why = fixmapset.build(MAPSET, os.path.join(SCRATCH, 'mapset_fixed.wad'))
