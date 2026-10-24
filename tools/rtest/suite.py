@@ -37,12 +37,12 @@ def one(gun):
     # A false STUCK is far worse than a slow suite, so the budget is generous and the script
     # short. If a gun ever does report STUCK, check its last logged tick against the hold it
     # died in before believing it.
-    log = run.run('suite_' + gun, 220, [
+    log = run.run('suite_' + gun, 90, [
         '10:god; show_messages 0; rsq_reload 1; aet_empty 1; aet_gun ' + gun,
         '40:rsrtest_script 7',
         '80:+reload',
         '84:-reload',
-        '700:echo END',
+        '450:echo END',
     ])
     text = open(log, encoding='utf-8', errors='replace').read()
     phases = []

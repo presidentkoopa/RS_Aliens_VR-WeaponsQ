@@ -70,12 +70,13 @@ def overlay(path):
     # ZSCRIPT lump, the hands compile first and RSR_TestDriver is an unknown class inside them
     # -- 24 errors of 'Call to unknown function RSR_TestDriver' and its knock-ons.
     body = '\n'.join(open(os.path.join(H, f), encoding='utf-8').read()
-                     for f in ('fakehands.zs', 'rsr_testdriver.zs', 'driver.zs'))
+                     for f in ('fakehands.zs', 'rsr_testdriver.zs', 'pump_test.zs',
+                               'driver.zs'))
     with zipfile.ZipFile(path, 'w', zipfile.ZIP_DEFLATED) as z:
         z.writestr('zscript/rsvr/vrhand.zs', body)
         z.writestr('CVARINFO.rtest', CVARS)
         z.writestr('MAPINFO.rtest',
-                   'gameinfo { AddEventHandlers = "RSR_TestDriver", "AET_Driver" }\n')
+                   'gameinfo { AddEventHandlers = "RSR_TestDriver", "RSP_TestDriver", "AET_Driver" }\n')
     return path
 
 
