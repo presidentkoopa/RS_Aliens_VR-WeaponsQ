@@ -103,8 +103,17 @@ class AET_LoaderTest : EventHandler
 			subject = Actor.Spawn('ExplosiveBarrel', at);
 			Console.Printf("LOADER target %s at %.0f units", subject ? 'barrel' : 'NONE', 60.0);
 		}
+		// 8: a MONSTER in reach, to prove it freezes in its pain frame while held. A barrel
+		// has no Pain state, so scripts 4 and 5 could never show this.
+		if (s == 8 && n == 1)
+		{
+			Vector3 at = mo.pos + (cos(mo.angle), sin(mo.angle), 0) * 40.0;
+			subject = Actor.Spawn('XenomorphAT', at, NO_REPLACE);
+			Console.Printf("LOADER monster %s", subject ? subject.GetClassName() : 'NONE');
+		}
+
 		// a barrel within the claw's reach for grab / throw / crush
-		if ((s == 4 || s == 5) && n == 1)
+		if ((s == 4 || s == 5 || s == 8) && n == 1 && s != 8)
 		{
 			Vector3 at = mo.pos + (cos(mo.angle), sin(mo.angle), 0) * 40.0;
 			at.z += 20;
@@ -134,6 +143,9 @@ class AET_LoaderTest : EventHandler
 			want |= (n < 19) ? (4 | ((n >= 12 && n < 16) ? 8 : 0)) : 0;
 		if (s == 5)
 			want |= 4;				// main trigger, held, to crush
+		if (s == 8)
+			want |= 4;		// held throughout: the run raises ae_loader_crush_tics so the
+							// crush cannot fire and end the test early
 		if (s == 6)
 			want |= 8;				// main alt with nothing held: the ram
 		let bc = CVar.FindCVar('aet_buttons');
@@ -159,10 +171,14 @@ class AET_LoaderTest : EventHandler
 		{
 			let a = p.FindPSprite(2300);
 			let b = p.FindPSprite(2200);
-			Console.Printf("LOADER frame t%d  main %s  left %s", t,
+			Console.Printf("LOADER frame t%d  main %s  left %s  sparks %d", t,
 				a ? String.Format("%d", a.Frame) : "-",
-				b ? String.Format("%d", b.Frame) : "-");
+				b ? String.Format("%d", b.Frame) : "-", Cnt('AE_LoaderCageSpark'));
 		}
+
+		if (s == 8 && (n % 4) == 0 && subject)
+			Console.Printf("LOADER monster t%d  state tics %d  frame %d  vel %.1f  hp %d",
+				t, subject.tics, subject.frame, subject.vel.Length(), subject.health);
 
 		if ((n % 35) == 0)
 		{

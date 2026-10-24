@@ -103,9 +103,20 @@ Else
 	}	
 	
 IsSelected NewShotgun_3D
+	InInventory AE_SlugMode, 1
+	{
+	drawstring smallfont, green, "SLUG-SHOT", 160, 0, 2, alignment(center);
+	}
+IsSelected NewShotgun_3D
 	InInventory ShotgunBurstAlt, 1
 	{
+	InInventory AE_SlugMode, 1
+	{
+	}
+	Else
+	{
 	drawstring smallfont, green, "BURST-SHOT", 160, 0, 2, alignment(center);	
+	}
 	}
 Else
     {
@@ -114,9 +125,20 @@ Else
 	}
 	
 IsSelected YutaniShotgun_3D
+	InInventory AE_SlugMode, 1
+	{
+	drawstring smallfont, green, "SLUG-SHOT", 160, 0, 2, alignment(center);
+	}
+IsSelected YutaniShotgun_3D
 	InInventory ShotgunBurstAlt, 1
 	{
+	InInventory AE_SlugMode, 1
+	{
+	}
+	Else
+	{
 	drawstring smallfont, green, "BURST-SHOT", 160, 0, 2, alignment(center);	
+	}
 	}
 Else
     {

@@ -78,3 +78,8 @@ melee/wall1			DSPUNCH2
 melee/wall2			FOOTWALL
 
 COLTFIRE COLTFIRE
+
+// The loader's hydraulic hum. ae_loader_hum defaults to 0 because the set had no hum
+// loop and the logical name resolved to nothing, so raising the slider got silence.
+// Pointed at the TC's own loader motor sound: the slider now does something.
+ae/loaderhum		LODRALTF

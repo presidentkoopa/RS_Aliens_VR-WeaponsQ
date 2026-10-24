@@ -50,5 +50,39 @@
   "gun_err": 1.41,
   "sup": null,
   "enc": 6
+ },
+ "Knife_3D": {
+  "gun": [
+   0.24,
+   0.5,
+   -2.35
+  ],
+  "gun_err": 1.08,
+  "sup": null,
+  "enc": 2
+ },
+ "Satcheler_3D": {
+  "gun": [
+   8.5,
+   1.07,
+   -0.85
+  ],
+  "gun_err": 3.34,
+  "sup": null,
+  "enc": 0
+ },
+ "M240Flamethrower_3D": {
+  "gun": [
+   -0.08,
+   0.08,
+   -4.3
+  ],
+  "gun_err": 1.2,
+  "sup": [
+   9.93,
+   -0.09,
+   -8.42
+  ],
+  "enc": 8
  }
 }

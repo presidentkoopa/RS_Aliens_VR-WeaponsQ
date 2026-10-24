@@ -114,8 +114,6 @@ Model YutaniPistol_3D
 	FrameIndex YM91 H 0 7
 	
 	//Drop clip
-	FrameIndex YM91 J 0 9
-	FrameIndex YM91 K 0 10
 	
 	//Insert new clip
 	FrameIndex YM91 M 0 11

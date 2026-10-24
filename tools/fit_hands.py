@@ -62,6 +62,9 @@ READY = [
     ('NewShotgun_3D', 'RSHG', 'A'),
     ('PulseRifle_3D', 'PULS', 'A'),
     ('Smartgun_3D',   'SMRT', 'A'),
+    ('Knife_3D',             'ATKN', 'A'),
+    ('Satcheler_3D',         'STCG', 'A'),
+    ('M240Flamethrower_3D',  'FLMT', 'A'),
 ]
 
 # gun -> (Ermac set for the gun hand, Ermac set for the support, how the support holds)
@@ -75,10 +78,19 @@ ROWS = {
     # deliberately does not do (it returns early); minigun_fit.py is that fit, and
     # tools/smartgun_fit.py drives it off the measured bar.
     'Smartgun_3D':   ('plasma', 'chaingun', ('handle',)),
+    # The last three, 2026-10-24. A knife and a satchel are ONE-handed -- no support row, so
+    # fitall.run() returns before its support branches, which is correct and not a failure.
+    # The flamethrower is a two-handed gun and wraps like the rifle does.
+    'Knife_3D':             ('pistol', 'pistol', ('none',)),
+    'Satcheler_3D':         ('pistol', 'pistol', ('none',)),
+    'M240Flamethrower_3D':  ('plasma', 'shotgun', ('wrap', 48)),
 }
 
 # gun hand grip box per gun, where the kit's default f=(-22,6) l=(-5,5) u=(-24,-1) is wrong
 BOX = {
+    # a knife is held by a handle at its own back end, not at a pistol grip's station
+    'Knife_3D':     dict(f=(-14, 10), l=(-6, 6), u=(-12, 8)),
+    'Satcheler_3D': dict(f=(-14, 12), l=(-8, 8), u=(-14, 8)),
     # vertical grip measured at F +6.8..+8.2, L +11.0, U -9.4..+0.5 (md3label + island split)
     'Smartgun_3D': dict(f=(1, 14), l=(5, 17), u=(-13, 4)),
 }

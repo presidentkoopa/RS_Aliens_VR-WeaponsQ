@@ -58,8 +58,41 @@ class RSQ_CasingSprites : Actor
 	}
 }
 
+// The shotgun's alt fire becomes a SLUG when ae_shotgun_slug is on, but sbarinfo.txt kept
+// printing "BURST-SHOT" because SBARINFO cannot read a cvar -- it can only test inventory. So
+// the cvar is mirrored onto a token here and the HUD tests that. It lives in this handler
+// because this one already ticks for every player and the alternative was a handler of its own
+// for one bool.
+class AE_SlugMode : Inventory
+{
+	Default
+	{
+		Inventory.MaxAmount 1;
+		+INVENTORY.UNDROPPABLE
+		+INVENTORY.UNTOSSABLE
+		+INVENTORY.QUIET
+	}
+}
+
 class RSQ_Casings : EventHandler
 {
+	override void WorldTick()
+	{
+		let cv = CVar.FindCVar('ae_shotgun_slug');
+		bool on = cv && cv.GetBool();
+		for (int n = 0; n < MAXPLAYERS; n++)
+		{
+			if (!playeringame[n] || !players[n].mo)
+				continue;
+			let mo = players[n].mo;
+			bool has = mo.FindInventory('AE_SlugMode') != null;
+			if (on && !has)
+				mo.GiveInventory('AE_SlugMode', 1);
+			else if (!on && has)
+				mo.TakeInventory('AE_SlugMode', 1);
+		}
+	}
+
 	int lastTic[MAXPLAYERS];
 
 	// the tracer each gun fires -> which case it leaves. Anything not named here (the

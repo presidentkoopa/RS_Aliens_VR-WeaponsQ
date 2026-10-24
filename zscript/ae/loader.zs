@@ -26,10 +26,11 @@
 class AE_LoaderLayers abstract
 {
 	const ARM_MAIN = 2300;
-	// 2026-10-23: the off arm sits in the 2200 band, next to the layers the pack already
-	// drives successfully with RSQ_Hands as their caller (2200, 2201, 2202, 2210). At
-	// 2301 the engine created it and something removed it again within the tic.
-	const ARM_OFF  = 2211;
+	// There is deliberately no off-arm id here. A const of 2211 sat in this spot and
+	// NOTHING ever read it: Arms() creates only ARM_MAIN, and hands.zs:694 draws the
+	// left arm on RSQ_Hands' own free-hand layer (2200) with the AEArmL state. A
+	// harness that checked 2211 reported "no off arm" on a loader that has one, and
+	// that reached the owner as a pack bug. A constant nobody reads is worse than none.
 	const BEACON   = 2304;
 	// 2026-10-23 the cab cage over the operator's head. The design hangs this on the body
 	// frame (step 7), but the owner cut the body and the legs, so it goes on a psprite layer
@@ -217,7 +218,8 @@ class AE_LoaderHandler : EventHandler
 	// NOT 'punch': ZScript identifiers are CASE-INSENSITIVE, so a field punch[] and a
 	// method Punch() are the same name -- "Attempt to redefine 'Punch'". The fifth time
 	// this project has hit it (claw/Claw(), look/Look(), pull/Pull(), held/held).
-	int     punchAt[MAXPLAYERS * 2];	// tics left of the arm's punch animation, 0 = at rest
+	int     punchAt[MAXPLAYERS * 2];
+	int     work[MAXPLAYERS * 2];		// 1 while that boom is welding or burning	// tics left of the arm's punch animation, 0 = at rest
 
 	// STEP 6, GRAB / CARRY / THROW / PIN / CRUSH.
 	bool    ramPrev[MAXPLAYERS * 2];	// alt fire was down last tic
@@ -232,6 +234,7 @@ class AE_LoaderHandler : EventHandler
 	bool    arcOn[MAXPLAYERS];			// the arc was lit last tic, for the loop sound edge
 	bool    flameOn[MAXPLAYERS];
 	bool    heldGrav[MAXPLAYERS * 2];
+	bool    heldPain[MAXPLAYERS * 2];	// we put this one in its Pain frame; put it back
 	Vector3 clawPrev[MAXPLAYERS * 2];
 	// thrown things, so a thrown body hurts what it lands on
 	Array<Actor> flung;
@@ -642,6 +645,13 @@ class AE_LoaderHandler : EventHandler
 			int fr = 0;
 			if (punchAt[i] > 0)
 				fr = clamp(int(14.0 * (1.0 - punchAt[i] / gap) + 0.5), 0, 14);
+			else if (work[i] > 0)
+			{
+				// welding or burning: stir frames 0..4 on a 16-tic cycle, a working boom
+				int ph = (Level.maptime % 16);
+				fr = ph < 8 ? ph / 2 : (15 - ph) / 2;
+				work[i] = 0;		// set again next tic for as long as the button is held
+			}
 			else if (clawShut[i] > 0.02)
 				fr = 15 + clamp(int(clawShut[i] * 5.0 + 0.5), 0, 5);
 			if (psp.Frame != fr)
@@ -892,6 +902,13 @@ class AE_LoaderHandler : EventHandler
 	{
 		if (arcQuiet[n] > 0)
 			arcQuiet[n]--;
+		// THE OFF BOOM MOVES WHILE IT WORKS, 2026-10-24. The punch animation is bound to both
+		// arms now, but only a swing drove it -- so the arc and the torch fired off an arm as
+		// still as a photograph. A weld is not a punch, so this is not the full 0..14 throw:
+		// it stirs the first third, frames 0..4, on a slow cycle, which reads as the boom
+		// working rather than swinging. Presentation only; Punch() does the drawing.
+		if ((RSVR_VRHand.Buttons(mo) & BT_OFFHANDATTACK) && punchAt[n * 2 + 1] <= 0)
+			work[n * 2 + 1] = 1;
 		let p = mo.player;
 		bool down = (RSVR_VRHand.Buttons(mo) & BT_OFFHANDATTACK) != 0;
 		if (!down || F('ae_loader_arc', 1.0) <= 0)
@@ -919,6 +936,8 @@ class AE_LoaderHandler : EventHandler
 	{
 		let p = mo.player;
 		bool down = (RSVR_VRHand.Buttons(mo) & BT_OFFHANDALTATTACK) != 0;
+		if (down && punchAt[n * 2 + 1] <= 0)
+			work[n * 2 + 1] = 1;		// the torch stirs the boom too, as the arc does
 		if (!down || F('ae_loader_flame', 1.0) <= 0)
 		{
 			flameOn[n] = false;
@@ -1205,6 +1224,10 @@ class AE_LoaderHandler : EventHandler
 	// keeps asking and the wall keeps refusing.
 	void Carry(PlayerPawn mo, int i, Vector3 pt)
 	{
+		// hold the pain frame. Some pain states are a short run rather than one frame, and a
+		// run would walk itself off the -1 we set; re-asserting it each tic costs nothing.
+		if (heldPain[i] && held[i] && held[i].health > 0 && held[i].tics >= 0)
+			held[i].tics = -1;
 		let t = held[i];
 		if (!t || t.health <= 0 && !t.bCORPSE)
 		{
@@ -1227,6 +1250,28 @@ class AE_LoaderHandler : EventHandler
 		t.bNOGRAVITY = true;
 		t.bTHRUACTORS = true;
 		crushFor[i] = 0;
+
+		// FROZEN IN PAIN WHILE IT IS HELD, 2026-10-24 (owner: "I EXPECT WHATEVER MONSTER IN MY
+		// CLAWS TO BE DRAWN IN THE CLAW IN A FROZEN PAIN STATE"). Until now a grabbed drone
+		// went on walking, turning and swinging in the claw, animating as if nothing had it.
+		//
+		// A state with tics -1 never advances, so putting it in Pain and setting tics -1 holds
+		// that frame for as long as we keep hold. Not bNOINTERACTION and not a freeze flag: it
+		// must still be damageable, because crushing it is the point.
+		//
+		// A corpse has no Pain state and a barrel has no Pain state; FindState returns null
+		// for both and they are left exactly as they are.
+		heldPain[i] = false;
+		if (!t.bCORPSE && t.health > 0)
+		{
+			State pn = t.FindState('Pain');
+			if (pn)
+			{
+				t.SetState(pn);
+				t.tics = -1;
+				heldPain[i] = true;
+			}
+		}
 	}
 
 	// Let go, restoring exactly what we changed. A flag set and never put back is the bug that
@@ -1240,6 +1285,21 @@ class AE_LoaderHandler : EventHandler
 			return;
 		t.bNOGRAVITY = heldGrav[i];
 		t.bTHRUACTORS = false;
+		// let it move again: back to See if it has one, else Spawn. Without this a released
+		// monster keeps the -1 tic and stands in its pain frame for ever.
+		if (heldPain[i] && t.health > 0)
+		{
+			State go = t.FindState('See');
+			if (!go)
+				go = t.FindState('Spawn');
+			if (go)
+			{
+				t.SetState(go);
+				if (t.tics < 0)
+					t.tics = 1;
+			}
+		}
+		heldPain[i] = false;
 		if (throwVel.Length() > 0.1)
 		{
 			t.vel = throwVel;

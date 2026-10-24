@@ -42,6 +42,32 @@ GUNS = [
 SRC = ['pistol.txt', 'shotgun.txt', 'rifle.txt', 'flamethrower.txt', 'smartgun.txt', 'grenade.txt']
 
 
+def strip_states(body):
+    """Remove an existing States { } block from an actor body.
+
+    NOT IDEMPOTENT BEFORE THIS: the splice below finds the actor's closing brace and inserts a
+    fresh States block in front of it without removing one already there, so a second run gave
+    every off-hand actor TWO States blocks. The shipped DECORATE.aedual has exactly one each
+    (counted), so nothing was broken -- but the next person to re-run this would not have been
+    so lucky. ALREADY HAS A STATES BLOCK: now it is taken out first.
+    """
+    i = body.lower().find('states')
+    if i < 0:
+        return body
+    j = body.find('{', i)
+    if j < 0:
+        return body
+    depth = 0
+    for k in range(j, len(body)):
+        if body[k] == '{':
+            depth += 1
+        elif body[k] == '}':
+            depth -= 1
+            if depth == 0:
+                return body[:i] + body[k + 1:]
+    return body
+
+
 def read(path):
     with io.open(path, encoding='utf-8', errors='replace', newline='') as fh:
         return fh.read()
